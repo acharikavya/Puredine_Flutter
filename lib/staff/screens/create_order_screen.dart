@@ -11,6 +11,68 @@ import '../models/models.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common_widgets.dart';
 
+/// ─────────────────────────────────────────────────────────────────────────
+/// Local "Dark Maroon / Soft Cream / Gold Glow" palette — Theme 1.
+/// Used ONLY for this screen's restyle. Nothing here touches AppColors,
+/// AppTheme, or any other file — pure UI enhancement, no logic changed
+/// anywhere here. Field names are kept identical to the previous palette
+/// so every usage below the class still lines up — only the color VALUES
+/// have changed to the new Dark Maroon × Soft Cream × Gold Glow theme.
+///
+/// NOTE: This is a private class, so it can't be imported from
+/// dashboard_screen.dart — it must be redeclared identically in every
+/// screen that wants this look. That duplication (or the lack of it) is
+/// exactly why this screen previously fell back to AppColors.* and looked
+/// different from the Dashboard.
+/// ─────────────────────────────────────────────────────────────────────────
+class _Palette {
+  // Dark Maroon primary (was Milano Red)
+  static const Color milanoRed = Color(0xFF8B1D1D);
+  static const Color milanoRedDeep = Color(0xFF5E1212);
+  static const Color milanoRedLight = Color(0xFFA62828);
+
+  // Soft Cream + Gold Glow accents (was Lemon Chiffon)
+  static const Color lemonChiffon = Color(0xFFFFF8E7);
+  static const Color lemonChiffonDeep = Color(0xFFF4E4C1);
+
+  // Soft cream canvas background
+  static const Color canvas = Color(0xFFFFFBF5);
+  static const Color canvasDeep = Color(0xFFFCF1DD);
+
+  static const Color textDark = Color(0xFF2A1610);
+  static const Color textMuted = Color(0xFF8B7D6B);
+
+  // Gold Glow accent
+  static const Color gold = Color(0xFFF4C430);
+  static const Color goldDeep = Color(0xFFD9A61E);
+
+  /// Themed soft shadow for resting cards/panels — mirrors the shadow
+  /// language used on the Menu Management screen so both screens read
+  /// as one consistent brand.
+  static List<BoxShadow> get softShadow => [
+        BoxShadow(
+          color: milanoRedDeep.withValues(alpha: 0.06),
+          blurRadius: 18,
+          offset: const Offset(0, 8),
+        ),
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.03),
+          blurRadius: 4,
+          offset: const Offset(0, 2),
+        ),
+      ];
+}
+
+const List<String> _kMonthNames = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+String _todayLabel() {
+  final now = DateTime.now();
+  return '${_kMonthNames[now.month - 1]} ${now.day}, ${now.year}';
+}
+
 class CreateOrderScreen extends StatefulWidget {
   const CreateOrderScreen({super.key});
 
@@ -129,61 +191,133 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
     final total = _calcTotal(menu.items);
 
     return Scaffold(
-      backgroundColor: AppColors.ivory,
-      body: Column(
+      backgroundColor: _Palette.canvas,
+      extendBodyBehindAppBar: true,
+      body: Stack(
         children: [
-          // ── Header ──────────────────────────────────────────────
-          PageHeader(
-            title: 'Create Order',
-            subtitle: 'Manual order entry',
-            onBack: () => context.pop(),
-          ),
-
-          // ── Body ─────────────────────────────────────────────────
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final isWide = constraints.maxWidth >= 768;
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1100),
-                      child: isWide
-                          ? Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  flex: 5,
-                                  child: _buildLeftPanel(tables, grouped, menu),
-                                ),
-                                const SizedBox(width: 24),
-                                SizedBox(
-                                  width: 320,
-                                  child: _buildSummaryPanel(
-                                    menu.items,
-                                    selectedCount,
-                                    total,
-                                  ),
-                                ),
-                              ],
-                            )
-                          : Column(
-                              children: [
-                                _buildLeftPanel(tables, grouped, menu),
-                                const SizedBox(height: 24),
-                                _buildSummaryPanel(
-                                  menu.items,
-                                  selectedCount,
-                                  total,
-                                ),
-                              ],
-                            ),
+          // ── Ambient background dressing ─────────────────────────────────
+          // Purely decorative — soft cream/gold glows layered over the
+          // existing canvas wash, matching the Menu Management screen's
+          // "foggy" backdrop so the whole admin experience feels like one
+          // cohesive brand. No logic touched — visuals only.
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    _Palette.canvasDeep.withValues(alpha: 0.5),
+                    _Palette.canvas,
+                    _Palette.canvas,
+                  ],
+                  stops: const [0.0, 0.2, 1.0],
+                ),
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: -70,
+                    right: -60,
+                    child: Container(
+                      width: 260,
+                      height: 260,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            _Palette.gold.withValues(alpha: 0.16),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                );
-              },
+                  Positioned(
+                    bottom: -90,
+                    left: -80,
+                    child: Container(
+                      width: 280,
+                      height: 280,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            _Palette.milanoRed.withValues(alpha: 0.07),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
+          ),
+
+          Column(
+            children: [
+              // ── Header — same Dark Maroon gradient theme as the Order
+              // Summary card below, so both read as one brand ──────────
+              _ScreenHeader(
+                title: 'Create Order',
+                subtitle: 'Manual order entry',
+                dateLabel: _todayLabel(),
+                onBack: () => context.pop(),
+              ),
+
+              // ── Body ─────────────────────────────────────────────────
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isWide = constraints.maxWidth >= 768;
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.all(24),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 1100),
+                          child: isWide
+                              ? Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      flex: 5,
+                                      child: _buildLeftPanel(
+                                        tables,
+                                        grouped,
+                                        menu,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 24),
+                                    SizedBox(
+                                      width: 320,
+                                      child: _buildSummaryPanel(
+                                        menu.items,
+                                        selectedCount,
+                                        total,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : Column(
+                                  children: [
+                                    _buildLeftPanel(tables, grouped, menu),
+                                    const SizedBox(height: 24),
+                                    _buildSummaryPanel(
+                                      menu.items,
+                                      selectedCount,
+                                      total,
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -227,16 +361,12 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.slate100),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(
+          color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
+        ),
+        boxShadow: _Palette.softShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,10 +378,10 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
+                    color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(icon, color: AppColors.primary, size: 18),
+                  child: Icon(icon, color: _Palette.milanoRedDeep, size: 18),
                 ),
                 const SizedBox(width: 12),
                 Text(
@@ -259,15 +389,18 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                   style: AppTheme.sans(
                     size: 16,
                     weight: FontWeight.w800,
-                    color: AppColors.slate900,
+                    color: _Palette.textDark,
                   ),
                 ),
               ],
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            child: Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Divider(
+              height: 1,
+              color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+            ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -319,7 +452,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
         TextFormField(
           controller: _nameCtrl,
           decoration: _inputDecoration('Walk-in Customer'),
-          style: AppTheme.sans(size: 14, color: AppColors.slate900),
+          style: AppTheme.sans(size: 14, color: _Palette.textDark),
         ),
         const SizedBox(height: 16),
         _label('Customer Phone (optional)'),
@@ -328,7 +461,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
           controller: _phoneCtrl,
           keyboardType: TextInputType.phone,
           decoration: _inputDecoration('e.g. 9876543210'),
-          style: AppTheme.sans(size: 14, color: AppColors.slate900),
+          style: AppTheme.sans(size: 14, color: _Palette.textDark),
         ),
       ],
     );
@@ -339,29 +472,36 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
         style: AppTheme.sans(
           size: 12,
           weight: FontWeight.w700,
-          color: AppColors.slate500,
+          color: _Palette.textMuted,
         ),
       );
 
   InputDecoration _inputDecoration(String hint) => InputDecoration(
         hintText: hint,
-        hintStyle: AppTheme.sans(size: 14, color: AppColors.slate400),
+        hintStyle: AppTheme.sans(
+          size: 14,
+          color: _Palette.textMuted.withValues(alpha: 0.7),
+        ),
         filled: true,
-        fillColor: AppColors.ivory,
+        fillColor: _Palette.canvas,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.slate200),
+          borderSide: BorderSide(
+            color: _Palette.milanoRedDeep.withValues(alpha: 0.14),
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.slate200),
+          borderSide: BorderSide(
+            color: _Palette.milanoRedDeep.withValues(alpha: 0.14),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: AppColors.primary.withValues(alpha: 0.6),
+            color: _Palette.milanoRed.withValues(alpha: 0.6),
             width: 1.5,
           ),
         ),
@@ -392,15 +532,15 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
         padding: const EdgeInsets.symmetric(vertical: 24),
         child: Column(
           children: [
-            const Icon(
+            Icon(
               Icons.restaurant_menu_outlined,
               size: 48,
-              color: AppColors.slate300,
+              color: _Palette.textMuted.withValues(alpha: 0.4),
             ),
             const SizedBox(height: 12),
             Text(
               menu.error != null ? menu.error! : 'No menu items available',
-              style: AppTheme.sans(size: 14, color: AppColors.slate500),
+              style: AppTheme.sans(size: 14, color: _Palette.textMuted),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
@@ -430,7 +570,14 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                     width: 4,
                     height: 16,
                     decoration: BoxDecoration(
-                      color: AppColors.primary,
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          _Palette.milanoRedLight,
+                          _Palette.milanoRed,
+                        ],
+                      ),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -440,7 +587,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                     style: AppTheme.sans(
                       size: 12,
                       weight: FontWeight.w900,
-                      color: AppColors.slate900,
+                      color: _Palette.textDark,
                     ).copyWith(letterSpacing: 1.5),
                   ),
                 ],
@@ -496,9 +643,9 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
               // Summary header
               Container(
                 padding: const EdgeInsets.all(24),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [AppColors.primary, AppColors.primaryDark],
+                    colors: [_Palette.milanoRedLight, _Palette.milanoRedDeep],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -507,7 +654,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                   children: [
                     const Icon(
                       Icons.receipt_rounded,
-                      color: AppColors.white,
+                      color: Colors.white,
                       size: 24,
                     ),
                     const SizedBox(width: 12),
@@ -516,7 +663,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                       style: AppTheme.serif(
                         size: 18,
                         weight: FontWeight.w800,
-                        color: AppColors.white,
+                        color: Colors.white,
                       ),
                     ),
                     const Spacer(),
@@ -534,7 +681,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                         style: AppTheme.sans(
                           size: 12,
                           weight: FontWeight.w800,
-                          color: AppColors.white,
+                          color: Colors.white,
                         ),
                       ),
                     ),
@@ -561,9 +708,12 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                           : _nameCtrl.text.trim(),
                       icon: Icons.person_rounded,
                     ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 20),
-                      child: Divider(height: 1, color: AppColors.slate100),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      child: Divider(
+                        height: 1,
+                        color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+                      ),
                     ),
 
                     if (selected.isEmpty)
@@ -572,17 +722,19 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 24),
                           child: Column(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.shopping_basket_outlined,
                                 size: 32,
-                                color: AppColors.slate200,
+                                color: _Palette.textMuted.withValues(
+                                  alpha: 0.35,
+                                ),
                               ),
                               const SizedBox(height: 12),
                               Text(
                                 'No items selected',
                                 style: AppTheme.sans(
                                   size: 14,
-                                  color: AppColors.slate400,
+                                  color: _Palette.textMuted,
                                   weight: FontWeight.w500,
                                 ),
                               ),
@@ -600,8 +752,8 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                 width: 26,
                                 height: 26,
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary.withValues(
-                                    alpha: 0.1,
+                                  color: _Palette.milanoRedDeep.withValues(
+                                    alpha: 0.08,
                                   ),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -611,7 +763,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                     style: AppTheme.sans(
                                       size: 11,
                                       weight: FontWeight.w900,
-                                      color: AppColors.primary,
+                                      color: _Palette.milanoRedDeep,
                                     ),
                                   ),
                                 ),
@@ -622,7 +774,9 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                   e.item.name,
                                   style: AppTheme.sans(
                                     size: 14,
-                                    color: AppColors.slate700,
+                                    color: _Palette.textDark.withValues(
+                                      alpha: 0.85,
+                                    ),
                                     weight: FontWeight.w600,
                                   ),
                                   overflow: TextOverflow.ellipsis,
@@ -633,7 +787,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                 style: AppTheme.serif(
                                   size: 14,
                                   weight: FontWeight.w700,
-                                  color: AppColors.slate900,
+                                  color: _Palette.textDark,
                                 ),
                               ),
                             ],
@@ -642,11 +796,13 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                       ),
 
                     if (selected.isNotEmpty) ...[
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         child: Divider(
                           height: 1,
-                          color: AppColors.slate100,
+                          color: _Palette.milanoRedDeep.withValues(
+                            alpha: 0.08,
+                          ),
                         ),
                       ),
                       _SummaryDetailRow(
@@ -658,7 +814,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                         'Tax (if applicable) is calculated on the final bill.',
                         style: AppTheme.sans(
                           size: 11,
-                          color: AppColors.slate400,
+                          color: _Palette.textMuted,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -670,7 +826,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                             style: AppTheme.sans(
                               size: 14,
                               weight: FontWeight.w700,
-                              color: AppColors.slate500,
+                              color: _Palette.textMuted,
                             ),
                           ),
                           Text(
@@ -678,7 +834,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                             style: AppTheme.serif(
                               size: 24,
                               weight: FontWeight.w900,
-                              color: AppColors.primary,
+                              color: _Palette.milanoRedDeep,
                             ),
                           ),
                         ],
@@ -701,8 +857,8 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
           label: 'CREATE ORDER',
           onTap: _isSubmitting ? null : _submit,
           isLoading: _isSubmitting,
-          color: AppColors.gold,
-          textColor: AppColors.white,
+          color: _Palette.milanoRedDeep,
+          textColor: Colors.white,
           icon: Icons.check_circle_rounded,
         )
             .animate()
@@ -713,8 +869,406 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
   }
 }
 
+/// Small decorative gradient divider placed beneath the header title —
+/// purely cosmetic, mirrors the accent used under section titles on the
+/// Menu Management screen for a consistent brand language.
+class _TitleDivider extends StatelessWidget {
+  final double width;
+  const _TitleDivider({this.width = 54});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: 3,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4),
+        gradient: LinearGradient(
+          colors: [
+            Colors.transparent,
+            _Palette.gold.withValues(alpha: 0.95),
+            Colors.transparent,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Screen header — Dark Maroon gradient treatment that matches the Order
+// Summary card (color, gradient direction, and shadow language match) and
+// mirrors the Menu Management screen's navbar language: soft rounded
+// bottom corners, a gold-glow accent border, layered ribbon glows, a fine
+// dotted texture accent, and the current date shown on wide screens. The
+// back control is now a compact, icon-only "‹" chip — no label, no arrow
+// glyph — for a cleaner, more premium top bar. The leading icon carries a
+// thin gold outline (gold on dark maroon is a classic premium / heritage
+// restaurant pairing) so it reads as a polished brand mark rather than a
+// plain glass chip. Nothing here changes behaviour — purely a richer,
+// more unique visual treatment, and the header now draws behind the
+// status bar for a true full-screen, edge-to-edge look. ──────────────────
+class _ScreenHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String dateLabel;
+  final VoidCallback onBack;
+
+  const _ScreenHeader({
+    required this.title,
+    required this.subtitle,
+    required this.dateLabel,
+    required this.onBack,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 800;
+
+    return ClipRect(
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [_Palette.milanoRedLight, _Palette.milanoRedDeep],
+          ),
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(isMobile ? 28 : 36),
+            bottomRight: Radius.circular(isMobile ? 28 : 36),
+          ),
+          border: Border(
+            bottom: BorderSide(
+              color: _Palette.gold.withValues(alpha: 0.85),
+              width: 4,
+            ),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: _Palette.milanoRedDeep.withValues(alpha: 0.38),
+              blurRadius: 30,
+              offset: const Offset(0, 14),
+            ),
+            BoxShadow(
+              color: _Palette.gold.withValues(alpha: 0.10),
+              blurRadius: 40,
+              offset: const Offset(0, 6),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.10),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            // Subtle decorative diagonal ribbon accents — purely cosmetic,
+            // matches the Menu Management header for a consistent brand feel.
+            Positioned(
+              top: -60,
+              right: -40,
+              child: Transform.rotate(
+                angle: -0.5,
+                child: Container(
+                  width: 220,
+                  height: 84,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        _Palette.gold.withValues(alpha: 0.16),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -50,
+              left: -60,
+              child: Transform.rotate(
+                angle: 0.4,
+                child: Container(
+                  width: 200,
+                  height: 66,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.white.withValues(alpha: 0.06),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Soft radial glow behind the brand icon, echoing the
+            // Dashboard hero treatment — now a warm gold glow.
+            Positioned(
+              top: -50,
+              left: -30,
+              child: Container(
+                width: 150,
+                height: 150,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      _Palette.gold.withValues(alpha: 0.16),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // Extra ambient glow, lower-right, for a fuller "full-screen"
+            // backdrop feel on wider headers — purely decorative.
+            Positioned(
+              bottom: -70,
+              right: -20,
+              child: Container(
+                width: 180,
+                height: 180,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      _Palette.gold.withValues(alpha: 0.08),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // Fine dotted texture accent, matching the refined decorative
+            // language used on the dashboard / menu-management headers.
+            Positioned(
+              top: 8,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(
+                    5,
+                    (i) => Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      width: 4,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _Palette.gold.withValues(
+                          alpha: i == 2 ? 0.9 : 0.32,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  isMobile ? 16 : 24,
+                  16,
+                  isMobile ? 16 : 24,
+                  22,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        // ── Icon-only back control — a single "‹" glyph,
+                        // no arrow icon and no "Back" label, inside a
+                        // compact glass-gold chip for a cleaner top bar.
+                        _BackChip(onTap: onBack),
+                        const Spacer(),
+                        if (!isMobile)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: _Palette.gold.withValues(alpha: 0.25),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              dateLabel,
+                              style: AppTheme.sans(
+                                size: 12,
+                                weight: FontWeight.w600,
+                                color: Colors.white.withValues(alpha: 0.75),
+                              ).copyWith(letterSpacing: 0.3),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // ── Brand icon chip — thin gold border + soft
+                        // gold glow layered under the glass background.
+                        // Purely decorative; no logic touched. ─────────
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: _Palette.gold.withValues(alpha: 0.8),
+                              width: 1.3,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: _Palette.gold.withValues(alpha: 0.3),
+                                blurRadius: 14,
+                                spreadRadius: 0.5,
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.receipt_long_rounded,
+                            color: _Palette.lemonChiffon,
+                            size: 23,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                style: AppTheme.serif(
+                                  size: isMobile ? 25 : 29,
+                                  weight: FontWeight.w800,
+                                  color: Colors.white,
+                                ).copyWith(height: 1.1),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 8),
+                              const _TitleDivider(),
+                              const SizedBox(height: 8),
+                              Text(
+                                subtitle,
+                                style: AppTheme.sans(
+                                  size: 12.5,
+                                  weight: FontWeight.w500,
+                                  color: Colors.white.withValues(alpha: 0.78),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (isMobile)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: _Palette.gold.withValues(alpha: 0.25),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              dateLabel,
+                              style: AppTheme.sans(
+                                size: 10.5,
+                                weight: FontWeight.w600,
+                                color: Colors.white.withValues(alpha: 0.7),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ).animate().fade(duration: 450.ms).slideY(begin: -0.15, duration: 450.ms);
+  }
+}
+
+// ─── Back chip — icon-only "‹" control ────────────────────────────────────
+// Replaces the previous arrow_back_rounded icon + "Back" label combo with
+// a single, minimal "‹" glyph inside a rounded glass-gold chip. Purely a
+// visual swap — same onTap/onBack callback, no navigation logic touched.
+class _BackChip extends StatefulWidget {
+  final VoidCallback onTap;
+  const _BackChip({required this.onTap});
+
+  @override
+  State<_BackChip> createState() => _BackChipState();
+}
+
+class _BackChipState extends State<_BackChip> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
+      child: AnimatedScale(
+        scale: _pressed ? 0.92 : 1.0,
+        duration: 120.ms,
+        curve: Curves.easeOut,
+        child: Container(
+          width: 40,
+          height: 40,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white.withValues(alpha: 0.10),
+            border: Border.all(
+              color: _Palette.gold.withValues(alpha: 0.55),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: _Palette.gold.withValues(alpha: 0.18),
+                blurRadius: 10,
+                spreadRadius: 0.5,
+              ),
+            ],
+          ),
+          child: Text(
+            '‹',
+            style: AppTheme.sans(
+              size: 24,
+              weight: FontWeight.w900,
+              color: Colors.white,
+            ).copyWith(height: 1.0),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ─── Menu Item Row ────────────────────────────────────────────────────────────
-class _MenuItemRow extends StatelessWidget {
+class _MenuItemRow extends StatefulWidget {
   final MenuItem item;
   final int qty;
   final VoidCallback onAdd;
@@ -728,26 +1282,35 @@ class _MenuItemRow extends StatelessWidget {
   });
 
   @override
+  State<_MenuItemRow> createState() => _MenuItemRowState();
+}
+
+class _MenuItemRowState extends State<_MenuItemRow> {
+  bool _addPressed = false;
+  bool _incPressed = false;
+  bool _decPressed = false;
+
+  @override
   Widget build(BuildContext context) {
-    final isSelected = qty > 0;
+    final isSelected = widget.qty > 0;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: isSelected
-            ? AppColors.primary.withValues(alpha: 0.04)
-            : AppColors.white,
+            ? _Palette.milanoRed.withValues(alpha: 0.04)
+            : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isSelected
-              ? AppColors.primary.withValues(alpha: 0.2)
-              : AppColors.slate100,
+              ? _Palette.milanoRedDeep.withValues(alpha: 0.2)
+              : _Palette.milanoRedDeep.withValues(alpha: 0.08),
         ),
         boxShadow: [
           if (isSelected)
             BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.05),
+              color: _Palette.milanoRedDeep.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -759,12 +1322,14 @@ class _MenuItemRow extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: AppColors.ivory,
+              color: _Palette.canvas,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               Icons.restaurant_rounded,
-              color: isSelected ? AppColors.primary : AppColors.slate300,
+              color: isSelected
+                  ? _Palette.milanoRedDeep
+                  : _Palette.textMuted.withValues(alpha: 0.4),
               size: 22,
             ),
           ),
@@ -774,98 +1339,159 @@ class _MenuItemRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.name,
+                  widget.item.name,
                   style: AppTheme.sans(
                     size: 15,
                     weight: FontWeight.w700,
-                    color: AppColors.slate900,
+                    color: _Palette.textDark,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '₹${item.price.toStringAsFixed(0)}',
+                  '₹${widget.item.price.toStringAsFixed(0)}',
                   style: AppTheme.serif(
                     size: 13,
                     weight: FontWeight.w700,
-                    color: AppColors.primary,
+                    color: _Palette.milanoRedDeep,
                   ),
                 ),
               ],
             ),
           ),
-          if (qty == 0)
+          if (widget.qty == 0)
             GestureDetector(
-              onTap: onAdd,
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.2),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
+              onTap: widget.onAdd,
+              onTapDown: (_) => setState(() => _addPressed = true),
+              onTapUp: (_) => setState(() => _addPressed = false),
+              onTapCancel: () => setState(() => _addPressed = false),
+              child: AnimatedScale(
+                scale: _addPressed ? 0.9 : 1.0,
+                duration: 120.ms,
+                curve: Curves.easeOut,
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        _Palette.milanoRedLight,
+                        _Palette.milanoRedDeep,
+                      ],
                     ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.add_rounded,
-                  color: Colors.white,
-                  size: 20,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _Palette.milanoRedDeep.withValues(alpha: 0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.add_rounded,
+                    color: Colors.white,
+                    size: 21,
+                  ),
                 ),
               ),
             )
           else
-            Row(
-              children: [
-                GestureDetector(
-                  onTap: onRemove,
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.slate200),
-                    ),
-                    child: const Icon(
-                      Icons.remove_rounded,
-                      color: AppColors.slate700,
-                      size: 20,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 3),
+              decoration: BoxDecoration(
+                color: _Palette.canvas,
+                borderRadius: BorderRadius.circular(13),
+                border: Border.all(
+                  color: _Palette.milanoRedDeep.withValues(alpha: 0.12),
+                ),
+              ),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: widget.onRemove,
+                    onTapDown: (_) => setState(() => _decPressed = true),
+                    onTapUp: (_) => setState(() => _decPressed = false),
+                    onTapCancel: () => setState(() => _decPressed = false),
+                    child: AnimatedScale(
+                      scale: _decPressed ? 0.88 : 1.0,
+                      duration: 120.ms,
+                      curve: Curves.easeOut,
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: _Palette.milanoRedDeep.withValues(
+                              alpha: 0.18,
+                            ),
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.remove_rounded,
+                          color: _Palette.milanoRedDeep,
+                          size: 18,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                Container(
-                  width: 32,
-                  alignment: Alignment.center,
-                  child: Text(
-                    '$qty',
-                    style: AppTheme.sans(
-                      size: 16,
-                      weight: FontWeight.w900,
-                      color: AppColors.primary,
+                  Container(
+                    width: 34,
+                    alignment: Alignment.center,
+                    child: Text(
+                      '${widget.qty}',
+                      style: AppTheme.sans(
+                        size: 16,
+                        weight: FontWeight.w900,
+                        color: _Palette.milanoRedDeep,
+                      ),
                     ),
                   ),
-                ),
-                GestureDetector(
-                  onTap: onAdd,
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.add_rounded,
-                      color: Colors.white,
-                      size: 20,
+                  GestureDetector(
+                    onTap: widget.onAdd,
+                    onTapDown: (_) => setState(() => _incPressed = true),
+                    onTapUp: (_) => setState(() => _incPressed = false),
+                    onTapCancel: () => setState(() => _incPressed = false),
+                    child: AnimatedScale(
+                      scale: _incPressed ? 0.88 : 1.0,
+                      duration: 120.ms,
+                      curve: Curves.easeOut,
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              _Palette.milanoRedLight,
+                              _Palette.milanoRedDeep,
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: _Palette.milanoRedDeep.withValues(
+                                alpha: 0.28,
+                              ),
+                              blurRadius: 6,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.add_rounded,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
         ],
       ),
@@ -891,9 +1517,12 @@ class _SummaryRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: AppColors.slate400),
+        Icon(icon, size: 16, color: _Palette.textMuted),
         const SizedBox(width: 8),
-        Text(label, style: AppTheme.sans(size: 12, color: AppColors.slate500)),
+        Text(
+          label,
+          style: AppTheme.sans(size: 12, color: _Palette.textMuted),
+        ),
         const SizedBox(width: 6),
         Expanded(
           child: Text(
@@ -901,7 +1530,7 @@ class _SummaryRow extends StatelessWidget {
             style: AppTheme.sans(
               size: 13,
               weight: FontWeight.w600,
-              color: AppColors.slate900,
+              color: _Palette.textDark,
             ),
             textAlign: TextAlign.right,
           ),
@@ -926,7 +1555,7 @@ class _SummaryDetailRow extends StatelessWidget {
           label,
           style: AppTheme.sans(
             size: 13,
-            color: AppColors.slate400,
+            color: _Palette.textMuted,
             weight: FontWeight.w500,
           ),
         ),
@@ -934,7 +1563,7 @@ class _SummaryDetailRow extends StatelessWidget {
           value,
           style: AppTheme.sans(
             size: 13,
-            color: AppColors.slate700,
+            color: _Palette.textDark,
             weight: FontWeight.w600,
           ),
         ),

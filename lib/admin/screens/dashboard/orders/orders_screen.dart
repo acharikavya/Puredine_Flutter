@@ -13,6 +13,62 @@ import 'package:restaurant_unified_app/admin/core/models/restaurant_model.dart';
 import 'package:restaurant_unified_app/admin/core/providers/restaurant_provider.dart';
 import 'package:restaurant_unified_app/admin/services/orders_service.dart';
 
+/// -----------------------------------------------------------------------
+/// Screen-local theme palette: "Dark Maroon x Soft Cream x Gold Glow"
+/// Kept local to this file so it layers on top of the app's existing
+/// AppColors without requiring changes anywhere else. Only visual tokens
+/// live here — no business logic is affected.
+/// -----------------------------------------------------------------------
+class _OrdersTheme {
+  // Primary brand — Dark Maroon (#8B1D1D) per Theme 1. Field names kept
+  // identical to the previous palette so every widget below (which
+  // references _OrdersTheme.milanoRed, .gold, etc.) is re-themed
+  // automatically without touching any layout or logic.
+  static const Color milanoRed = Color(0xFF8B1D1D); // Primary maroon
+  static const Color milanoRedDark = Color(0xFF5E1212); // Deeper maroon
+  static const Color milanoRedLight = Color(0xFFA5271F); // Lighter maroon
+
+  // Gold Glow accents (Theme 1: #F4C430) replacing the old lemon-chiffon
+  // tones, plus soft cream companions for badges/backgrounds.
+  static const Color lemonChiffon = Color(0xFFF4C430);
+  static const Color lemonChiffonSoft = Color(0xFFFDF3E7);
+  static const Color gold = Color(0xFFF4C430);
+  static const Color goldSoft = Color(0xFFF9DE8B);
+
+  // Soft Cream canvas + card white, matching Theme 1's "Light" swatch.
+  static const Color canvas = Color(0xFFFDF3E7);
+  static const Color canvasDeep = Color(0xFFF3E4CC);
+  static const Color cardWhite = Colors.white;
+
+  // Convenience gradients used for headers / primary buttons.
+  static const LinearGradient headerGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [milanoRedLight, milanoRedDark],
+  );
+
+  static const LinearGradient primaryButtonGradient = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [milanoRedDark, milanoRed],
+  );
+
+  /// Themed soft shadow for resting cards/panels — mirrors the Menu
+  /// screen's softShadow so every surface shares the same warm tint.
+  static List<BoxShadow> get softShadow => [
+        BoxShadow(
+          color: milanoRedDark.withValues(alpha: 0.06),
+          blurRadius: 18,
+          offset: const Offset(0, 8),
+        ),
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.03),
+          blurRadius: 4,
+          offset: const Offset(0, 2),
+        ),
+      ];
+}
+
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});
 
@@ -63,10 +119,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
       final filtered = _filtered;
       final index = filtered.indexWhere((o) => o.id == id);
       if (index != -1) {
-        // Approximate heights:
-        // Header ~180, Stats ~120, Filters ~180, Spacings ~100
-        // Rows 80 each
-        final offset = 180.0 + 120.0 + 180.0 + 100.0 + (index * 80.0);
+        // Approximate heights of the scrollable body only — the header is
+        // now fixed outside the scroll view (matches the Menu screen
+        // pattern), so its height is no longer part of this offset.
+        // Stats ~120, Filters ~180, Spacings ~100, Rows 80 each.
+        final offset = 120.0 + 180.0 + 100.0 + (index * 80.0);
         _scrollController.animateTo(
           offset,
           duration: const Duration(milliseconds: 1000),
@@ -147,163 +204,391 @@ class _OrdersScreenState extends State<OrdersScreen> {
     final bool isMobile = size.width < 900;
 
     return Scaffold(
-      backgroundColor: AppColors.ivory,
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.rubyDark),
-            )
-          : _error != null
-              ? _buildErrorState()
-              : CustomScrollView(
-                  controller: _scrollController,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  slivers: [
-                    SliverToBoxAdapter(child: _buildHeader(isMobile)),
-                    SliverPadding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isMobile ? 16 : 40,
-                        vertical: 32,
-                      ),
-                      sliver: SliverList(
-                        delegate: SliverChildListDelegate([
-                          _buildStatsGrid(isMobile),
-                          const SizedBox(height: 32),
-                          _buildFilterSection(isMobile),
-                          const SizedBox(height: 24),
-                          Text(
-                            'Showing ${filtered.length > 50 ? 50 : filtered.length} of ${filtered.length} orders',
-                            style: GoogleFonts.inter(
-                              color: AppColors.textMuted,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
+      backgroundColor: _OrdersTheme.canvas,
+      body: Column(
+        children: [
+          // ── Header Section ───────────────────────────────────────────────
+          // Fixed at the top, exactly like MenuScreen's custom header — it
+          // no longer scrolls away with the content beneath it.
+          _buildHeader(isMobile),
+
+          // ── Main Body Section ────────────────────────────────────────────
+          Expanded(
+            child: Stack(
+              children: [
+                // ── Ambient background dressing ─────────────────────────────
+                // Purely decorative — soft lemon/ruby glows plus a faint
+                // textured photograph, matching the Menu and Dashboard
+                // screens so the whole admin experience reads as one
+                // cohesive brand.
+                Positioned.fill(
+                  child: Container(
+                    color: _OrdersTheme.canvas,
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          top: -70,
+                          right: -60,
+                          child: Container(
+                            width: 260,
+                            height: 260,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  _OrdersTheme.lemonChiffon.withValues(alpha: 0.5),
+                                  Colors.transparent,
+                                ],
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          _buildOrdersList(
-                              filtered.take(50).toList(), isMobile),
-                        ]),
-                      ),
-                    ),
-                  ],
-                ),
-    );
-  }
-
-  Widget _buildHeader(bool isMobile) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(
-        isMobile ? 20 : 40,
-        isMobile ? 32 : 48,
-        isMobile ? 20 : 40,
-        32,
-      ),
-      decoration: const BoxDecoration(
-        color: AppColors.rubyDark,
-        border: Border(bottom: BorderSide(color: AppColors.gold, width: 4)),
-      ),
-      child: isMobile
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: () => context.go('/admin/dashboard'),
-                  icon: const Icon(
-                    Icons.arrow_back,
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                  label: Text(
-                    'Back',
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontSize: 14,
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.white30, width: 1.2),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 10,
-                    ),
-                    shape: const StadiumBorder(),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'Orders',
-                  style: GoogleFonts.playfairDisplay(
-                    color: Colors.white,
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Track customer orders',
-                  style: GoogleFonts.inter(
-                    color: AppColors.gold,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            )
-          : Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: () => context.go('/admin/dashboard'),
-                  icon: const Icon(
-                    Icons.arrow_back,
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                  label: Text(
-                    'Back',
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontSize: 14,
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.white30, width: 1.2),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 10,
-                    ),
-                    shape: const StadiumBorder(),
-                  ),
-                ),
-                Expanded(
-                  child: Center(
-                    child: Column(
-                      children: [
-                        Text(
-                          'Orders Management',
-                          style: GoogleFonts.playfairDisplay(
-                            color: Colors.white,
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
+                        ),
+                        Positioned(
+                          bottom: -90,
+                          left: -80,
+                          child: Container(
+                            width: 280,
+                            height: 280,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  _OrdersTheme.milanoRed.withValues(alpha: 0.07),
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'View and track customer orders',
-                          style: GoogleFonts.inter(
-                            color: AppColors.gold,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                        Opacity(
+                          opacity: 0.04,
+                          child: Image.network(
+                            'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop',
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(width: 48),
+
+                // Content — same fixed-header / scrollable-body pattern as
+                // MenuScreen: a SingleChildScrollView, instead of the header
+                // scrolling away inside a CustomScrollView/sliver list.
+                _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: _OrdersTheme.milanoRed,
+                        ),
+                      )
+                    : _error != null
+                        ? _buildErrorState()
+                        : SingleChildScrollView(
+                            controller: _scrollController,
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: EdgeInsets.symmetric(
+                              horizontal:
+                                  isMobile ? 16 : (size.width > 1400 ? 64 : 40),
+                              vertical: 32,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildStatsGrid(isMobile),
+                                const SizedBox(height: 32),
+                                _buildFilterSection(isMobile),
+                                const SizedBox(height: 24),
+                                Text(
+                                  'Showing ${filtered.length > 50 ? 50 : filtered.length} of ${filtered.length} orders',
+                                  style: GoogleFonts.inter(
+                                    color: AppColors.textMuted,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                _buildOrdersList(
+                                    filtered.take(50).toList(), isMobile),
+                              ],
+                            ),
+                          ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(bool isMobile) {
+    return ClipRect(
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.fromLTRB(
+          isMobile ? 20 : 40,
+          isMobile ? 32 : 48,
+          isMobile ? 20 : 40,
+          32,
+        ),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              _OrdersTheme.milanoRedLight,
+              _OrdersTheme.milanoRed,
+              _OrdersTheme.milanoRedDark,
+            ],
+          ),
+          // Softly rounded bottom corners give the header a modern,
+          // "floating navbar" feel that matches the Menu and Dashboard
+          // screens, instead of a flat hard-edged band.
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(isMobile ? 28 : 38),
+            bottomRight: Radius.circular(isMobile ? 28 : 38),
+          ),
+          border: Border(
+            bottom: BorderSide(color: _OrdersTheme.gold, width: 4),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: _OrdersTheme.milanoRedDark.withValues(alpha: 0.35),
+              blurRadius: 34,
+              offset: const Offset(0, 16),
+            ),
+            BoxShadow(
+              color: _OrdersTheme.gold.withValues(alpha: 0.12),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.10),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // Subtle decorative diagonal ribbon accents (purely cosmetic,
+            // matches the Menu/Dashboard headers for a consistent brand)
+            Positioned(
+              top: -60,
+              right: -40,
+              child: Transform.rotate(
+                angle: -0.5,
+                child: Container(
+                  width: 240,
+                  height: 90,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        _OrdersTheme.gold.withValues(alpha: 0.14),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -50,
+              left: -60,
+              child: Transform.rotate(
+                angle: 0.4,
+                child: Container(
+                  width: 220,
+                  height: 70,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.white.withValues(alpha: 0.06),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Fine dotted texture accent, matching the app's refined
+            // decorative language used on the Menu/Dashboard headers.
+            Positioned(
+              top: 8,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(
+                    5,
+                    (i) => Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      width: 4,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _OrdersTheme.gold.withValues(
+                          alpha: i == 2 ? 0.85 : 0.3,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            isMobile
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Material(
+                        color: Colors.white.withValues(alpha: 0.10),
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          onTap: () => context.go('/admin/dashboard'),
+                          customBorder: const CircleBorder(),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: _OrdersTheme.goldSoft.withValues(alpha: 0.6),
+                                width: 1.2,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.chevron_left_rounded,
+                              color: Colors.white,
+                              size: 26,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Orders',
+                        style: GoogleFonts.playfairDisplay(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Track customer orders',
+                        style: GoogleFonts.inter(
+                          color: _OrdersTheme.goldSoft,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Container(
+                        height: 3,
+                        width: 64,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(4),
+                          gradient: LinearGradient(
+                            colors: [
+                              _OrdersTheme.gold,
+                              _OrdersTheme.gold.withValues(alpha: 0.0),
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: _OrdersTheme.gold.withValues(alpha: 0.6),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Material(
+                        color: Colors.white.withValues(alpha: 0.10),
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          onTap: () => context.go('/admin/dashboard'),
+                          customBorder: const CircleBorder(),
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: _OrdersTheme.goldSoft.withValues(alpha: 0.6),
+                                width: 1.2,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.chevron_left_rounded,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Center(
+                          child: Column(
+                            children: [
+                              Text(
+                                'Orders Management',
+                                style: GoogleFonts.playfairDisplay(
+                                  color: Colors.white,
+                                  fontSize: 36,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'View and track customer orders',
+                                style: GoogleFonts.inter(
+                                  color: _OrdersTheme.goldSoft,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              Container(
+                                height: 3,
+                                width: 84,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(4),
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      _OrdersTheme.gold.withValues(alpha: 0.0),
+                                      _OrdersTheme.gold,
+                                      _OrdersTheme.gold.withValues(alpha: 0.0),
+                                    ],
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: _OrdersTheme.gold.withValues(alpha: 0.6),
+                                      blurRadius: 8,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 48),
+                    ],
+                  ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -316,7 +601,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
             _statCard(
               'Total Orders',
               _orders.length.toString(),
-              AppColors.rubyDark,
+              _OrdersTheme.milanoRed,
               isMobile,
             ),
             const SizedBox(width: 12),
@@ -337,7 +622,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
             _statCard(
               'Revenue',
               '₹${_totalRevenue.toStringAsFixed(0)}',
-              AppColors.rubyDark,
+              _OrdersTheme.milanoRed,
               isMobile,
             ),
           ],
@@ -351,7 +636,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
           child: _statCard(
             'Total Orders',
             _orders.length.toString(),
-            AppColors.rubyDark,
+            _OrdersTheme.milanoRed,
             false,
           ),
         ),
@@ -378,7 +663,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
           child: _statCard(
             'Total Revenue',
             '₹${_totalRevenue.toStringAsFixed(0)}',
-            AppColors.rubyDark,
+            _OrdersTheme.milanoRed,
             false,
           ),
         ),
@@ -392,29 +677,48 @@ class _OrdersScreenState extends State<OrdersScreen> {
       padding: EdgeInsets.all(isMobile ? 16 : 24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: AppColors.rubyDark.withValues(alpha: 0.2),
+          color: color.withValues(alpha: 0.18),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.01),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: color.withValues(alpha: 0.10),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: GoogleFonts.inter(
-              color: AppColors.textMuted,
-              fontSize: isMobile ? 12 : 14,
-              fontWeight: FontWeight.w500,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.inter(
+                  color: AppColors.textMuted,
+                  fontSize: isMobile ? 12 : 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.5),
+                      blurRadius: 6,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Text(
@@ -435,16 +739,16 @@ class _OrdersScreenState extends State<OrdersScreen> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: AppColors.rubyDark.withValues(alpha: 0.2),
+          color: _OrdersTheme.milanoRed.withValues(alpha: 0.15),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.01),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: _OrdersTheme.milanoRed.withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -453,18 +757,25 @@ class _OrdersScreenState extends State<OrdersScreen> {
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.filter_alt_outlined,
-                size: 20,
-                color: AppColors.rubyDark,
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _OrdersTheme.lemonChiffon.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.filter_alt_outlined,
+                  size: 18,
+                  color: _OrdersTheme.milanoRed,
+                ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Text(
                 'Filters',
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: AppColors.rubyDark,
+                  color: _OrdersTheme.milanoRed,
                 ),
               ),
             ],
@@ -547,19 +858,20 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(
-                              color: AppColors.rubyDark.withValues(alpha: 0.2),
+                              color: _OrdersTheme.milanoRed.withValues(alpha: 0.2),
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(
-                              color: AppColors.rubyDark.withValues(alpha: 0.1),
+                              color: _OrdersTheme.milanoRed.withValues(alpha: 0.12),
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(
-                              color: AppColors.rubyDark.withValues(alpha: 0.5),
+                              color: _OrdersTheme.milanoRed.withValues(alpha: 0.55),
+                              width: 1.4,
                             ),
                           ),
                         ),
@@ -636,7 +948,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.rubyDark.withValues(alpha: 0.2)),
+        border: Border.all(color: _OrdersTheme.milanoRed.withValues(alpha: 0.2)),
         borderRadius: BorderRadius.circular(8),
       ),
       child: DropdownButtonHideUnderline(
@@ -702,7 +1014,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 )
                 .shimmer(
                   duration: 1500.ms,
-                  color: AppColors.rubyRed.withValues(alpha: 0.2),
+                  color: _OrdersTheme.milanoRed.withValues(alpha: 0.2),
                 )
                 .scale(
                   begin: const Offset(1, 1),
@@ -723,7 +1035,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: o.id == _highlightedOrderId
-            ? AppColors.rubyRed.withValues(alpha: 0.08)
+            ? _OrdersTheme.lemonChiffon.withValues(alpha: 0.35)
             : Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
@@ -731,8 +1043,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
         ],
         border: Border.all(
           color: o.id == _highlightedOrderId
-              ? AppColors.gold
-              : AppColors.rubyDark.withOpacity(0.05),
+              ? _OrdersTheme.gold
+              : _OrdersTheme.milanoRed.withValues(alpha: 0.05),
         ),
       ),
       child: Column(
@@ -744,7 +1056,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 '#${o.id.substring(0, 8)}',
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.rubyDark,
+                  color: _OrdersTheme.milanoRed,
                 ),
               ),
               _statusBadge(
@@ -800,7 +1112,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.rubyDark,
+                      color: _OrdersTheme.milanoRed,
                     ),
                   ),
                 ],
@@ -815,8 +1127,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
               ElevatedButton(
                 onPressed: () => _showOrderDetails(o),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.rubyDark.withOpacity(0.05),
-                  foregroundColor: AppColors.rubyDark,
+                  backgroundColor: _OrdersTheme.milanoRed.withValues(alpha: 0.08),
+                  foregroundColor: _OrdersTheme.milanoRed,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -836,21 +1148,21 @@ class _OrdersScreenState extends State<OrdersScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: AppColors.rubyDark.withValues(alpha: 0.2),
+          color: _OrdersTheme.milanoRed.withValues(alpha: 0.15),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.01),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: _OrdersTheme.milanoRed.withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: ConstrainedBox(
@@ -858,7 +1170,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
               minWidth: MediaQuery.of(context).size.width - 80,
             ),
             child: DataTable(
-              headingRowColor: WidgetStateProperty.all(Colors.white),
+              headingRowColor: WidgetStateProperty.all(
+                _OrdersTheme.lemonChiffon.withValues(alpha: 0.35),
+              ),
               dataRowMaxHeight: 80,
               horizontalMargin: 24,
               columnSpacing: 24,
@@ -966,7 +1280,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       )
                       .shimmer(
                         duration: 1500.ms,
-                        color: AppColors.rubyRed.withValues(alpha: 0.2),
+                        color: _OrdersTheme.milanoRed.withValues(alpha: 0.2),
                       )
                       .scale(
                         begin: const Offset(1, 1),
@@ -978,7 +1292,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 return DataRow(
                   color: isHighlighted
                       ? WidgetStateProperty.resolveWith(
-                          (states) => AppColors.rubyRed.withValues(alpha: 0.08),
+                          (states) =>
+                              _OrdersTheme.lemonChiffon.withValues(alpha: 0.45),
                         )
                       : null,
                   cells: [
@@ -992,7 +1307,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                               '#${o.id.substring(0, 8)}',
                               style: GoogleFonts.inter(
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.rubyDark,
+                                color: _OrdersTheme.milanoRed,
                                 fontSize: 13,
                               ),
                             ),
@@ -1081,7 +1396,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           '₹${o.totalAmount.toStringAsFixed(0)}',
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.w800,
-                            color: AppColors.rubyDark,
+                            color: _OrdersTheme.milanoRed,
                             fontSize: 14,
                           ),
                         ),
@@ -1115,7 +1430,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2563EB),
+                            backgroundColor: _OrdersTheme.milanoRed,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(6),
@@ -1383,9 +1698,13 @@ class _PaymentDialogState extends State<_PaymentDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: _OrdersTheme.gold.withValues(alpha: 0.4), width: 1.2),
+      ),
+      elevation: 16,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 450),
+        constraints: const BoxConstraints(maxWidth: 480),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1393,7 +1712,7 @@ class _PaymentDialogState extends State<_PaymentDialog> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: const BoxDecoration(
-                color: AppColors.rubyDark,
+                gradient: _OrdersTheme.headerGradient,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
               child: Row(
@@ -1514,7 +1833,7 @@ class _PaymentDialogState extends State<_PaymentDialog> {
                           style: GoogleFonts.inter(
                             fontSize: 24,
                             fontWeight: FontWeight.w900,
-                            color: AppColors.rubyDark,
+                            color: _OrdersTheme.milanoRed,
                           ),
                         ),
                         Text(
@@ -1522,7 +1841,7 @@ class _PaymentDialogState extends State<_PaymentDialog> {
                           style: GoogleFonts.inter(
                             fontSize: 24,
                             fontWeight: FontWeight.w900,
-                            color: AppColors.rubyDark,
+                            color: _OrdersTheme.milanoRed,
                           ),
                         ),
                       ],
@@ -1544,13 +1863,14 @@ class _PaymentDialogState extends State<_PaymentDialog> {
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.rubyDark,
+                          backgroundColor: _OrdersTheme.milanoRed,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 20),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(100),
                           ),
                           elevation: 4,
+                          shadowColor: _OrdersTheme.milanoRed.withValues(alpha: 0.4),
                         ),
                       ),
                     ),
@@ -1573,12 +1893,12 @@ class _PaymentDialogState extends State<_PaymentDialog> {
           padding: const EdgeInsets.symmetric(vertical: 24),
           decoration: BoxDecoration(
             border: Border.all(
-              color: isSelected ? AppColors.rubyDark : Colors.grey.shade200,
+              color: isSelected ? _OrdersTheme.milanoRed : Colors.grey.shade200,
               width: 2,
             ),
             borderRadius: BorderRadius.circular(20),
             color: isSelected
-                ? AppColors.rubyDark.withValues(alpha: 0.02)
+                ? _OrdersTheme.lemonChiffon.withValues(alpha: 0.35)
                 : Colors.white,
           ),
           child: Column(
@@ -1586,14 +1906,14 @@ class _PaymentDialogState extends State<_PaymentDialog> {
               Icon(
                 icon,
                 size: 32,
-                color: isSelected ? AppColors.rubyDark : Colors.grey,
+                color: isSelected ? _OrdersTheme.milanoRed : Colors.grey,
               ),
               const SizedBox(height: 8),
               Text(
                 label,
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.bold,
-                  color: isSelected ? AppColors.rubyDark : Colors.grey,
+                  color: isSelected ? _OrdersTheme.milanoRed : Colors.grey,
                 ),
               ),
             ],
@@ -1614,7 +1934,7 @@ class _PaymentDialogState extends State<_PaymentDialog> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.rubyDark : Colors.grey.shade100,
+          color: isSelected ? _OrdersTheme.milanoRed : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Text(
@@ -1689,12 +2009,19 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
     final dateFormat = DateFormat("MMMM dd, yyyy 'at' hh:mm a");
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: _OrdersTheme.gold.withValues(alpha: 0.4), width: 1.2),
+      ),
+      elevation: 20,
       backgroundColor: Colors.white,
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: 850,
-          maxHeight: MediaQuery.of(context).size.height * 0.9,
+          maxWidth: MediaQuery.of(context).size.width > 1000
+              ? 960
+              : MediaQuery.of(context).size.width * 0.94,
+          maxHeight: MediaQuery.of(context).size.height * 0.92,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1710,7 +2037,7 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
                     style: GoogleFonts.playfairDisplay(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.rubyDark,
+                      color: _OrdersTheme.milanoRed,
                     ),
                   ),
                   IconButton(
@@ -1898,7 +2225,7 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
                                       context,
                                       'Proceed to Payment',
                                       Icons.payment,
-                                      AppColors.rubyDark,
+                                      _OrdersTheme.milanoRed,
                                       () {
                                         _showPaymentDialog(context);
                                       },
@@ -2130,9 +2457,9 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
                               horizontal: 24,
                               vertical: 16,
                             ),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.vertical(
+                            decoration: BoxDecoration(
+                              color: _OrdersTheme.lemonChiffon.withValues(alpha: 0.4),
+                              borderRadius: const BorderRadius.vertical(
                                 top: Radius.circular(12),
                               ),
                             ),
@@ -2229,10 +2556,10 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: _OrdersTheme.lemonChiffonSoft,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: const Color(0xFFE2E8F0),
+                          color: _OrdersTheme.gold.withValues(alpha: 0.35),
                           width: 1.5,
                         ),
                         boxShadow: [
@@ -2256,9 +2583,12 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
                               _currentOrder.taxAmount!.toStringAsFixed(0),
                             ),
                           ],
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 16),
-                            child: Divider(height: 1, color: Color(0xFFCBD5E1)),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: Divider(
+                              height: 1,
+                              color: _OrdersTheme.gold.withValues(alpha: 0.4),
+                            ),
                           ),
                           _priceRow(
                             'TOTAL',
@@ -2771,7 +3101,7 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
           style: GoogleFonts.inter(
             fontSize: isTotal ? 20 : 16,
             fontWeight: FontWeight.w900,
-            color: AppColors.slate900,
+            color: isTotal ? _OrdersTheme.milanoRed : AppColors.slate900,
           ),
         ),
       ],

@@ -3,10 +3,86 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:restaurant_unified_app/core/constants.dart';
-import 'package:restaurant_unified_app/staff/widgets/common_widgets.dart';
+
+/// ─────────────────────────────────────────────────────────────────────────
+/// Local "Theme 1 — Dark Maroon × Soft Cream × Gold Glow" palette — matches
+/// AdminDashboardScreen, MenuScreen, and OrdersScreen exactly, so this
+/// screen reads as part of the same consistent brand instead of its own
+/// one-off theme. Used ONLY for this screen's restyle. Nothing here touches
+/// AppColors or any other file — pure UI enhancement, no logic changed
+/// anywhere here.
+/// ─────────────────────────────────────────────────────────────────────────
+class _Palette {
+  _Palette._();
+
+  static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
+  static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
+  static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
+  static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow (Accent)
+  static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
+  static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
+  static const Color canvasDeep = Color(0xFFF5E9D6); // Deeper cream
+  static const Color cardWhite = Colors.white;
+  static const Color textDark = Color(0xFF3A1608);
+  static const Color textMuted = Color(0xFF8A6F5E);
+  static const Color success = Color(0xFF2E9E5B);
+  static const Color danger = Color(0xFFC62828);
+
+  static const LinearGradient headerGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [milanoRedLight, milanoRed, milanoRedDeep],
+  );
+
+  /// Themed soft shadow for resting cards/panels — matches MenuScreen's and
+  /// OrdersScreen's softShadow exactly, so every surface across the admin
+  /// app shares the same warm, branded tint.
+  static List<BoxShadow> get softShadow => [
+        BoxShadow(
+          color: milanoRedDeep.withValues(alpha: 0.06),
+          blurRadius: 18,
+          offset: const Offset(0, 8),
+        ),
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.03),
+          blurRadius: 4,
+          offset: const Offset(0, 2),
+        ),
+      ];
+
+  /// Themed elevated/hover shadow — matches MenuScreen's glowShadow, used
+  /// on card hover for a richer, more premium lift effect.
+  static List<BoxShadow> get glowShadow => [
+        BoxShadow(
+          color: milanoRedDeep.withValues(alpha: 0.20),
+          blurRadius: 28,
+          offset: const Offset(0, 14),
+        ),
+        BoxShadow(
+          color: lemonChiffon.withValues(alpha: 0.10),
+          blurRadius: 10,
+          offset: const Offset(0, 3),
+        ),
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.05),
+          blurRadius: 6,
+          offset: const Offset(0, 3),
+        ),
+      ];
+}
 
 class StaffLandingScreen extends StatelessWidget {
   const StaffLandingScreen({super.key});
+
+  static const List<String> _monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+
+  static String _todayLabel() {
+    final now = DateTime.now();
+    return '${_monthNames[now.month - 1]} ${now.day}, ${now.year}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,17 +90,72 @@ class StaffLandingScreen extends StatelessWidget {
     final isMobile = size.width < 600;
 
     return Scaffold(
-      backgroundColor: AppColors.ivory,
+      backgroundColor: _Palette.canvas,
       body: Stack(
         children: [
-          // Clean Elegant Background
+          // ── Ambient background dressing ─────────────────────────────────
+          // Purely decorative — layered gold/maroon glows plus a faint
+          // textured photograph, matching MenuScreen's/OrdersScreen's
+          // "foggy" backdrop so the whole admin experience feels like one
+          // cohesive, premium brand.
           Positioned.fill(
             child: Container(
-              color: AppColors.ivory,
+              color: _Palette.canvas,
               child: Stack(
                 children: [
+                  Positioned(
+                    top: -70,
+                    right: -60,
+                    child: Container(
+                      width: 280,
+                      height: 280,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            _Palette.lemonChiffon.withValues(alpha: 0.32),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -90,
+                    left: -80,
+                    child: Container(
+                      width: 300,
+                      height: 300,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            _Palette.milanoRed.withValues(alpha: 0.08),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 260,
+                    right: -110,
+                    child: Container(
+                      width: 220,
+                      height: 220,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            _Palette.lemonChiffonDeep.withValues(alpha: 0.08),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                   Opacity(
-                    opacity: 0.05,
+                    opacity: 0.04,
                     child: Image.network(
                       'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop',
                       fit: BoxFit.cover,
@@ -37,106 +168,387 @@ class StaffLandingScreen extends StatelessWidget {
             ),
           ),
 
-          SafeArea(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: EdgeInsets.symmetric(vertical: isMobile ? 20 : 40),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1000),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // ── Header (Back Button) ───────────────────────────
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isMobile ? 20 : 40,
-                        ),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: PremiumBackButton(
-                            label: 'Back to Dashboard',
-                            onTap: () => context.go('/admin/dashboard'),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // ── Title Section ───────────────────────────────────
-                      Padding(
+          Column(
+            children: [
+              _buildCustomHeader(context, isMobile),
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.symmetric(
+                    vertical: isMobile ? 32 : 48,
+                  ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1000),
+                      child: Padding(
                         padding: EdgeInsets.symmetric(
                           horizontal: isMobile ? 20 : 40,
                         ),
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Staff Management',
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.playfairDisplay(
-                                color: AppColors.rubyDark,
-                                fontSize: isMobile ? 32 : 48,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: -0.5,
+                            Row(
+                              children: [
+                                Container(
+                                  width: 4,
+                                  height: 18,
+                                  decoration: BoxDecoration(
+                                    color: _Palette.milanoRed,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  'CHOOSE A ROLE',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 2.2,
+                                    color: _Palette.textMuted,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Container(
+                                    height: 1,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          _Palette.milanoRedDeep
+                                              .withValues(alpha: 0.14),
+                                          Colors.transparent,
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 28),
+                            Center(
+                              child: Wrap(
+                                spacing: isMobile ? 20 : 40,
+                                runSpacing: isMobile ? 20 : 30,
+                                alignment: WrapAlignment.center,
+                                children: [
+                                  _StaffTypeCard(
+                                    title: 'Billing Staff',
+                                    description:
+                                        'Manage cashier terminals and transaction logs.',
+                                    icon: Icons.receipt_long_rounded,
+                                    role: 'cashier',
+                                    index: 0,
+                                    isMobile: isMobile,
+                                  ),
+                                  _StaffTypeCard(
+                                    title: 'Serving Staff',
+                                    description:
+                                        'Manage floor staff and service assignments.',
+                                    icon: Icons.restaurant_rounded,
+                                    role: 'server',
+                                    index: 1,
+                                    isMobile: isMobile,
+                                  ),
+                                ],
                               ),
-                            ).animate().fadeIn().slideY(begin: 0.1),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Select a role to manage credentials and access.',
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.inter(
-                                color: AppColors.rubyDark.withOpacity(0.7),
-                                fontSize: isMobile ? 14 : 16,
-                                fontStyle: FontStyle.italic,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ).animate().fadeIn(delay: 200.ms),
+                            ),
                           ],
                         ),
                       ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ).animate().fadeIn();
+  }
 
-                      SizedBox(height: isMobile ? 40 : 60),
-
-                      // ── Cards Section ───────────────────────────────────────
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isMobile ? 20 : 40,
-                        ),
-                        child: Wrap(
-                          spacing: isMobile ? 20 : 40,
-                          runSpacing: isMobile ? 20 : 30,
-                          alignment: WrapAlignment.center,
-                          children: [
-                            _StaffTypeCard(
-                              title: 'Billing Staff',
-                              description:
-                                  'Manage cashier terminals and transaction logs.',
-                              icon: Icons.receipt_long_rounded,
-                              role: 'cashier',
-                              index: 0,
-                              isMobile: isMobile,
-                            ),
-                            _StaffTypeCard(
-                              title: 'Serving Staff',
-                              description:
-                                  'Manage floor staff and service assignments.',
-                              icon: Icons.restaurant_rounded,
-                              role: 'server',
-                              index: 1,
-                              isMobile: isMobile,
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 40),
-                    ],
+  /// Branded "floating navbar" header — mirrors the premium treatment used
+  /// on AdminDashboardScreen / MenuScreen / OrdersScreen: a richer 3-stop
+  /// gradient, rounded bottom corners, decorative diagonal ribbon accents,
+  /// a soft radial glow behind the title block, and a fine dotted texture
+  /// strip. The back control is now a compact icon-only "‹" chevron button
+  /// (no arrow icon, no "Back" label) matching the other admin screens.
+  /// Purely visual; the navigation action underneath (context.go) is
+  /// unchanged.
+  Widget _buildCustomHeader(BuildContext context, bool isMobile) {
+    return ClipRect(
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          gradient: _Palette.headerGradient,
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(isMobile ? 28 : 38),
+            bottomRight: Radius.circular(isMobile ? 28 : 38),
+          ),
+          border: const Border(
+            bottom: BorderSide(color: _Palette.lemonChiffon, width: 4),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: _Palette.milanoRed.withValues(alpha: 0.34),
+              blurRadius: 36,
+              offset: const Offset(0, 16),
+            ),
+            BoxShadow(
+              color: _Palette.lemonChiffon.withValues(alpha: 0.10),
+              blurRadius: 18,
+              offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.12),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            // Subtle decorative diagonal ribbon accents (purely cosmetic,
+            // matches the dashboard/menu/orders headers for a consistent
+            // brand feel).
+            Positioned(
+              top: -60,
+              right: -40,
+              child: Transform.rotate(
+                angle: -0.5,
+                child: Container(
+                  width: 260,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        _Palette.lemonChiffon.withValues(alpha: 0.18),
+                        Colors.transparent,
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
+            Positioned(
+              bottom: -50,
+              left: -60,
+              child: Transform.rotate(
+                angle: 0.4,
+                child: Container(
+                  width: 230,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.white.withValues(alpha: 0.07),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Soft radial glow behind the title block, adding depth without
+            // affecting any layout or logic.
+            Positioned(
+              top: 10,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  width: 260,
+                  height: 130,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        _Palette.lemonChiffon.withValues(alpha: 0.10),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Fine dotted texture accent, matching the app's refined
+            // decorative language used across the other admin headers.
+            Positioned(
+              top: 8,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(
+                    5,
+                    (i) => Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      width: 4,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _Palette.lemonChiffon.withValues(
+                          alpha: i == 2 ? 0.9 : 0.32,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                isMobile ? 20 : 40,
+                isMobile ? 16 : 24,
+                isMobile ? 20 : 40,
+                isMobile ? 20 : 28,
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        // Compact icon-only back control — no arrow icon,
+                        // no "Back" label, just a clean "‹" glyph in a
+                        // circular glass button matching the app's other
+                        // header controls.
+                        _BackChevronButton(
+                          onTap: () => context.go('/admin/dashboard'),
+                        ),
+                        const Spacer(),
+                        if (!isMobile)
+                          Text(
+                            _todayLabel(),
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.3,
+                              color: Colors.white.withValues(alpha: 0.65),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      'Staff Management',
+                      style: GoogleFonts.playfairDisplay(
+                        color: Colors.white,
+                        fontSize: isMobile ? 26 : 34,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.6,
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const _TitleDivider(),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Select a role to manage credentials and access.',
+                      style: GoogleFonts.inter(
+                        color: _Palette.lemonChiffon,
+                        fontSize: isMobile ? 12 : 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Compact icon-only "back" control — a circular glass button showing only
+/// a plain "‹" glyph. Replaces the previous arrow-icon + "Back to
+/// Dashboard" pill with a minimal, professional control that matches the
+/// other 40×40 circular header buttons used across the app (Menu, Orders).
+class _BackChevronButton extends StatefulWidget {
+  final VoidCallback onTap;
+  const _BackChevronButton({required this.onTap});
+
+  @override
+  State<_BackChevronButton> createState() => _BackChevronButtonState();
+}
+
+class _BackChevronButtonState extends State<_BackChevronButton> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 40,
+          height: 40,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: _isHovered
+                ? Colors.white.withValues(alpha: 0.20)
+                : Colors.white.withValues(alpha: 0.10),
+            border: Border.all(
+              color: _isHovered
+                  ? _Palette.lemonChiffon.withValues(alpha: 0.7)
+                  : _Palette.lemonChiffon.withValues(alpha: 0.4),
+              width: 1.2,
+            ),
+            boxShadow: _isHovered
+                ? [
+                    BoxShadow(
+                      color: _Palette.lemonChiffon.withValues(alpha: 0.25),
+                      blurRadius: 10,
+                      spreadRadius: 1,
+                    ),
+                  ]
+                : null,
           ),
-        ],
+          child: Text(
+            '‹',
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              height: 1.0,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Small decorative gradient divider placed beneath the header title —
+/// purely cosmetic, mirrors the same accent used on the dashboard, menu,
+/// and orders screens so the title treatment matches exactly across the
+/// admin app.
+class _TitleDivider extends StatelessWidget {
+  const _TitleDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 64,
+      height: 3,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4),
+        gradient: LinearGradient(
+          colors: [
+            Colors.transparent,
+            _Palette.lemonChiffon.withValues(alpha: 0.9),
+            Colors.transparent,
+          ],
+        ),
       ),
     );
   }
@@ -174,66 +586,282 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
         onTap: () => context.go('/admin/staff/${widget.role}'),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
           width: widget.isMobile ? 280 : 320,
           height: widget.isMobile ? 260 : 320, // Slightly shorter on mobile
-          padding: EdgeInsets.all(widget.isMobile ? 24 : 32),
+          transform: _isHovered
+              ? (Matrix4.identity()..translate(0.0, -6.0))
+              : Matrix4.identity(),
+          // NOTE: BoxDecoration only ever uses `gradient` here (never mixed
+          // with a plain `color`) so both hover states interpolate cleanly.
+          // Mixing color + gradient across the two states is what threw
+          // "Cannot provide both a color and a gradient" during the
+          // hover animation before this fix.
           decoration: BoxDecoration(
-            color: Colors.white,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: _isHovered
+                  ? [
+                      _Palette.cardWhite,
+                      _Palette.lemonChiffon.withValues(alpha: 0.25),
+                    ]
+                  : [_Palette.cardWhite, _Palette.cardWhite],
+            ),
             borderRadius: BorderRadius.circular(28),
             border: Border.all(
-              color: _isHovered ? AppColors.gold : AppColors.rubyDark,
-              width: 1,
+              color: _isHovered
+                  ? _Palette.milanoRed
+                  : _Palette.milanoRedDeep.withValues(alpha: 0.15),
+              width: _isHovered ? 1.4 : 1,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.rubyDark.withOpacity(0.12),
-                blurRadius: _isHovered ? 30 : 20,
-                offset: Offset(0, _isHovered ? 15 : 10),
-              ),
-            ],
+            boxShadow: _isHovered ? _Palette.glowShadow : _Palette.softShadow,
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // ── Icon Container ──────────────────────────────────
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: _isHovered
-                      ? AppColors.rubyRed
-                      : AppColors.rubyDark.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(16),
+          // The card has a fixed width/height (kept exactly as before, for a
+          // consistent grid). Decorative corner accents now live in a
+          // ClipRRect + Stack that is bounded by this exact width/height, so
+          // they can bleed right up to the rounded edge without any risk of
+          // overflowing outside the card.
+          //
+          // The main content (icon + spacing + title + description + the
+          // hint row, which always reserves its height even at opacity 0)
+          // could add up to slightly more than the fixed height depending on
+          // text/font metrics — that mismatch is what produced the "BOTTOM
+          // OVERFLOWED BY 17 PIXELS" banner previously.
+          //
+          // Wrapping the content in a LayoutBuilder + SingleChildScrollView
+          // (non-scrollable in normal use) lets it report its own height
+          // safely instead of forcing it into the parent's constraints, so
+          // the same centered layout renders with zero overflow risk.
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: Stack(
+              children: [
+                // ── Decorative corner glow (purely cosmetic) ─────────────
+                Positioned(
+                  top: -36,
+                  right: -36,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          _Palette.lemonChiffon.withValues(
+                            alpha: _isHovered ? 0.45 : 0.18,
+                          ),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-                child: Icon(
-                  widget.icon,
-                  color: _isHovered ? Colors.white : AppColors.rubyDark,
-                  size: 32,
+                Positioned(
+                  bottom: -50,
+                  left: -50,
+                  child: Container(
+                    width: 130,
+                    height: 130,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          _Palette.milanoRedDeep.withValues(alpha: 0.05),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 32),
-              // ── Title ───────────────────────────────────────────
-              Text(
-                widget.title,
-                style: GoogleFonts.playfairDisplay(
-                  color: AppColors.rubyDark,
-                  fontSize: widget.isMobile ? 22 : 28,
-                  fontWeight: FontWeight.bold,
+                // ── Step index tag, flush to the top-left corner ─────────
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _isHovered
+                          ? _Palette.milanoRedDeep
+                          : _Palette.lemonChiffon.withValues(alpha: 0.55),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(26),
+                        bottomRight: Radius.circular(18),
+                      ),
+                    ),
+                    child: Text(
+                      '0${widget.index + 1}',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                        color: _isHovered
+                            ? Colors.white
+                            : _Palette.milanoRedDeep,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              // ── Description ─────────────────────────────────────
-              Text(
-                widget.description,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
-                  color: Colors.grey.shade500,
-                  fontSize: 14,
-                  height: 1.6,
+                // ── Main content ──────────────────────────────────────────
+                Padding(
+                  padding: EdgeInsets.all(widget.isMobile ? 24 : 32),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        physics: const NeverScrollableScrollPhysics(),
+                        child: ConstrainedBox(
+                          constraints:
+                              BoxConstraints(minHeight: constraints.maxHeight),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              // ── Icon Container ─────────────────────────
+                              // Also gradient-only in both states (fixes the
+                              // same color/gradient interpolation crash as
+                              // above), now wrapped in a soft outer ring for
+                              // a more premium "badge" look.
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: _isHovered
+                                        ? _Palette.milanoRed
+                                            .withValues(alpha: 0.25)
+                                        : _Palette.lemonChiffon
+                                            .withValues(alpha: 0.5),
+                                    width: 1.4,
+                                  ),
+                                ),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 300),
+                                  width: 72,
+                                  height: 72,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: _isHovered
+                                          ? [
+                                              _Palette.milanoRedDeep,
+                                              _Palette.milanoRed,
+                                            ]
+                                          : [
+                                              _Palette.lemonChiffon
+                                                  .withValues(alpha: 0.5),
+                                              _Palette.lemonChiffon
+                                                  .withValues(alpha: 0.5),
+                                            ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: _isHovered
+                                        ? [
+                                            BoxShadow(
+                                              color: _Palette.milanoRed
+                                                  .withValues(alpha: 0.35),
+                                              blurRadius: 16,
+                                              offset: const Offset(0, 8),
+                                            ),
+                                          ]
+                                        : [
+                                            BoxShadow(
+                                              color: _Palette.lemonChiffonDeep
+                                                  .withValues(alpha: 0.18),
+                                              blurRadius: 10,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
+                                  ),
+                                  child: Icon(
+                                    widget.icon,
+                                    color: _isHovered
+                                        ? Colors.white
+                                        : _Palette.milanoRedDeep,
+                                    size: 32,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 28),
+                              // ── Title ───────────────────────────────────
+                              Text(
+                                widget.title,
+                                style: GoogleFonts.playfairDisplay(
+                                  color: _Palette.milanoRedDeep,
+                                  fontSize: widget.isMobile ? 22 : 28,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const _TitleDivider(),
+                              const SizedBox(height: 14),
+                              // ── Description ─────────────────────────────
+                              Text(
+                                widget.description,
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.inter(
+                                  color: _Palette.textMuted,
+                                  fontSize: 14,
+                                  height: 1.6,
+                                ),
+                              ),
+                              const SizedBox(height: 18),
+                              // ── Hint pill (appears on hover) ────────────
+                              AnimatedOpacity(
+                                duration: const Duration(milliseconds: 250),
+                                opacity: _isHovered ? 1 : 0,
+                                child: AnimatedSlide(
+                                  duration: const Duration(milliseconds: 250),
+                                  offset: _isHovered
+                                      ? Offset.zero
+                                      : const Offset(0, 0.3),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _Palette.milanoRed
+                                          .withValues(alpha: 0.08),
+                                      borderRadius:
+                                          BorderRadius.circular(100),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          'Manage',
+                                          style: GoogleFonts.inter(
+                                            color: _Palette.milanoRed,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        const Icon(
+                                          Icons.arrow_forward_rounded,
+                                          color: _Palette.milanoRed,
+                                          size: 16,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ).animate().fadeIn(delay: (widget.index * 200).ms).scale(
               begin: const Offset(0.95, 0.95),

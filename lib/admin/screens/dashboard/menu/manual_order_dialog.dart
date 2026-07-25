@@ -1,9 +1,69 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:restaurant_unified_app/core/constants.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:restaurant_unified_app/admin/core/models/restaurant_model.dart';
 import 'package:restaurant_unified_app/admin/services/orders_service.dart';
 import 'package:restaurant_unified_app/admin/services/tables_service.dart';
+
+/// ─────────────────────────────────────────────────────────────────────────
+/// Local "Theme 1 — Dark Maroon × Soft Cream × Gold Glow" palette — matches
+/// MenuScreen / AdminDashboardScreen / CategoryFormDialog / ItemFormDialog
+/// exactly. Used ONLY for this dialog's restyle. Nothing here touches
+/// AppColors or any other file — pure UI enhancement, no logic changed
+/// anywhere here. The header mirrors the same decorative language (ribbon
+/// accents, dotted texture line, radial glow, gold underline) used across
+/// the other admin dialogs, so this screen reads as part of the same
+/// cohesive, professional brand.
+/// ─────────────────────────────────────────────────────────────────────────
+class _Palette {
+  static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
+  static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
+  static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
+  static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow (Accent)
+  static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
+  static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
+  static const Color canvasDeep = Color(0xFFF5E9D6); // Deeper cream
+  static const Color cardWhite = Colors.white;
+  static const Color textDark = Color(0xFF3A1608);
+  static const Color textMuted = Color(0xFF8A6F5E);
+  static const Color success = Color(0xFF2E9E5B);
+  static const Color danger = Color(0xFFC62828);
+
+  /// Themed soft shadow for resting surfaces — mirrors the shared shadow
+  /// language used across MenuScreen / AdminDashboardScreen.
+  static List<BoxShadow> get softShadow => [
+        BoxShadow(
+          color: milanoRedDeep.withValues(alpha: 0.06),
+          blurRadius: 18,
+          offset: const Offset(0, 8),
+        ),
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.03),
+          blurRadius: 4,
+          offset: const Offset(0, 2),
+        ),
+      ];
+
+  /// Themed elevated glow shadow — used for the whole dialog card and the
+  /// primary action button so both read as "lifted" above the backdrop.
+  static List<BoxShadow> get glowShadow => [
+        BoxShadow(
+          color: milanoRedDeep.withValues(alpha: 0.28),
+          blurRadius: 44,
+          offset: const Offset(0, 22),
+        ),
+        BoxShadow(
+          color: lemonChiffon.withValues(alpha: 0.12),
+          blurRadius: 14,
+          offset: const Offset(0, 4),
+        ),
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.08),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ];
+}
 
 class ManualOrderDialog extends StatefulWidget {
   final List<MenuItem> menuItems;
@@ -81,13 +141,13 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
     if (!_formKey.currentState!.validate()) return;
     if (_orderMode == 'Dine-in' && _selectedTableId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a table for Dine-in')),
+        _themedSnack('Please select a table for Dine-in', isError: true),
       );
       return;
     }
     if (_selectedItems.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please add at least one item')),
+        _themedSnack('Please add at least one item', isError: true),
       );
       return;
     }
@@ -119,24 +179,27 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
       if (mounted) {
         Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Order created successfully!'),
-            backgroundColor: AppColors.success,
-          ),
+          _themedSnack('Order created successfully!'),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to create order: $e'),
-            backgroundColor: AppColors.danger,
-          ),
+          _themedSnack('Failed to create order: $e', isError: true),
         );
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
+  }
+
+  SnackBar _themedSnack(String message, {bool isError = false}) {
+    return SnackBar(
+      content: Text(message),
+      backgroundColor: isError ? _Palette.danger : _Palette.success,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    );
   }
 
   @override
@@ -145,54 +208,241 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
     final isDesktop = size.width > 900;
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
       child: Container(
         width: isDesktop ? 1000 : size.width * 0.95,
         height: size.height * 0.9,
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          color: _Palette.cardWhite,
+          borderRadius: BorderRadius.circular(26),
+          border: Border.all(
+            color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+          ),
+          boxShadow: _Palette.glowShadow,
         ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
           children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              decoration: const BoxDecoration(
-                color: AppColors.rubyDark,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
+            // ── Header (mini navbar) ─────────────────────────────────────
+            // Mirrors the Menu screen's header + the other admin dialogs:
+            // brand gradient, decorative diagonal ribbons, a soft radial
+            // glow behind the icon block, a fine dotted accent line, and a
+            // gold underline beneath the title.
+            ClipRect(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      _Palette.milanoRedLight,
+                      _Palette.milanoRed,
+                      _Palette.milanoRedDeep,
+                    ],
+                  ),
+                  border: const Border(
+                    bottom: BorderSide(
+                      color: _Palette.lemonChiffon,
+                      width: 3.5,
+                    ),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _Palette.milanoRed.withValues(alpha: 0.30),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                    BoxShadow(
+                      color: _Palette.lemonChiffon.withValues(alpha: 0.08),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.receipt_long,
-                    color: Colors.white,
-                    size: isDesktop ? 28 : 22,
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Text(
-                      'Create Manual Order',
-                      style: GoogleFonts.playfairDisplay(
-                        color: Colors.white,
-                        fontSize: isDesktop ? 26 : 18,
-                        fontWeight: FontWeight.bold,
+                child: Stack(
+                  children: [
+                    // Decorative diagonal ribbon accents (purely cosmetic)
+                    Positioned(
+                      top: -50,
+                      right: -30,
+                      child: Transform.rotate(
+                        angle: -0.5,
+                        child: Container(
+                          width: 200,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                _Palette.lemonChiffon.withValues(alpha: 0.18),
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.close,
-                      color: Colors.white70,
-                      size: 20,
+                    Positioned(
+                      bottom: -44,
+                      left: -44,
+                      child: Transform.rotate(
+                        angle: 0.4,
+                        child: Container(
+                          width: 170,
+                          height: 64,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.white.withValues(alpha: 0.07),
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
+                    // Soft radial glow behind the icon block, adding depth
+                    // without affecting any layout or logic.
+                    Positioned(
+                      top: -30,
+                      left: -20,
+                      child: Container(
+                        width: 150,
+                        height: 150,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              _Palette.lemonChiffon.withValues(alpha: 0.14),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Fine dotted texture accent — matches the dashed dot
+                    // row used on the Menu/Dashboard headers.
+                    Positioned(
+                      top: 8,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: List.generate(
+                            5,
+                            (i) => Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 3),
+                              width: 3.5,
+                              height: 3.5,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: _Palette.lemonChiffon.withValues(
+                                  alpha: i == 2 ? 0.85 : 0.28,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: isDesktop ? 48 : 42,
+                            height: isDesktop ? 48 : 42,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.14),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color:
+                                    _Palette.lemonChiffon.withValues(alpha: 0.4),
+                                width: 1.2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      _Palette.lemonChiffon.withValues(alpha: 0.18),
+                                  blurRadius: 12,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.receipt_long_rounded,
+                              color: _Palette.lemonChiffon,
+                              size: isDesktop ? 24 : 20,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Create Manual Order',
+                                  style: GoogleFonts.playfairDisplay(
+                                    color: Colors.white,
+                                    fontSize: isDesktop ? 26 : 19,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.3,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 9),
+                                Container(
+                                  width: 48,
+                                  height: 2.5,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(4),
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        _Palette.lemonChiffon
+                                            .withValues(alpha: 0.9),
+                                        Colors.transparent,
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Take an order on behalf of a customer',
+                                  style: GoogleFonts.inter(
+                                    color: Colors.white.withValues(alpha: 0.85),
+                                    fontSize: 12,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.10),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.14),
+                              ),
+                            ),
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.close_rounded,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                              onPressed: () => Navigator.pop(context),
+                              splashRadius: 20,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
 
@@ -201,7 +451,7 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
               child: isDesktop ? _buildDesktopBody() : _buildMobileBody(),
             ),
 
-            // Footer
+            // ── Footer ────────────────────────────────────────────────────
             Container(
               padding: EdgeInsets.symmetric(
                 horizontal: isDesktop ? 32 : 16,
@@ -209,11 +459,18 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
               ),
               decoration: BoxDecoration(
                 color: Colors.white,
-                border: Border(top: BorderSide(color: Colors.grey.shade100)),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(20),
-                  bottomRight: Radius.circular(20),
+                border: Border(
+                  top: BorderSide(
+                    color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+                  ),
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _Palette.milanoRedDeep.withValues(alpha: 0.05),
+                    blurRadius: 12,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -222,19 +479,35 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        'Total Amount',
-                        style: GoogleFonts.inter(
-                          color: AppColors.textMuted,
-                          fontSize: 13,
-                        ),
+                      Row(
+                        children: [
+                          Container(
+                            width: 3,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: _Palette.milanoRed,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'TOTAL AMOUNT',
+                            style: GoogleFonts.inter(
+                              color: _Palette.textMuted,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: 4),
                       Text(
                         '₹${_totalAmount.toStringAsFixed(2)}',
-                        style: GoogleFonts.inter(
-                          fontSize: isDesktop ? 24 : 18,
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: isDesktop ? 27 : 20,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.rubyRed,
+                          color: _Palette.milanoRed,
                         ),
                       ),
                     ],
@@ -243,50 +516,101 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        TextButton(
+                        OutlinedButton(
                           onPressed: _isSubmitting
                               ? null
                               : () => Navigator.pop(context),
-                          style: TextButton.styleFrom(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: _Palette.textMuted,
+                            backgroundColor: _Palette.canvas,
+                            side: BorderSide(
+                              color:
+                                  _Palette.milanoRedDeep.withValues(alpha: 0.14),
+                            ),
                             padding: EdgeInsets.symmetric(
-                              horizontal: isDesktop ? 24 : 8,
+                              horizontal: isDesktop ? 24 : 12,
+                              vertical: isDesktop ? 18 : 14,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: const Text('Cancel'),
+                          child: Text(
+                            'Cancel',
+                            style:
+                                GoogleFonts.inter(fontWeight: FontWeight.w700),
+                          ),
                         ),
                         SizedBox(width: isDesktop ? 16 : 8),
                         Expanded(
-                          child: ElevatedButton(
-                            onPressed: _isSubmitting ? null : _submitOrder,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.rubyRed,
-                              padding: EdgeInsets.symmetric(
-                                horizontal: isDesktop ? 40 : 8,
-                                vertical: isDesktop ? 18 : 14,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: _isSubmitting
+                                  ? const []
+                                  : [
+                                      BoxShadow(
+                                        color: _Palette.milanoRed
+                                            .withValues(alpha: 0.32),
+                                        blurRadius: 20,
+                                        offset: const Offset(0, 10),
+                                      ),
+                                      BoxShadow(
+                                        color: _Palette.lemonChiffon
+                                            .withValues(alpha: 0.12),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
                             ),
-                            child: _isSubmitting
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    child: Text(
-                                      'Submit Order',
-                                      style: TextStyle(
+                            child: ElevatedButton(
+                              onPressed: _isSubmitting ? null : _submitOrder,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _Palette.milanoRedDeep,
+                                disabledBackgroundColor:
+                                    _Palette.milanoRedDeep.withValues(
+                                  alpha: 0.6,
+                                ),
+                                elevation: 0,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isDesktop ? 40 : 8,
+                                  vertical: isDesktop ? 18 : 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: _isSubmitting
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
                                         color: Colors.white,
-                                        fontWeight: FontWeight.bold,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.check_circle_rounded,
+                                            size: 16,
+                                            color: _Palette.lemonChiffon,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'Submit Order',
+                                            style: GoogleFonts.inter(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                  ),
+                            ),
                           ),
                         ),
                       ],
@@ -297,7 +621,15 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
             ),
           ],
         ),
-      ),
+      )
+          .animate()
+          .fadeIn(duration: 220.ms, curve: Curves.easeOut)
+          .scale(
+            begin: const Offset(0.97, 0.97),
+            end: const Offset(1, 1),
+            duration: 220.ms,
+            curve: Curves.easeOutCubic,
+          ),
     );
   }
 
@@ -311,7 +643,12 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
           child: Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              border: Border(right: BorderSide(color: Colors.grey.shade100)),
+              color: _Palette.cardWhite,
+              border: Border(
+                right: BorderSide(
+                  color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+                ),
+              ),
             ),
             child: SingleChildScrollView(child: _buildOrderDetailsForm()),
           ),
@@ -320,7 +657,7 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
         Expanded(
           flex: 6,
           child: Container(
-            color: const Color(0xFFF9FAFB),
+            color: _Palette.canvas,
             child: _buildMenuSelection(),
           ),
         ),
@@ -338,15 +675,45 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
             child: _buildOrderDetailsForm(),
           ),
         ),
-        Container(height: 1, color: Colors.grey.shade200),
+        Container(
+          height: 1,
+          color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+        ),
         Expanded(
           flex: 3,
           child: Container(
-            color: const Color(0xFFF9FAFB),
+            color: _Palette.canvas,
             child: _buildMenuSelection(),
           ),
         ),
       ],
+    );
+  }
+
+  InputDecoration _themedInputDecoration() {
+    return InputDecoration(
+      filled: true,
+      fillColor: _Palette.canvas,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 16,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(
+          color: _Palette.milanoRedDeep.withValues(alpha: 0.12),
+        ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(
+          color: _Palette.milanoRedDeep.withValues(alpha: 0.12),
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: _Palette.milanoRedDeep, width: 1.6),
+      ),
     );
   }
 
@@ -356,15 +723,45 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Order Configuration',
-            style: GoogleFonts.inter(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.rubyDark,
+          Row(
+            children: [
+              Container(
+                width: 4,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: _Palette.milanoRed,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Order Configuration',
+                style: GoogleFonts.playfairDisplay(
+                  fontSize: 19,
+                  fontWeight: FontWeight.bold,
+                  color: _Palette.milanoRedDeep,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Padding(
+            padding: const EdgeInsets.only(left: 12),
+            child: Container(
+              width: 50,
+              height: 2.5,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                gradient: LinearGradient(
+                  colors: [
+                    _Palette.milanoRedDeep.withValues(alpha: 0.5),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 22),
 
           // Order Mode
           _fieldLabel('Order Mode'),
@@ -395,8 +792,12 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
               onSelectionChanged: (v) => setState(() => _orderMode = v.first),
               showSelectedIcon: false,
               style: SegmentedButton.styleFrom(
-                selectedBackgroundColor: AppColors.rubyRed,
+                selectedBackgroundColor: _Palette.milanoRedDeep,
                 selectedForegroundColor: Colors.white,
+                foregroundColor: _Palette.milanoRedDeep,
+                side: BorderSide(
+                  color: _Palette.milanoRedDeep.withValues(alpha: 0.3),
+                ),
                 textStyle: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
@@ -412,17 +813,29 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
           if (_orderMode == 'Dine-in') ...[
             _fieldLabel('Select Table'),
             _isLoadingTables
-                ? const LinearProgressIndicator()
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: LinearProgressIndicator(
+                      color: _Palette.milanoRedDeep,
+                      backgroundColor:
+                          _Palette.milanoRedDeep.withValues(alpha: 0.1),
+                    ),
+                  )
                 : DropdownButtonFormField<String>(
                     initialValue: _selectedTableId,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 16,
-                      ),
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: _Palette.milanoRedDeep,
                     ),
-                    hint: const Text('Choose a table'),
+                    style: GoogleFonts.inter(
+                      color: _Palette.textDark,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    decoration: _themedInputDecoration(),
+                    hint: Text(
+                      'Choose a table',
+                      style: GoogleFonts.inter(color: _Palette.textMuted),
+                    ),
                     items: _tables
                         .map(
                           (t) => DropdownMenuItem(
@@ -443,13 +856,15 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
           _fieldLabel('Payment Mode'),
           DropdownButtonFormField<String>(
             initialValue: _paymentMode,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 16,
-              ),
+            icon: const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: _Palette.milanoRedDeep,
             ),
+            style: GoogleFonts.inter(
+              color: _Palette.textDark,
+              fontWeight: FontWeight.w600,
+            ),
+            decoration: _themedInputDecoration(),
             items: [
               'Cash',
               'Card',
@@ -464,44 +879,73 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
           _fieldLabel('Customer Name'),
           TextFormField(
             controller: _nameCtrl,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 16,
-              ),
+            style: GoogleFonts.inter(
+              color: _Palette.textDark,
+              fontWeight: FontWeight.w600,
             ),
+            decoration: _themedInputDecoration(),
           ),
 
           const SizedBox(height: 20),
 
-          _fieldLabel('Customer Phone (Optional)'),
+          _fieldLabel('Customer Phone', badge: 'OPTIONAL'),
           TextFormField(
             controller: _phoneCtrl,
             keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 16,
-              ),
+            style: GoogleFonts.inter(
+              color: _Palette.textDark,
+              fontWeight: FontWeight.w600,
             ),
+            decoration: _themedInputDecoration(),
           ),
         ],
       ),
     );
   }
 
-  Widget _fieldLabel(String label) {
+  Widget _fieldLabel(String label, {String? badge}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 13,
-          color: AppColors.textDark,
-        ),
+      child: Row(
+        children: [
+          Container(
+            width: 3,
+            height: 12,
+            decoration: BoxDecoration(
+              color: _Palette.milanoRed,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(width: 7),
+          Text(
+            label.toUpperCase(),
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w800,
+              fontSize: 11,
+              color: _Palette.milanoRedDeep,
+              letterSpacing: 0.5,
+            ),
+          ),
+          if (badge != null) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: _Palette.lemonChiffon.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                badge,
+                style: GoogleFonts.inter(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w800,
+                  color: _Palette.milanoRedDeep,
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -522,13 +966,25 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
           color: Colors.white,
           child: Row(
             children: [
-              const Icon(Icons.category_rounded, color: AppColors.rubyRed),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.category_rounded,
+                  color: _Palette.milanoRedDeep,
+                  size: 18,
+                ),
+              ),
               const SizedBox(width: 12),
               Text(
                 'Select Category',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.playfairDisplay(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
+                  color: _Palette.milanoRedDeep,
                 ),
               ),
             ],
@@ -554,7 +1010,7 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                     _viewMode = 'items';
                   });
                 },
-              );
+              ).animate().fadeIn(delay: (i * 40).ms, duration: 300.ms);
             },
           ),
         ),
@@ -575,22 +1031,46 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
           color: Colors.white,
           child: Row(
             children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppColors.rubyRed),
-                onPressed: () => setState(() => _viewMode = 'categories'),
+              Container(
+                decoration: BoxDecoration(
+                  color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.arrow_back_rounded,
+                    color: _Palette.milanoRedDeep,
+                  ),
+                  onPressed: () => setState(() => _viewMode = 'categories'),
+                ),
               ),
               const SizedBox(width: 8),
               Text(
                 _activeCategory?.name ?? 'Items',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.playfairDisplay(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
+                  color: _Palette.milanoRedDeep,
                 ),
               ),
               const Spacer(),
-              Text(
-                '${items.length} items',
-                style: GoogleFonts.inter(color: Colors.grey, fontSize: 13),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${items.length} items',
+                  style: GoogleFonts.inter(
+                    color: _Palette.milanoRedDeep,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
             ],
           ),
@@ -598,7 +1078,12 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
 
         Expanded(
           child: items.isEmpty
-              ? const Center(child: Text('No items in this category.'))
+              ? Center(
+                  child: Text(
+                    'No items in this category.',
+                    style: GoogleFonts.inter(color: _Palette.textMuted),
+                  ),
+                )
               : ListView.separated(
                   padding: const EdgeInsets.all(20),
                   itemCount: items.length,
@@ -614,16 +1099,18 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.03),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+                            color: _Palette.milanoRedDeep.withValues(
+                              alpha: qty > 0 ? 0.10 : 0.04,
+                            ),
+                            blurRadius: qty > 0 ? 16 : 10,
+                            offset: Offset(0, qty > 0 ? 6 : 3),
                           ),
                         ],
                         border: Border.all(
                           color: qty > 0
-                              ? AppColors.rubyRed.withValues(alpha: 0.4)
-                              : AppColors.rubyDark.withValues(alpha: 0.12),
-                          width: 1.5,
+                              ? _Palette.milanoRed.withValues(alpha: 0.45)
+                              : _Palette.milanoRedDeep.withValues(alpha: 0.12),
+                          width: qty > 0 ? 1.6 : 1.2,
                         ),
                       ),
                       child: Row(
@@ -644,12 +1131,12 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                               width: 64,
                               height: 64,
                               decoration: BoxDecoration(
-                                color: Colors.grey.shade50,
+                                color: _Palette.canvasDeep,
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.restaurant,
-                                color: Colors.grey,
+                                color: _Palette.textMuted,
                                 size: 28,
                               ),
                             ),
@@ -662,9 +1149,10 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                                   item.name,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.inter(
+                                  style: GoogleFonts.playfairDisplay(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 15,
+                                    color: _Palette.textDark,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -673,8 +1161,8 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: GoogleFonts.inter(
-                                    color: AppColors.rubyRed,
-                                    fontWeight: FontWeight.w600,
+                                    color: _Palette.milanoRed,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ],
@@ -692,8 +1180,8 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                                   ),
                                   visualDensity: VisualDensity.compact,
                                   icon: const Icon(
-                                    Icons.remove_circle_outline,
-                                    color: AppColors.rubyRed,
+                                    Icons.remove_circle_outline_rounded,
+                                    color: _Palette.milanoRed,
                                     size: 22,
                                   ),
                                   onPressed: () {
@@ -711,9 +1199,10 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                                   child: Text(
                                     '$qty',
                                     textAlign: TextAlign.center,
-                                    style: const TextStyle(
+                                    style: GoogleFonts.inter(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
+                                      color: _Palette.textDark,
                                     ),
                                   ),
                                 ),
@@ -727,9 +1216,9 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                                 visualDensity: VisualDensity.compact,
                                 icon: Icon(
                                   qty > 0
-                                      ? Icons.add_circle
-                                      : Icons.add_circle_outline,
-                                  color: AppColors.success,
+                                      ? Icons.add_circle_rounded
+                                      : Icons.add_circle_outline_rounded,
+                                  color: _Palette.success,
                                   size: 22,
                                 ),
                                 onPressed: () {
@@ -778,20 +1267,29 @@ class _CategoryCardState extends State<_CategoryCard> {
               ? (Matrix4.identity()..scaleByDouble(1.02, 1.02, 1.0, 1.0))
               : Matrix4.identity(),
           decoration: BoxDecoration(
-            color: Colors.white,
+            gradient: _isHovered
+                ? const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [_Palette.milanoRedLight, _Palette.milanoRedDeep],
+                  )
+                : null,
+            color: _isHovered ? null : Colors.white,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: _isHovered ? 0.08 : 0.04),
-                blurRadius: _isHovered ? 15 : 10,
-                offset: Offset(0, _isHovered ? 6 : 4),
+                color: _Palette.milanoRedDeep.withValues(
+                  alpha: _isHovered ? 0.22 : 0.06,
+                ),
+                blurRadius: _isHovered ? 18 : 10,
+                offset: Offset(0, _isHovered ? 8 : 4),
               ),
             ],
             border: Border.all(
               color: _isHovered
-                  ? AppColors.rubyDark
-                  : AppColors.rubyDark.withValues(alpha: 0.2),
-              width: _isHovered ? 2 : 1.5,
+                  ? _Palette.milanoRedDeep
+                  : _Palette.milanoRedDeep.withValues(alpha: 0.15),
+              width: _isHovered ? 1.5 : 1.2,
             ),
           ),
           child: Column(
@@ -800,13 +1298,15 @@ class _CategoryCardState extends State<_CategoryCard> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: (_isHovered ? AppColors.rubyRed : AppColors.rubyRed)
-                      .withValues(alpha: _isHovered ? 0.15 : 0.08),
+                  color: _isHovered
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : _Palette.milanoRedDeep.withValues(alpha: 0.08),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.restaurant_menu_rounded,
-                  color: _isHovered ? AppColors.rubyDark : AppColors.rubyRed,
+                  color:
+                      _isHovered ? _Palette.lemonChiffon : _Palette.milanoRed,
                   size: 28,
                 ),
               ),
@@ -816,7 +1316,7 @@ class _CategoryCardState extends State<_CategoryCard> {
                 style: GoogleFonts.inter(
                   fontWeight: _isHovered ? FontWeight.w800 : FontWeight.bold,
                   fontSize: 14,
-                  color: _isHovered ? AppColors.rubyDark : AppColors.textDark,
+                  color: _isHovered ? Colors.white : _Palette.textDark,
                 ),
               ),
             ],

@@ -7,6 +7,75 @@ import '../models/models.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common_widgets.dart';
 import '../../core/currency_utils.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+
+/// ─────────────────────────────────────────────────────────────────────────
+/// Local "Theme 1 — Dark Maroon × Soft Cream × Gold Glow" palette — matches
+/// the Order Details / Dashboard / Menu Management screens exactly (#8B1D1D
+/// primary / #F4C430 gold accent), so this screen now reads as part of the
+/// same cohesive, professional brand. Used ONLY for this screen's visual
+/// layer. Nothing here touches AppColors, AppTheme, or any other file —
+/// pure UI enhancement, no logic changed anywhere in this file.
+///
+/// NOTE: this is a private class redeclared identically to the ones in
+/// the other staff screens (private classes can't be shared across files
+/// without a new shared import, which would go beyond a pure UI-only
+/// change here).
+/// ─────────────────────────────────────────────────────────────────────────
+class _Palette {
+  static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
+  static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
+  static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
+  static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow (Accent)
+  static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
+  static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
+  static const Color canvasDeep = Color(0xFFF5E9D6); // Deeper cream
+  static const Color textDark = Color(0xFF3A1608);
+  static const Color textMuted = Color(0xFF8A6F5E);
+  static const Color gold = Color(0xFFF4C430);
+  static const Color goldDeep = Color(0xFFD9A62A);
+  static const Color goldLight = Color(0xFFF7D66B);
+  static const Color success = Color(0xFF10B981);
+  static const Color successDeep = Color(0xFF065F46);
+  static const Color successBg = Color(0xFFECFDF5);
+
+  /// Themed soft shadow for resting cards/panels — matches the exact
+  /// softShadow used on Menu/Dashboard/Order Details so every card on this
+  /// screen carries the same warm, branded elevation.
+  static List<BoxShadow> get softShadow => [
+        BoxShadow(
+          color: milanoRedDeep.withValues(alpha: 0.07),
+          blurRadius: 20,
+          offset: const Offset(0, 8),
+        ),
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.03),
+          blurRadius: 4,
+          offset: const Offset(0, 2),
+        ),
+      ];
+
+  /// Richer navbar/header shadow stack — the same three-layer shadow
+  /// language used on the Order Details / Dashboard headers (deep maroon
+  /// drop shadow + soft ambient gold bloom + fine black contact shadow).
+  static List<BoxShadow> get heroShadow => [
+        BoxShadow(
+          color: milanoRedDeep.withValues(alpha: 0.40),
+          blurRadius: 34,
+          offset: const Offset(0, 15),
+        ),
+        BoxShadow(
+          color: lemonChiffon.withValues(alpha: 0.12),
+          blurRadius: 40,
+          offset: const Offset(0, 6),
+        ),
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.10),
+          blurRadius: 6,
+          offset: const Offset(0, 2),
+        ),
+      ];
+}
 
 class BillingScreen extends StatefulWidget {
   const BillingScreen({super.key});
@@ -42,22 +111,22 @@ class _BillingScreenState extends State<BillingScreen> {
       case OrderStatus.billed:
         return {
           'label': 'BILLED',
-          'bg': AppColors.warningLight,
-          'color': AppColors.warning,
+          'bg': _Palette.lemonChiffonDeep.withValues(alpha: 0.45),
+          'color': _Palette.goldDeep,
           'icon': Icons.access_time,
         };
       case OrderStatus.paid:
         return {
           'label': 'PAID',
-          'bg': AppColors.successLight,
-          'color': AppColors.success,
+          'bg': _Palette.successBg,
+          'color': _Palette.success,
           'icon': Icons.check_circle_outline,
         };
       default:
         return {
           'label': 'PENDING',
-          'bg': AppColors.warningLight,
-          'color': AppColors.warning,
+          'bg': _Palette.lemonChiffonDeep.withValues(alpha: 0.45),
+          'color': _Palette.goldDeep,
           'icon': Icons.pending_actions,
         };
     }
@@ -127,163 +196,296 @@ class _BillingScreenState extends State<BillingScreen> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.ivory,
-      body: Column(
+      backgroundColor: _Palette.canvas,
+      body: Stack(
         children: [
-          const PageHeader(
-            title: 'Billing & Payments',
-            subtitle: 'Manage Transactions and Revenue',
-          ),
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final isWide = constraints.maxWidth >= 768;
-
-                // Revenue Stats Row
-                final statsRow = GridView.count(
-                  crossAxisCount:
-                      isWide ? (constraints.maxWidth >= 1024 ? 3 : 2) : 1,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisSpacing: 20,
-                  mainAxisSpacing: 20,
-                  childAspectRatio: isWide ? 2.5 : 2.7,
-                  children: [
-                    StatCard(
-                      icon: Icons.account_balance_wallet,
-                      iconColor: AppColors.warning,
-                      iconBg: AppColors.warningLight,
-                      label: 'Total Revenue',
-                      value: CurrencyUtils.format(grandTotal),
-                    ),
-                    StatCard(
-                      icon: Icons.payments,
-                      iconColor: AppColors.success,
-                      iconBg: AppColors.successLight,
-                      label: 'Collected',
-                      value: CurrencyUtils.format(totalRevenue),
-                    ),
-                    if (isWide && constraints.maxWidth >= 1024)
-                      StatCard(
-                        icon: Icons.access_time,
-                        iconColor: AppColors.warning,
-                        iconBg: AppColors.warningLight,
-                        label: 'Billed',
-                        value: CurrencyUtils.format(totalBilled),
-                      ),
-                  ],
-                );
-
-                Widget filterList = isWide
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: filters
-                            .map((f) => _buildFilterButton(f, isWide))
-                            .toList(),
-                      )
-                    : SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: filters
-                              .map(
-                                (f) => Padding(
-                                  padding: const EdgeInsets.only(right: 8),
-                                  child: _buildFilterButton(f, isWide),
-                                ),
-                              )
-                              .toList(),
+          // ── Ambient background dressing ─────────────────────────────────
+          // Purely decorative — soft gold/ruby glows plus a faint textured
+          // photograph, matching the Menu Management / Dashboard screens'
+          // "foggy" backdrop so the whole app feels like one cohesive
+          // brand.
+          Positioned.fill(
+            child: Container(
+              color: _Palette.canvas,
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: -70,
+                    right: -60,
+                    child: Container(
+                      width: 260,
+                      height: 260,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            _Palette.lemonChiffon.withValues(alpha: 0.30),
+                            Colors.transparent,
+                          ],
                         ),
-                      );
-
-                Widget content = filteredOrders.isEmpty
-                    ? const EmptyState(
-                        icon: Icons.receipt,
-                        title: 'No bills found',
-                      )
-                    : GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        padding: EdgeInsets.zero,
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: isWide
-                              ? (constraints.maxWidth >= 1024 ? 2 : 1)
-                              : 1,
-                          crossAxisSpacing: 24,
-                          mainAxisSpacing: 24,
-                          childAspectRatio: isWide ? 1.8 : 1.3,
-                        ),
-                        itemCount: filteredOrders.length,
-                        itemBuilder: (context, index) {
-                          final order = filteredOrders[index];
-                          final config = _getStatusConfig(order.status);
-                          return _BillingCard(order: order, config: config);
-                        },
-                      );
-
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 32,
-                  ),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1280),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          statsRow,
-                          const SizedBox(height: 32),
-                          isWide
-                              ? Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // Sidebar Filter
-                                    Container(
-                                      width: 256,
-                                      margin: const EdgeInsets.only(right: 32),
-                                      padding: const EdgeInsets.all(24),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.white,
-                                        borderRadius: BorderRadius.circular(24),
-                                        border: Border.all(
-                                          color: const Color(0xFFF1F5F9),
-                                        ),
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'PAYMENT STATUS',
-                                            style: AppTheme.sans(
-                                              size: 12,
-                                              weight: FontWeight.w700,
-                                              color: AppColors.slate400,
-                                            ).copyWith(letterSpacing: 1.0),
-                                          ),
-                                          const SizedBox(height: 16),
-                                          filterList,
-                                        ],
-                                      ),
-                                    ),
-                                    // Grid
-                                    Expanded(child: content),
-                                  ],
-                                )
-                              : Column(
-                                  children: [
-                                    filterList,
-                                    const SizedBox(height: 24),
-                                    content,
-                                  ],
-                                ),
-                        ],
                       ),
                     ),
                   ),
-                );
-              },
+                  Positioned(
+                    bottom: -90,
+                    left: -80,
+                    child: Container(
+                      width: 280,
+                      height: 280,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            _Palette.milanoRed.withValues(alpha: 0.07),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 340,
+                    right: -120,
+                    child: Container(
+                      width: 230,
+                      height: 230,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            _Palette.lemonChiffonDeep.withValues(alpha: 0.08),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Opacity(
+                    opacity: 0.04,
+                    child: Image.network(
+                      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop',
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                    ),
+                  ),
+                ],
+              ),
             ),
+          ),
+          Column(
+            children: [
+              // ── Header — same Dark Maroon gradient, rounded "floating
+              // navbar" corners, dotted texture accent, and diagonal
+              // ribbon glows used on the Menu Management screen's header,
+              // so every screen reads as one cohesive, unique brand. ────
+              const _ScreenHeader(
+                title: 'Billing & Payments',
+                subtitle: 'Manage Transactions and Revenue',
+              ),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isWide = constraints.maxWidth >= 768;
+
+                    // Revenue Stats Row
+                    final statsRow = GridView.count(
+                      crossAxisCount:
+                          isWide ? (constraints.maxWidth >= 1024 ? 3 : 2) : 1,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisSpacing: 20,
+                      mainAxisSpacing: 20,
+                      childAspectRatio: isWide ? 2.4 : 2.5,
+                      children: [
+                        _StatBox(
+                          icon: Icons.account_balance_wallet,
+                          iconColor: _Palette.milanoRedDeep,
+                          iconBg: _Palette.milanoRed.withValues(alpha: 0.10),
+                          label: 'Total Revenue',
+                          value: CurrencyUtils.format(grandTotal),
+                        ).animate().fade().scale(
+                              curve: Curves.easeOutBack,
+                              duration: 400.ms,
+                            ),
+                        _StatBox(
+                          icon: Icons.payments,
+                          iconColor: _Palette.successDeep,
+                          iconBg: _Palette.successBg,
+                          label: 'Collected',
+                          value: CurrencyUtils.format(totalRevenue),
+                        ).animate().fade().scale(
+                              curve: Curves.easeOutBack,
+                              duration: 400.ms,
+                              delay: 100.ms,
+                            ),
+                        if (isWide && constraints.maxWidth >= 1024)
+                          _StatBox(
+                            icon: Icons.access_time,
+                            iconColor: _Palette.goldDeep,
+                            iconBg: _Palette.lemonChiffonDeep.withValues(
+                              alpha: 0.55,
+                            ),
+                            label: 'Billed',
+                            value: CurrencyUtils.format(totalBilled),
+                          ).animate().fade().scale(
+                                curve: Curves.easeOutBack,
+                                duration: 400.ms,
+                                delay: 200.ms,
+                              ),
+                      ],
+                    );
+
+                    Widget filterList = isWide
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: filters
+                                .map((f) => _buildFilterButton(f, isWide))
+                                .toList(),
+                          )
+                        : SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: filters
+                                  .map(
+                                    (f) => Padding(
+                                      padding: const EdgeInsets.only(
+                                        right: 8,
+                                      ),
+                                      child: _buildFilterButton(f, isWide),
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                          );
+
+                    Widget content = filteredOrders.isEmpty
+                        ? const EmptyState(
+                            icon: Icons.receipt,
+                            title: 'No bills found',
+                          )
+                        : GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            padding: EdgeInsets.zero,
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: isWide
+                                  ? (constraints.maxWidth >= 1024 ? 2 : 1)
+                                  : 1,
+                              crossAxisSpacing: 24,
+                              mainAxisSpacing: 24,
+                              childAspectRatio: isWide ? 1.7 : 1.2,
+                            ),
+                            itemCount: filteredOrders.length,
+                            itemBuilder: (context, index) {
+                              final order = filteredOrders[index];
+                              final config = _getStatusConfig(order.status);
+                              return _BillingCard(order: order, config: config)
+                                  .animate()
+                                  .fade(
+                                    duration: 400.ms,
+                                    delay: (index * 80).ms,
+                                  )
+                                  .slideY(
+                                    begin: 0.08,
+                                    duration: 400.ms,
+                                    curve: Curves.easeOutQuad,
+                                  );
+                            },
+                          );
+
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 32,
+                      ),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 1280),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              statsRow,
+                              const SizedBox(height: 32),
+                              isWide
+                                  ? Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // Sidebar Filter
+                                        Container(
+                                          width: 256,
+                                          margin: const EdgeInsets.only(
+                                            right: 32,
+                                          ),
+                                          padding: const EdgeInsets.all(24),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius:
+                                                BorderRadius.circular(26),
+                                            border: Border.all(
+                                              color: _Palette.milanoRedDeep
+                                                  .withValues(alpha: 0.10),
+                                            ),
+                                            boxShadow: _Palette.softShadow,
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Container(
+                                                    width: 4,
+                                                    height: 14,
+                                                    decoration: BoxDecoration(
+                                                      color:
+                                                          _Palette.milanoRed,
+                                                      borderRadius:
+                                                          BorderRadius
+                                                              .circular(4),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Text(
+                                                    'PAYMENT STATUS',
+                                                    style: AppTheme.sans(
+                                                      size: 12,
+                                                      weight: FontWeight.w700,
+                                                      color:
+                                                          _Palette.textMuted,
+                                                    ).copyWith(
+                                                      letterSpacing: 1.0,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 16),
+                                              filterList,
+                                            ],
+                                          ),
+                                        ),
+                                        // Grid
+                                        Expanded(child: content),
+                                      ],
+                                    )
+                                  : Column(
+                                      children: [
+                                        filterList,
+                                        const SizedBox(height: 24),
+                                        content,
+                                      ],
+                                    ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -301,8 +503,29 @@ class _BillingScreenState extends State<BillingScreen> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: isActive ? AppColors.primary : Colors.transparent,
+            gradient: isActive
+                ? LinearGradient(
+                    colors: [_Palette.milanoRedLight, _Palette.milanoRedDeep],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : null,
+            color: isActive ? null : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isActive
+                  ? _Palette.gold.withValues(alpha: 0.55)
+                  : _Palette.milanoRedDeep.withValues(alpha: 0.10),
+              width: isActive ? 1.1 : 1,
+            ),
+            boxShadow: [
+              if (isActive)
+                BoxShadow(
+                  color: _Palette.milanoRedDeep.withValues(alpha: 0.18),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+            ],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -312,7 +535,7 @@ class _BillingScreenState extends State<BillingScreen> {
                 style: AppTheme.sans(
                   size: 14,
                   weight: FontWeight.w700,
-                  color: isActive ? AppColors.white : AppColors.slate900,
+                  color: isActive ? Colors.white : _Palette.textDark,
                 ),
               ),
               if (isWide) const SizedBox(width: 8),
@@ -321,7 +544,7 @@ class _BillingScreenState extends State<BillingScreen> {
                 decoration: BoxDecoration(
                   color: isActive
                       ? Colors.white.withValues(alpha: 0.2)
-                      : AppColors.ivory,
+                      : _Palette.canvas,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -329,7 +552,7 @@ class _BillingScreenState extends State<BillingScreen> {
                   style: AppTheme.sans(
                     size: 12,
                     weight: FontWeight.w700,
-                    color: isActive ? AppColors.white : AppColors.slate500,
+                    color: isActive ? Colors.white : _Palette.textMuted,
                   ),
                 ),
               ),
@@ -341,6 +564,342 @@ class _BillingScreenState extends State<BillingScreen> {
   }
 }
 
+/// Small decorative gradient divider placed beneath a title — purely
+/// cosmetic, mirrors the same accent used on the Menu Management screen.
+class _TitleDivider extends StatelessWidget {
+  const _TitleDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 46,
+      height: 3,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4),
+        gradient: LinearGradient(
+          colors: [
+            Colors.transparent,
+            _Palette.gold.withValues(alpha: 0.9),
+            Colors.transparent,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Screen header — same Dark Maroon gradient treatment, bigger rounded
+// "floating navbar" corners, a richer 3-layer shadow stack, layered
+// ribbon glows, and a fine dotted texture accent, plus the same
+// thin-gold-border language used throughout, so the top bar reads as one
+// cohesive, unique brand across the whole app. Purely a presentational
+// replacement for the previous plain PageHeader — this screen never had
+// a back button, refresh action, or sort toggle, so none were added
+// here. ──────────────────────────────────────────────────────────────────
+class _ScreenHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+
+  const _ScreenHeader({required this.title, required this.subtitle});
+
+  @override
+  Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 800;
+
+    return ClipRect(
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [
+              _Palette.milanoRedLight,
+              _Palette.milanoRed,
+              _Palette.milanoRedDeep,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          // Softly rounded bottom corners give the header a modern,
+          // "floating navbar" feel that matches the rest of the app
+          // exactly, instead of a flat hard-edged band.
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(isMobile ? 28 : 38),
+            bottomRight: Radius.circular(isMobile ? 28 : 38),
+          ),
+          border: const Border(
+            bottom: BorderSide(color: _Palette.lemonChiffon, width: 4),
+          ),
+          boxShadow: _Palette.heroShadow,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            // Subtle decorative diagonal ribbon accents (purely
+            // cosmetic, matches the rest of the app's headers for a
+            // consistent brand feel).
+            Positioned(
+              top: -60,
+              right: -40,
+              child: Transform.rotate(
+                angle: -0.5,
+                child: Container(
+                  width: 240,
+                  height: 90,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        _Palette.lemonChiffon.withValues(alpha: 0.16),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -50,
+              left: -60,
+              child: Transform.rotate(
+                angle: 0.4,
+                child: Container(
+                  width: 220,
+                  height: 70,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.white.withValues(alpha: 0.06),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Soft gold radial glow behind the brand icon, echoing the
+            // Dashboard/Order Details header treatment.
+            Positioned(
+              top: -50,
+              left: -20,
+              child: Container(
+                width: 150,
+                height: 150,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      _Palette.gold.withValues(alpha: 0.14),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // Fine dotted texture accent, matching the app's refined
+            // decorative language used on the other headers.
+            Positioned(
+              top: 8,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(
+                    5,
+                    (i) => Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      width: 4,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _Palette.lemonChiffon.withValues(
+                          alpha: i == 2 ? 0.85 : 0.3,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  isMobile ? 20 : 24,
+                  isMobile ? 18 : 16,
+                  isMobile ? 20 : 24,
+                  22,
+                ),
+                child: Row(
+                  children: [
+                    // ── Brand icon chip — thin gold border + soft gold
+                    // glow, matching every other screen's header icon.
+                    Container(
+                      padding: const EdgeInsets.all(9),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _Palette.gold.withValues(alpha: 0.75),
+                          width: 1.2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _Palette.gold.withValues(alpha: 0.25),
+                            blurRadius: 10,
+                            spreadRadius: 0.5,
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.account_balance_wallet_rounded,
+                        color: _Palette.lemonChiffon,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: AppTheme.serif(
+                              size: 20,
+                              weight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 6),
+                          _TitleDivider(),
+                          const SizedBox(height: 6),
+                          Text(
+                            subtitle,
+                            style: AppTheme.sans(
+                              size: 12,
+                              weight: FontWeight.w500,
+                              color: Colors.white.withValues(alpha: 0.75),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ).animate().fade(duration: 450.ms).slideY(begin: -0.15, duration: 450.ms);
+  }
+}
+
+// ─── Stat box — same white-card, gold-ringed icon language used across
+// the app, now with a more generous, professional footprint (bigger icon
+// circle, more padding, richer shadow) so the numbers up top feel like a
+// premium component. ──────────────────────────────────────────────────
+class _StatBox extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBg;
+  final String label;
+  final String value;
+
+  const _StatBox({
+    required this.icon,
+    required this.iconColor,
+    required this.iconBg,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Colors.white, _Palette.canvasDeep.withValues(alpha: 0.35)],
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
+        ),
+        boxShadow: _Palette.softShadow,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 54,
+            height: 54,
+            decoration: BoxDecoration(
+              color: iconBg,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: _Palette.gold.withValues(alpha: 0.35),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: iconColor.withValues(alpha: 0.14),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Icon(icon, color: iconColor, size: 26),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: AppTheme.sans(
+                    size: 11,
+                    color: _Palette.textMuted,
+                    weight: FontWeight.w700,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  value,
+                  style: AppTheme.serif(
+                    size: 23,
+                    weight: FontWeight.w900,
+                    color: _Palette.textDark,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Billing card — same brand language as the rest of the app: a
+// colored status banner up top (Dark Maroon gradient while the bill
+// still needs action, flat success green once paid), a white body, and
+// a gold-gradient CTA button for the primary action, now with a more
+// generous, professional footprint (bigger icon chips, more padding,
+// richer shadow). Tap behavior, navigation targets, and which button
+// appears for which status are all unchanged from before — only the
+// visual shell changed. ─────────────────────────────────────────────────
 class _BillingCard extends StatelessWidget {
   final Order order;
   final Map<String, dynamic> config;
@@ -350,44 +909,78 @@ class _BillingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSmall = MediaQuery.of(context).size.width < 400;
+    final isUnpaid =
+        order.status == OrderStatus.served || order.status == OrderStatus.billed;
 
     return GestureDetector(
       onTap: () {
-        if (order.status == OrderStatus.served ||
-            order.status == OrderStatus.billed) {
+        if (isUnpaid) {
           context.push('/staff/payment/${order.id}');
         }
       },
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.slate100),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(26),
+          border: Border.all(
+            color: isUnpaid
+                ? _Palette.milanoRed.withValues(alpha: 0.24)
+                : _Palette.milanoRedDeep.withValues(alpha: 0.08),
+          ),
+          boxShadow: isUnpaid
+              ? [
+                  BoxShadow(
+                    color: _Palette.milanoRedDeep.withValues(alpha: 0.12),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ]
+              : _Palette.softShadow,
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
           children: [
             // Status Banner
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              color: config['bg'] as Color,
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+              decoration: BoxDecoration(
+                gradient: isUnpaid
+                    ? LinearGradient(
+                        colors: [
+                          _Palette.milanoRedLight,
+                          _Palette.milanoRedDeep,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      )
+                    : null,
+                color: isUnpaid ? null : _Palette.successBg,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
                     children: [
-                      Icon(
-                        config['icon'] as IconData,
-                        size: 28,
-                        color: config['color'] as Color,
-                      ),
+                      if (isUnpaid)
+                        Icon(
+                          config['icon'] as IconData,
+                          size: 26,
+                          color: Colors.white,
+                        )
+                      else
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: const BoxDecoration(
+                            color: _Palette.success,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.check,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ),
                       const SizedBox(width: 12),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -395,29 +988,54 @@ class _BillingCard extends StatelessWidget {
                           Text(
                             config['label'] as String,
                             style: AppTheme.sans(
-                              size: 18,
+                              size: isUnpaid ? 16 : 15,
                               weight: FontWeight.w900,
-                              color: config['color'] as Color,
+                              color: isUnpaid
+                                  ? Colors.white
+                                  : _Palette.successDeep,
                             ).copyWith(letterSpacing: 0.5),
                           ),
                           Text(
                             'Order #${order.id.substring(0, 4)}',
                             style: AppTheme.sans(
-                              size: 14,
-                              color: (config['color'] as Color).withValues(
-                                alpha: 0.8,
-                              ),
+                              size: 12,
+                              color: isUnpaid
+                                  ? Colors.white.withValues(alpha: 0.75)
+                                  : _Palette.successDeep.withValues(
+                                      alpha: 0.7,
+                                    ),
                             ),
                           ),
                         ],
                       ),
                     ],
                   ),
-                  Icon(
-                    Icons.chevron_right,
-                    size: 24,
-                    color: config['color'] as Color,
-                  ),
+                  if (isUnpaid)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: _Palette.gold.withValues(alpha: 0.6),
+                          width: 1,
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.chevron_right,
+                        size: 20,
+                        color: Colors.white,
+                      ),
+                    )
+                  else
+                    Icon(
+                      Icons.chevron_right,
+                      size: 22,
+                      color: _Palette.successDeep,
+                    ),
                 ],
               ),
             ),
@@ -425,7 +1043,7 @@ class _BillingCard extends StatelessWidget {
             // Content
             Expanded(
               child: Padding(
-                padding: EdgeInsets.all(isSmall ? 16 : 20),
+                padding: EdgeInsets.all(isSmall ? 18 : 22),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -435,19 +1053,24 @@ class _BillingCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Container(
-                            width: isSmall ? 40 : 48,
-                            height: isSmall ? 40 : 48,
+                            width: isSmall ? 44 : 52,
+                            height: isSmall ? 44 : 52,
                             decoration: BoxDecoration(
-                              color: AppColors.slate50,
-                              borderRadius: BorderRadius.circular(12),
+                              color: _Palette.canvas,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: _Palette.milanoRedDeep.withValues(
+                                  alpha: 0.10,
+                                ),
+                              ),
                             ),
                             child: Icon(
                               Icons.receipt_long,
-                              color: AppColors.primary,
-                              size: isSmall ? 20 : 24,
+                              color: _Palette.milanoRedDeep,
+                              size: isSmall ? 22 : 26,
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 14),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -455,10 +1078,10 @@ class _BillingCard extends StatelessWidget {
                               children: [
                                 Text(
                                   order.table,
-                                  style: AppTheme.sans(
-                                    size: isSmall ? 16 : 20,
-                                    weight: FontWeight.w700,
-                                    color: AppColors.slate900,
+                                  style: AppTheme.serif(
+                                    size: isSmall ? 16 : 19,
+                                    weight: FontWeight.w800,
+                                    color: _Palette.textDark,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -468,9 +1091,11 @@ class _BillingCard extends StatelessWidget {
                                   Text(
                                     order.customerName!,
                                     style: AppTheme.sans(
-                                      size: isSmall ? 13 : 15,
+                                      size: isSmall ? 13 : 14,
                                       weight: FontWeight.w700,
-                                      color: AppColors.slate700,
+                                      color: _Palette.textDark.withValues(
+                                        alpha: 0.75,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -478,8 +1103,8 @@ class _BillingCard extends StatelessWidget {
                                 Text(
                                   '${order.items} items',
                                   style: AppTheme.sans(
-                                    size: isSmall ? 12 : 14,
-                                    color: AppColors.slate500,
+                                    size: isSmall ? 12 : 13,
+                                    color: _Palette.textMuted,
                                   ),
                                 ),
                               ],
@@ -495,22 +1120,57 @@ class _BillingCard extends StatelessWidget {
                       children: [
                         Text(
                           CurrencyUtils.format(order.total),
-                          style: AppTheme.sans(
-                            size: isSmall ? 22 : 28,
+                          style: AppTheme.serif(
+                            size: isSmall ? 20 : 24,
                             weight: FontWeight.w900,
-                            color: AppColors.slate900,
+                            color: _Palette.milanoRedDeep,
                           ),
                         ),
-                        if (order.status == OrderStatus.served ||
-                            order.status == OrderStatus.billed) ...[
+                        if (isUnpaid) ...[
                           const SizedBox(height: 8),
                           SizedBox(
-                            height: isSmall ? 36 : null,
-                            child: PrimaryButton(
-                              label: 'Pay Now',
-                              color: AppColors.gold,
+                            height: isSmall ? 36 : 40,
+                            child: GestureDetector(
                               onTap: () =>
                                   context.push('/staff/payment/${order.id}'),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 18,
+                                ),
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      _Palette.gold,
+                                      _Palette.goldLight,
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: _Palette.lemonChiffonDeep
+                                        .withValues(alpha: 0.6),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: _Palette.gold.withValues(
+                                        alpha: 0.35,
+                                      ),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Text(
+                                  'Pay Now',
+                                  style: AppTheme.sans(
+                                    size: 13,
+                                    weight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ],

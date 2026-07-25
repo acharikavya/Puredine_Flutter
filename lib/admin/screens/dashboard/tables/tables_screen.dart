@@ -4,10 +4,56 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:restaurant_unified_app/core/constants.dart';
 import 'package:restaurant_unified_app/admin/core/models/restaurant_model.dart';
 import 'package:restaurant_unified_app/admin/services/tables_service.dart';
 import 'package:restaurant_unified_app/utils/file_download_helper.dart';
+
+/// ─────────────────────────────────────────────────────────────────────────
+/// Local "Dark Maroon × Soft Cream × Gold Glow" palette — matches
+/// AdminDashboardScreen, MenuScreen, OrdersScreen, ProfileScreen,
+/// StaffLandingScreen, and StaffScreen exactly, so this screen reads as
+/// part of the same consistent brand instead of its own one-off theme.
+/// Used ONLY for this screen's restyle. Nothing here touches AppColors or
+/// any other file — pure UI enhancement, no logic changed anywhere here.
+/// ─────────────────────────────────────────────────────────────────────────
+class _Palette {
+  _Palette._();
+
+  static const Color milanoRed = Color(0xFF8B1D1D); // Primary maroon
+  static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
+  static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
+  static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow
+  static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
+  static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
+  static const Color canvasDeep = Color(0xFFF5E9D6); // Deeper cream
+  static const Color cardWhite = Colors.white;
+  static const Color textDark = Color(0xFF3A1608);
+  static const Color textMuted = Color(0xFF8A6F5E);
+  static const Color success = Color(0xFF2E9E5B);
+  static const Color danger = Color(0xFFC62828);
+  static const Color info = Color(0xFF2563EB);
+
+  static const LinearGradient headerGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [milanoRedLight, milanoRedDeep],
+  );
+
+  /// Themed soft shadow for resting cards/panels — matches the exact
+  /// softShadow used across the other admin screens.
+  static List<BoxShadow> get softShadow => [
+        BoxShadow(
+          color: milanoRedDeep.withValues(alpha: 0.06),
+          blurRadius: 18,
+          offset: const Offset(0, 8),
+        ),
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.03),
+          blurRadius: 4,
+          offset: const Offset(0, 2),
+        ),
+      ];
+}
 
 class TablesScreen extends StatefulWidget {
   const TablesScreen({super.key});
@@ -27,6 +73,16 @@ class _TablesScreenState extends State<TablesScreen> {
 
   final _tableNumCtrl = TextEditingController();
   final _capacityCtrl = TextEditingController(text: '4');
+
+  static const List<String> _monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+
+  String _todayLabel() {
+    final now = DateTime.now();
+    return '${_monthNames[now.month - 1]} ${now.day}, ${now.year}';
+  }
 
   @override
   void initState() {
@@ -90,16 +146,79 @@ class _TablesScreenState extends State<TablesScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Table'),
-        content: const Text('Are you sure you want to delete this table?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+        backgroundColor: _Palette.cardWhite,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+        icon: Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            color: _Palette.danger.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          child: const Icon(
+            Icons.warning_rounded,
+            color: _Palette.danger,
+            size: 26,
+          ),
+        ),
+        title: Text(
+          'Delete Table',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.playfairDisplay(
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+            color: _Palette.textDark,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to delete this table? This action cannot be undone.',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.inter(color: _Palette.textMuted, fontSize: 13.5),
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        actions: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _Palette.textMuted,
+                side: BorderSide(
+                  color: _Palette.milanoRedDeep.withValues(alpha: 0.15),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _Palette.danger,
+                elevation: 2,
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(
+                'Delete',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -125,11 +244,11 @@ class _TablesScreenState extends State<TablesScreen> {
         version: QrVersions.auto,
         eyeStyle: const QrEyeStyle(
           eyeShape: QrEyeShape.square,
-          color: AppColors.rubyDark,
+          color: _Palette.milanoRedDeep,
         ),
         dataModuleStyle: const QrDataModuleStyle(
           dataModuleShape: QrDataModuleShape.square,
-          color: AppColors.rubyDark,
+          color: _Palette.milanoRedDeep,
         ),
       );
       final image = await painter.toImage(512);
@@ -154,17 +273,28 @@ class _TablesScreenState extends State<TablesScreen> {
         child: Container(
           width: 360,
           padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: _Palette.canvas,
+            borderRadius: BorderRadius.circular(20),
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 children: [
-                  const Icon(
-                    Icons.qr_code_2,
-                    color: AppColors.rubyDark,
-                    size: 22,
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: _Palette.milanoRed.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.qr_code_2,
+                      color: _Palette.milanoRed,
+                      size: 22,
+                    ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,21 +304,25 @@ class _TablesScreenState extends State<TablesScreen> {
                           style: GoogleFonts.playfairDisplay(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.rubyDark,
+                            color: _Palette.milanoRedDeep,
                           ),
                         ),
                         Text(
                           'Table ${t.tableNumber}',
                           style: GoogleFonts.inter(
                             fontSize: 12,
-                            color: AppColors.textMuted,
+                            color: _Palette.textMuted,
                           ),
                         ),
                       ],
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, size: 20),
+                    icon: Icon(
+                      Icons.close,
+                      size: 20,
+                      color: _Palette.textMuted,
+                    ),
                     onPressed: () => Navigator.pop(ctx),
                   ),
                 ],
@@ -197,12 +331,19 @@ class _TablesScreenState extends State<TablesScreen> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: _Palette.cardWhite,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppColors.rubyDark.withValues(alpha: 0.3),
+                    color: _Palette.milanoRed.withValues(alpha: 0.3),
                     width: 2,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
                 child: QrImageView(
                   data: qrData,
@@ -210,11 +351,11 @@ class _TablesScreenState extends State<TablesScreen> {
                   size: 220,
                   eyeStyle: const QrEyeStyle(
                     eyeShape: QrEyeShape.square,
-                    color: AppColors.rubyDark,
+                    color: _Palette.milanoRedDeep,
                   ),
                   dataModuleStyle: const QrDataModuleStyle(
                     dataModuleShape: QrDataModuleShape.square,
-                    color: AppColors.rubyDark,
+                    color: _Palette.milanoRedDeep,
                   ),
                 ),
               ),
@@ -223,14 +364,14 @@ class _TablesScreenState extends State<TablesScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.ivory,
+                  color: _Palette.lemonChiffon.withValues(alpha: 0.35),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: SelectableText(
                   qrData,
                   style: GoogleFonts.inter(
                     fontSize: 10,
-                    color: AppColors.textMuted,
+                    color: _Palette.textMuted,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -254,10 +395,11 @@ class _TablesScreenState extends State<TablesScreen> {
                         style: TextStyle(color: Colors.white),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.rubyDark,
+                        backgroundColor: _Palette.milanoRed,
+                        elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                     ),
@@ -283,10 +425,11 @@ class _TablesScreenState extends State<TablesScreen> {
                         style: TextStyle(color: Colors.white),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2563EB),
+                        backgroundColor: _Palette.info,
+                        elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                     ),
@@ -306,51 +449,133 @@ class _TablesScreenState extends State<TablesScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        backgroundColor: _Palette.cardWhite,
+        icon: Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.table_restaurant_rounded,
+            color: _Palette.milanoRedDeep,
+            size: 26,
+          ),
+        ),
         title: Text(
           'Add Table',
-          style: GoogleFonts.playfairDisplay(fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
+          style: GoogleFonts.playfairDisplay(
+            fontWeight: FontWeight.bold,
+            color: _Palette.milanoRedDeep,
+          ),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
-              controller: _tableNumCtrl,
-              decoration: const InputDecoration(labelText: 'Table Number'),
+            _dialogField(
+              _tableNumCtrl,
+              'Table Number',
+              Icons.table_restaurant_outlined,
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _capacityCtrl,
+            const SizedBox(height: 14),
+            _dialogField(
+              _capacityCtrl,
+              'Capacity',
+              Icons.groups_outlined,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Capacity'),
             ),
           ],
         ),
+        actionsAlignment: MainAxisAlignment.center,
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _Palette.textMuted,
+                side: BorderSide(
+                  color: _Palette.milanoRedDeep.withValues(alpha: 0.15),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+              ),
+            ),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.rubyRed),
-            onPressed: () async {
-              Navigator.pop(ctx);
-              try {
-                await TablesService.createTable({
-                  'table_number': _tableNumCtrl.text,
-                  'capacity': int.tryParse(_capacityCtrl.text) ?? 4,
-                });
-                _loadTables();
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text('Failed: $e')));
+          const SizedBox(width: 10),
+          Expanded(
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _Palette.milanoRed,
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 13),
+              ),
+              onPressed: () async {
+                Navigator.pop(ctx);
+                try {
+                  await TablesService.createTable({
+                    'table_number': _tableNumCtrl.text,
+                    'capacity': int.tryParse(_capacityCtrl.text) ?? 4,
+                  });
+                  _loadTables();
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text('Failed: $e')));
+                  }
                 }
-              }
-            },
-            child: const Text('Add', style: TextStyle(color: Colors.white)),
+              },
+              child: Text(
+                'Add',
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _dialogField(
+    TextEditingController ctrl,
+    String label,
+    IconData icon, {
+    TextInputType? keyboardType,
+  }) {
+    return TextField(
+      controller: ctrl,
+      keyboardType: keyboardType,
+      style: GoogleFonts.inter(color: _Palette.textDark),
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, size: 20, color: _Palette.milanoRed),
+        labelStyle: GoogleFonts.inter(color: _Palette.textMuted),
+        filled: true,
+        fillColor: _Palette.lemonChiffon.withValues(alpha: 0.35),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: _Palette.milanoRed, width: 1.4),
+        ),
       ),
     );
   }
@@ -361,195 +586,336 @@ class _TablesScreenState extends State<TablesScreen> {
     final isMobile = size.width < 800;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F5F2),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.rubyRed),
-            )
-          : Column(
-              children: [
-                _buildHeader(isMobile),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isMobile ? 16 : 40,
-                      vertical: 24,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildStatsRow(isMobile),
-                        const SizedBox(height: 24),
-                        _buildFiltersBar(isMobile),
-                        const SizedBox(height: 24),
-                        Text(
-                          'Showing ${_filteredTables.length} tables',
-                          style: GoogleFonts.inter(
-                            color: AppColors.textMuted,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        _buildTablesList(isMobile),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-    );
-  }
-
-  Widget _buildHeader(bool isMobile) {
-    return Container(
-      color: AppColors.rubyDark,
-      padding: EdgeInsets.fromLTRB(
-        isMobile ? 20 : 40,
-        isMobile ? 24 : 40,
-        isMobile ? 20 : 40,
-        32,
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: isMobile
-            ? Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: _Palette.canvas,
+      body: Stack(
+        children: [
+          // ── Ambient background dressing ─────────────────────────────────
+          // Purely decorative — soft lemon/ruby glows plus a faint textured
+          // photograph, matching the rest of the admin app's "foggy"
+          // backdrop so this screen feels like one cohesive brand.
+          Positioned.fill(
+            child: Container(
+              color: _Palette.canvas,
+              child: Stack(
                 children: [
-                  OutlinedButton.icon(
-                    onPressed: () => context.go('/admin/dashboard'),
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                    label: Text(
-                      'Back',
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: 14,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.white30, width: 1.2),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 10,
-                      ),
-                      shape: const StadiumBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Tables Management',
-                    style: GoogleFonts.playfairDisplay(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Manage restaurant tables and QR codes',
-                    style: GoogleFonts.inter(
-                      color: AppColors.gold,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _showAddDialog,
-                      icon: const Icon(Icons.add, size: 18),
-                      label: const Text('Add New Table'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.gold,
-                        foregroundColor: AppColors.rubyDark,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                  Positioned(
+                    top: -70,
+                    right: -60,
+                    child: Container(
+                      width: 260,
+                      height: 260,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            _Palette.lemonChiffon.withValues(alpha: 0.5),
+                            Colors.transparent,
+                          ],
                         ),
                       ),
                     ),
                   ),
-                ],
-              )
-            : Row(
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: () => context.go('/admin/dashboard'),
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                    label: Text(
-                      'Back',
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: 14,
+                  Positioned(
+                    bottom: -90,
+                    left: -80,
+                    child: Container(
+                      width: 280,
+                      height: 280,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            _Palette.milanoRed.withValues(alpha: 0.07),
+                            Colors.transparent,
+                          ],
+                        ),
                       ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.white30, width: 1.2),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 10,
-                      ),
-                      shape: const StadiumBorder(),
                     ),
                   ),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        Text(
-                          'Tables Management',
-                          style: GoogleFonts.playfairDisplay(
-                            color: Colors.white,
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Manage restaurant tables and QR codes',
-                          style: GoogleFonts.inter(
-                            color: AppColors.gold,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: _showAddDialog,
-                    icon: const Icon(
-                      Icons.add,
-                      color: AppColors.rubyDark,
-                      size: 18,
-                    ),
-                    label: Text(
-                      'Add Table',
-                      style: GoogleFonts.inter(
-                        color: AppColors.rubyDark,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.gold,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 16,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                  Opacity(
+                    opacity: 0.04,
+                    child: Image.network(
+                      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop',
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
                     ),
                   ),
                 ],
               ),
+            ),
+          ),
+
+          _isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(color: _Palette.milanoRed),
+                )
+              : Column(
+                  children: [
+                    _buildHeader(isMobile),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isMobile ? 16 : (size.width > 1400 ? 64 : 40),
+                          vertical: 24,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildStatsRow(isMobile),
+                            const SizedBox(height: 24),
+                            _buildFiltersBar(isMobile),
+                            const SizedBox(height: 24),
+                            Row(
+                              children: [
+                                Container(
+                                  width: 4,
+                                  height: 18,
+                                  decoration: BoxDecoration(
+                                    color: _Palette.milanoRed,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Showing ${_filteredTables.length} tables',
+                                  style: GoogleFonts.inter(
+                                    color: _Palette.textMuted,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            _buildTablesList(isMobile),
+                            const SizedBox(height: 40),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+        ],
+      ),
+    );
+  }
+
+  /// Branded "floating navbar" header — mirrors the exact treatment used on
+  /// AdminDashboardScreen / MenuScreen / OrdersScreen / ProfileScreen /
+  /// StaffLandingScreen / StaffScreen: rounded bottom corners, decorative
+  /// diagonal ribbon accents, a fine dotted texture strip, a glowing gold
+  /// title underline, and a compact circular "<" back control. Purely
+  /// visual; the navigation and add-table actions underneath are unchanged.
+  Widget _buildHeader(bool isMobile) {
+    return ClipRect(
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              _Palette.milanoRedLight,
+              _Palette.milanoRed,
+              _Palette.milanoRedDeep,
+            ],
+          ),
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(isMobile ? 28 : 38),
+            bottomRight: Radius.circular(isMobile ? 28 : 38),
+          ),
+          border: const Border(
+            bottom: BorderSide(color: _Palette.lemonChiffon, width: 4),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: _Palette.milanoRedDeep.withValues(alpha: 0.35),
+              blurRadius: 34,
+              offset: const Offset(0, 16),
+            ),
+            BoxShadow(
+              color: _Palette.lemonChiffon.withValues(alpha: 0.12),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.10),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // Subtle decorative diagonal ribbon accents (purely cosmetic,
+            // matches the dashboard/menu/orders/profile/staff headers for a
+            // consistent brand feel).
+            Positioned(
+              top: -60,
+              right: -40,
+              child: Transform.rotate(
+                angle: -0.5,
+                child: Container(
+                  width: 240,
+                  height: 90,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        _Palette.lemonChiffon.withValues(alpha: 0.14),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -50,
+              left: -60,
+              child: Transform.rotate(
+                angle: 0.4,
+                child: Container(
+                  width: 220,
+                  height: 70,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.white.withValues(alpha: 0.06),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Fine dotted texture accent, matching the app's refined
+            // decorative language used across the other admin headers.
+            Positioned(
+              top: 8,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(
+                    5,
+                    (i) => Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      width: 4,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _Palette.lemonChiffon.withValues(
+                          alpha: i == 2 ? 0.85 : 0.3,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                isMobile ? 20 : 40,
+                isMobile ? 16 : 24,
+                isMobile ? 20 : 40,
+                isMobile ? 20 : 28,
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        _BackChevronButton(
+                          onTap: () => context.go('/admin/dashboard'),
+                        ),
+                        const Spacer(),
+                        if (!isMobile)
+                          Text(
+                            _todayLabel(),
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.3,
+                              color: Colors.white.withValues(alpha: 0.65),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    if (isMobile) ...[
+                      _titleBlock(fontSize: 26),
+                      const SizedBox(height: 20),
+                      SizedBox(width: double.infinity, child: _addButton()),
+                    ] else
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(child: _titleBlock(fontSize: 34)),
+                          _addButton(),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _titleBlock({required double fontSize}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Tables Management',
+          style: GoogleFonts.playfairDisplay(
+            color: Colors.white,
+            fontSize: fontSize,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.6,
+            height: 1.1,
+          ),
+        ),
+        const SizedBox(height: 10),
+        const _TitleDivider(),
+        const SizedBox(height: 10),
+        Text(
+          'Manage restaurant tables and QR codes',
+          style: GoogleFonts.inter(
+            color: _Palette.lemonChiffon,
+            fontSize: fontSize > 30 ? 14 : 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _addButton() {
+    return ElevatedButton.icon(
+      onPressed: _showAddDialog,
+      icon: const Icon(Icons.add, size: 18, color: _Palette.milanoRedDeep),
+      label: Text(
+        'Add Table',
+        style: GoogleFonts.inter(
+          fontWeight: FontWeight.bold,
+          color: _Palette.milanoRedDeep,
+        ),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _Palette.lemonChiffon,
+        elevation: 4,
+        shadowColor: Colors.black.withValues(alpha: 0.2),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -565,17 +931,36 @@ class _TablesScreenState extends State<TablesScreen> {
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
-            _buildStatCard('Total', total.toString(), Colors.black, isMobile),
+            _buildStatCard(
+              'Total',
+              total.toString(),
+              _Palette.milanoRedDeep,
+              isMobile,
+              Icons.table_bar_outlined,
+            ),
             const SizedBox(width: 12),
-            _buildStatCard('Active', active.toString(), Colors.green, isMobile),
+            _buildStatCard(
+              'Active',
+              active.toString(),
+              _Palette.success,
+              isMobile,
+              Icons.check_circle_outline,
+            ),
             const SizedBox(width: 12),
-            _buildStatCard('Empty', empty.toString(), Colors.green, isMobile),
+            _buildStatCard(
+              'Empty',
+              empty.toString(),
+              _Palette.success,
+              isMobile,
+              Icons.event_seat_outlined,
+            ),
             const SizedBox(width: 12),
             _buildStatCard(
               'Occupied',
               occupied.toString(),
-              Colors.red,
+              _Palette.milanoRed,
               isMobile,
+              Icons.people_alt_outlined,
             ),
           ],
         ),
@@ -584,13 +969,37 @@ class _TablesScreenState extends State<TablesScreen> {
 
     return Row(
       children: [
-        _buildStatCard('Total Tables', total.toString(), Colors.black, false),
+        _buildStatCard(
+          'Total Tables',
+          total.toString(),
+          _Palette.milanoRedDeep,
+          false,
+          Icons.table_bar_outlined,
+        ),
         const SizedBox(width: 20),
-        _buildStatCard('Active', active.toString(), Colors.green, false),
+        _buildStatCard(
+          'Active',
+          active.toString(),
+          _Palette.success,
+          false,
+          Icons.check_circle_outline,
+        ),
         const SizedBox(width: 20),
-        _buildStatCard('Empty', empty.toString(), Colors.green, false),
+        _buildStatCard(
+          'Empty',
+          empty.toString(),
+          _Palette.success,
+          false,
+          Icons.event_seat_outlined,
+        ),
         const SizedBox(width: 20),
-        _buildStatCard('Occupied', occupied.toString(), Colors.red, false),
+        _buildStatCard(
+          'Occupied',
+          occupied.toString(),
+          _Palette.milanoRed,
+          false,
+          Icons.people_alt_outlined,
+        ),
       ],
     );
   }
@@ -600,49 +1009,59 @@ class _TablesScreenState extends State<TablesScreen> {
     String value,
     Color color,
     bool isMobile,
+    IconData icon,
   ) {
     Widget cardContent = Container(
       padding: EdgeInsets.all(isMobile ? 16 : 20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: _Palette.cardWhite,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.rubyDark.withOpacity(0.1),
-          width: 1,
+          color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: _Palette.softShadow,
       ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              color: AppColors.textMuted,
-              fontSize: isMobile ? 11 : 13,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    color: _Palette.textMuted,
+                    fontSize: isMobile ? 11 : 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  value,
+                  style: GoogleFonts.inter(
+                    color: color,
+                    fontSize: isMobile ? 20 : 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: GoogleFonts.inter(
-              color: color,
-              fontSize: isMobile ? 20 : 24,
-              fontWeight: FontWeight.bold,
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
             ),
+            child: Icon(icon, color: color, size: isMobile ? 16 : 20),
           ),
         ],
       ),
     );
 
     if (isMobile) {
-      return SizedBox(width: 120, child: cardContent);
+      return SizedBox(width: 140, child: cardContent);
     }
 
     return Expanded(child: cardContent);
@@ -652,19 +1071,12 @@ class _TablesScreenState extends State<TablesScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: _Palette.cardWhite,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.rubyDark.withOpacity(0.1),
-          width: 1,
+          color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: _Palette.softShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -674,7 +1086,7 @@ class _TablesScreenState extends State<TablesScreen> {
               const Icon(
                 Icons.filter_list,
                 size: 20,
-                color: AppColors.textMuted,
+                color: _Palette.milanoRedDeep,
               ),
               const SizedBox(width: 8),
               Text(
@@ -682,6 +1094,7 @@ class _TablesScreenState extends State<TablesScreen> {
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
+                  color: _Palette.textDark,
                 ),
               ),
             ],
@@ -692,13 +1105,27 @@ class _TablesScreenState extends State<TablesScreen> {
                   children: [
                     TextField(
                       controller: _searchController,
+                      style: GoogleFonts.inter(color: _Palette.textDark),
                       decoration: InputDecoration(
                         hintText: 'Search...',
-                        prefixIcon: const Icon(Icons.search, size: 20),
+                        hintStyle: GoogleFonts.inter(
+                          color: _Palette.textMuted,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          size: 20,
+                          color: _Palette.milanoRedDeep,
+                        ),
+                        filled: true,
+                        fillColor: _Palette.lemonChiffon.withValues(
+                          alpha: 0.2,
+                        ),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide(
-                            color: AppColors.rubyDark.withOpacity(0.1),
+                            color: _Palette.milanoRedDeep.withValues(
+                              alpha: 0.15,
+                            ),
                           ),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
@@ -732,25 +1159,44 @@ class _TablesScreenState extends State<TablesScreen> {
                       flex: 3,
                       child: TextField(
                         controller: _searchController,
+                        style: GoogleFonts.inter(color: _Palette.textDark),
                         decoration: InputDecoration(
                           hintText: 'Search by table number...',
-                          prefixIcon: const Icon(Icons.search, size: 20),
+                          hintStyle: GoogleFonts.inter(
+                            color: _Palette.textMuted,
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.search,
+                            size: 20,
+                            color: _Palette.milanoRedDeep,
+                          ),
+                          filled: true,
+                          fillColor: _Palette.lemonChiffon.withValues(
+                            alpha: 0.2,
+                          ),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide(
-                              color: AppColors.rubyDark.withOpacity(0.2),
+                              color: _Palette.milanoRedDeep.withValues(
+                                alpha: 0.2,
+                              ),
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide(
-                              color: AppColors.rubyDark.withOpacity(0.2),
+                              color: _Palette.milanoRedDeep.withValues(
+                                alpha: 0.2,
+                              ),
                             ),
                           ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+                          focusedBorder: const OutlineInputBorder(
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(10),
+                            ),
                             borderSide: BorderSide(
-                              color: AppColors.rubyDark.withOpacity(0.5),
+                              color: _Palette.milanoRed,
+                              width: 1.4,
                             ),
                           ),
                           contentPadding: const EdgeInsets.symmetric(
@@ -798,18 +1244,32 @@ class _TablesScreenState extends State<TablesScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.rubyDark.withOpacity(0.2)),
-        borderRadius: BorderRadius.circular(8),
+        color: _Palette.lemonChiffon.withValues(alpha: 0.2),
+        border: Border.all(
+          color: _Palette.milanoRedDeep.withValues(alpha: 0.2),
+        ),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
+          icon: const Icon(
+            Icons.keyboard_arrow_down,
+            color: _Palette.milanoRedDeep,
+          ),
+          dropdownColor: _Palette.cardWhite,
           items: items
               .map(
                 (e) => DropdownMenuItem(
                   value: e,
-                  child: Text(e, style: GoogleFonts.inter(fontSize: 14)),
+                  child: Text(
+                    e,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: _Palette.textDark,
+                    ),
+                  ),
                 ),
               )
               .toList(),
@@ -825,17 +1285,32 @@ class _TablesScreenState extends State<TablesScreen> {
         width: double.infinity,
         padding: const EdgeInsets.all(48),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          color: _Palette.cardWhite,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
+          ),
+          boxShadow: _Palette.softShadow,
         ),
-        child: const Center(child: Text('No tables found')),
+        child: Center(
+          child: Column(
+            children: [
+              Icon(
+                Icons.table_bar_outlined,
+                size: 40,
+                color: _Palette.milanoRedDeep.withValues(alpha: 0.4),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'No tables found',
+                style: GoogleFonts.inter(
+                  color: _Palette.textMuted,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     }
 
@@ -856,19 +1331,12 @@ class _TablesScreenState extends State<TablesScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: _Palette.cardWhite,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.rubyDark.withOpacity(0.1),
-          width: 1,
+          color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: _Palette.softShadow,
       ),
       child: Column(
         children: [
@@ -876,7 +1344,10 @@ class _TablesScreenState extends State<TablesScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
+              color: _Palette.lemonChiffon.withValues(alpha: 0.25),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
             ),
             child: Row(
               children: [
@@ -907,12 +1378,12 @@ class _TablesScreenState extends State<TablesScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6),
-        ],
-        border: Border.all(color: AppColors.rubyDark.withOpacity(0.05)),
+        color: _Palette.cardWhite,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+        ),
+        boxShadow: _Palette.softShadow,
       ),
       child: Column(
         children: [
@@ -924,12 +1395,18 @@ class _TablesScreenState extends State<TablesScreen> {
                 style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  color: _Palette.textDark,
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
-                  color: isOccupied ? Colors.red.shade50 : Colors.green.shade50,
+                  color: isOccupied
+                      ? _Palette.milanoRed.withValues(alpha: 0.1)
+                      : _Palette.success.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(100),
                 ),
                 child: Text(
@@ -938,8 +1415,8 @@ class _TablesScreenState extends State<TablesScreen> {
                     fontSize: 9,
                     fontWeight: FontWeight.bold,
                     color: isOccupied
-                        ? Colors.red.shade800
-                        : Colors.green.shade800,
+                        ? _Palette.milanoRedDeep
+                        : _Palette.success,
                   ),
                 ),
               ),
@@ -948,13 +1425,22 @@ class _TablesScreenState extends State<TablesScreen> {
           const Spacer(),
           GestureDetector(
             onTap: () => _showQRDialog(t),
-            child: QrImageView(
-              data: qrData,
-              version: QrVersions.auto,
-              size: 60,
-              eyeStyle: const QrEyeStyle(
-                eyeShape: QrEyeShape.square,
-                color: AppColors.rubyDark,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: _Palette.milanoRedDeep.withValues(alpha: 0.15),
+                ),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: QrImageView(
+                data: qrData,
+                version: QrVersions.auto,
+                size: 60,
+                eyeStyle: const QrEyeStyle(
+                  eyeShape: QrEyeShape.square,
+                  color: _Palette.milanoRedDeep,
+                ),
               ),
             ),
           ),
@@ -968,7 +1454,11 @@ class _TablesScreenState extends State<TablesScreen> {
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   onPressed: () => _showQRDialog(t),
-                  icon: const Icon(Icons.qr_code, size: 18, color: Colors.blue),
+                  icon: const Icon(
+                    Icons.qr_code,
+                    size: 18,
+                    color: _Palette.info,
+                  ),
                 ),
                 const SizedBox(width: 4),
                 IconButton(
@@ -978,7 +1468,7 @@ class _TablesScreenState extends State<TablesScreen> {
                   icon: const Icon(
                     Icons.delete_outline,
                     size: 18,
-                    color: Colors.red,
+                    color: _Palette.milanoRedDeep,
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -987,7 +1477,7 @@ class _TablesScreenState extends State<TablesScreen> {
                   child: Switch(
                     value: t.isActive,
                     onChanged: (v) => _toggleTable(t.id),
-                    activeColor: Colors.green,
+                    activeColor: _Palette.milanoRed,
                   ),
                 ),
               ],
@@ -1004,9 +1494,10 @@ class _TablesScreenState extends State<TablesScreen> {
       child: Text(
         label,
         style: GoogleFonts.inter(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: AppColors.textMuted,
+          fontSize: 11,
+          fontWeight: FontWeight.w900,
+          color: _Palette.milanoRedDeep.withValues(alpha: 0.55),
+          letterSpacing: 1.2,
         ),
       ),
     );
@@ -1023,7 +1514,11 @@ class _TablesScreenState extends State<TablesScreen> {
       decoration: BoxDecoration(
         border: index == _filteredTables.length - 1
             ? null
-            : Border(bottom: BorderSide(color: Colors.grey.shade100)),
+            : Border(
+                bottom: BorderSide(
+                  color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+                ),
+              ),
       ),
       child: Row(
         children: [
@@ -1038,6 +1533,7 @@ class _TablesScreenState extends State<TablesScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    color: _Palette.textDark,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -1045,7 +1541,7 @@ class _TablesScreenState extends State<TablesScreen> {
                   t.id.length > 8 ? '${t.id.substring(0, 8)}...' : t.id,
                   style: GoogleFonts.inter(
                     fontSize: 11,
-                    color: Colors.grey.shade400,
+                    color: _Palette.textMuted.withValues(alpha: 0.8),
                   ),
                 ),
               ],
@@ -1061,8 +1557,10 @@ class _TablesScreenState extends State<TablesScreen> {
               child: Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade200),
-                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(
+                    color: _Palette.milanoRedDeep.withValues(alpha: 0.15),
+                  ),
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: QrImageView(
                   data: qrData,
@@ -1070,7 +1568,7 @@ class _TablesScreenState extends State<TablesScreen> {
                   size: 40,
                   eyeStyle: const QrEyeStyle(
                     eyeShape: QrEyeShape.square,
-                    color: Colors.black,
+                    color: _Palette.textDark,
                   ),
                 ),
               ),
@@ -1088,9 +1586,14 @@ class _TablesScreenState extends State<TablesScreen> {
                 ),
                 decoration: BoxDecoration(
                   color: t.status == 'OCCUPIED'
-                      ? const Color(0xFFFFEBEE)
-                      : const Color(0xFFE8F5E9),
+                      ? _Palette.milanoRed.withValues(alpha: 0.08)
+                      : _Palette.success.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(100),
+                  border: Border.all(
+                    color: t.status == 'OCCUPIED'
+                        ? _Palette.milanoRed.withValues(alpha: 0.25)
+                        : _Palette.success.withValues(alpha: 0.25),
+                  ),
                 ),
                 child: Text(
                   t.status,
@@ -1098,8 +1601,8 @@ class _TablesScreenState extends State<TablesScreen> {
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                     color: t.status == 'OCCUPIED'
-                        ? Colors.red.shade800
-                        : Colors.green.shade800,
+                        ? _Palette.milanoRedDeep
+                        : _Palette.success,
                   ),
                 ),
               ),
@@ -1113,7 +1616,7 @@ class _TablesScreenState extends State<TablesScreen> {
               child: Switch(
                 value: t.isActive,
                 onChanged: (v) => _toggleTable(t.id),
-                activeThumbColor: Colors.green,
+                activeThumbColor: _Palette.milanoRed,
               ),
             ),
           ),
@@ -1124,19 +1627,19 @@ class _TablesScreenState extends State<TablesScreen> {
               children: [
                 _actionIcon(
                   Icons.qr_code_scanner,
-                  Colors.blue,
+                  _Palette.info,
                   () => _showQRDialog(t),
                 ),
                 const SizedBox(width: 12),
                 _actionIcon(
                   Icons.download_rounded,
-                  Colors.green,
+                  _Palette.success,
                   () => _downloadQR(t, qrData),
                 ),
                 const SizedBox(width: 12),
                 _actionIcon(
                   Icons.delete_rounded,
-                  Colors.red,
+                  _Palette.milanoRedDeep,
                   () => _deleteTable(t.id),
                 ),
               ],
@@ -1152,7 +1655,101 @@ class _TablesScreenState extends State<TablesScreen> {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(8),
+        ),
         child: Icon(icon, size: 20, color: color),
+      ),
+    );
+  }
+}
+
+/// Compact icon-only "back" control — a circular glass button showing only
+/// a plain "‹" glyph. Replaces the previous arrow-icon + "Back" label combo
+/// with a minimal, professional control, matching the same treatment used
+/// on OrdersScreen and MenuScreen.
+class _BackChevronButton extends StatefulWidget {
+  final VoidCallback onTap;
+  const _BackChevronButton({required this.onTap});
+
+  @override
+  State<_BackChevronButton> createState() => _BackChevronButtonState();
+}
+
+class _BackChevronButtonState extends State<_BackChevronButton> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 40,
+          height: 40,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: _isHovered
+                ? Colors.white.withValues(alpha: 0.20)
+                : Colors.white.withValues(alpha: 0.10),
+            border: Border.all(
+              color: _isHovered
+                  ? _Palette.lemonChiffon.withValues(alpha: 0.7)
+                  : _Palette.lemonChiffon.withValues(alpha: 0.4),
+              width: 1.2,
+            ),
+            boxShadow: _isHovered
+                ? [
+                    BoxShadow(
+                      color: _Palette.lemonChiffon.withValues(alpha: 0.25),
+                      blurRadius: 10,
+                      spreadRadius: 1,
+                    ),
+                  ]
+                : null,
+          ),
+          child: Text(
+            '‹',
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              height: 1.0,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Small decorative gradient divider placed beneath the header title —
+/// purely cosmetic, mirrors the same accent used on the dashboard, menu,
+/// orders, profile, and staff screens so the title treatment matches
+/// exactly across the admin app.
+class _TitleDivider extends StatelessWidget {
+  const _TitleDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 64,
+      height: 3,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4),
+        gradient: LinearGradient(
+          colors: [
+            Colors.transparent,
+            _Palette.lemonChiffon.withValues(alpha: 0.9),
+            Colors.transparent,
+          ],
+        ),
       ),
     );
   }

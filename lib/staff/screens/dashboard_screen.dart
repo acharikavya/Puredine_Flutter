@@ -100,8 +100,18 @@ class _Palette {
 }
 
 const List<String> _kMonthNames = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 String _todayLabel() {
@@ -469,8 +479,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                   size: isMobile ? 20 : 24,
                                                 ),
                                                 maxLines: 1,
-                                                overflow:
-                                                    TextOverflow.ellipsis,
+                                                overflow: TextOverflow.ellipsis,
                                               ),
                                             ],
                                           ),
@@ -1226,8 +1235,7 @@ class _FeatureCardState extends State<_FeatureCard> {
                     : _Palette.milanoRedDeep.withValues(alpha: 0.08),
                 width: isElevated ? 1.6 : 1.5,
               ),
-              boxShadow:
-                  isElevated ? _Palette.glowShadow : _Palette.softShadow,
+              boxShadow: isElevated ? _Palette.glowShadow : _Palette.softShadow,
             ),
             padding: EdgeInsets.all(isSmall ? 16 : 24),
             child: Column(

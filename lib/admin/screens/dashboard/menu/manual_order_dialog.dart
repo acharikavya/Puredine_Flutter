@@ -347,8 +347,8 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                       ),
                     ),
                     Padding(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 22),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -359,14 +359,14 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                               color: Colors.white.withValues(alpha: 0.14),
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color:
-                                    _Palette.lemonChiffon.withValues(alpha: 0.4),
+                                color: _Palette.lemonChiffon
+                                    .withValues(alpha: 0.4),
                                 width: 1.2,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color:
-                                      _Palette.lemonChiffon.withValues(alpha: 0.18),
+                                  color: _Palette.lemonChiffon
+                                      .withValues(alpha: 0.18),
                                   blurRadius: 12,
                                   spreadRadius: 1,
                                 ),
@@ -524,8 +524,8 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                             foregroundColor: _Palette.textMuted,
                             backgroundColor: _Palette.canvas,
                             side: BorderSide(
-                              color:
-                                  _Palette.milanoRedDeep.withValues(alpha: 0.14),
+                              color: _Palette.milanoRedDeep
+                                  .withValues(alpha: 0.14),
                             ),
                             padding: EdgeInsets.symmetric(
                               horizontal: isDesktop ? 24 : 12,
@@ -621,10 +621,7 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
             ),
           ],
         ),
-      )
-          .animate()
-          .fadeIn(duration: 220.ms, curve: Curves.easeOut)
-          .scale(
+      ).animate().fadeIn(duration: 220.ms, curve: Curves.easeOut).scale(
             begin: const Offset(0.97, 0.97),
             end: const Offset(1, 1),
             duration: 220.ms,

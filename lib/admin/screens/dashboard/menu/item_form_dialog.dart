@@ -387,7 +387,8 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: isMobile ? size.width * 0.94 : 540),
+        constraints:
+            BoxConstraints(maxWidth: isMobile ? size.width * 0.94 : 540),
         child: Container(
           constraints: BoxConstraints(maxHeight: size.height * 0.88),
           decoration: BoxDecoration(
@@ -598,7 +599,8 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                                         : 'Add a new dish to your menu',
                                     style: GoogleFonts.inter(
                                       fontSize: 12.5,
-                                      color: Colors.white.withValues(alpha: 0.85),
+                                      color:
+                                          Colors.white.withValues(alpha: 0.85),
                                     ),
                                   ),
                                 ],
@@ -741,7 +743,8 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                             ),
                             child: TextFormField(
                               controller: _imageController,
-                              style: GoogleFonts.inter(color: _Palette.textDark),
+                              style:
+                                  GoogleFonts.inter(color: _Palette.textDark),
                               decoration: _fieldDecoration(
                                 label: 'Image URL',
                                 icon: Icons.link_rounded,
@@ -774,8 +777,8 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                                   _cleanedPreview = _cleanImageUrl(val.trim());
                                 });
                               },
-                              onSaved: (val) => _imageUrl =
-                                  _cleanImageUrl(val?.trim() ?? ''),
+                              onSaved: (val) =>
+                                  _imageUrl = _cleanImageUrl(val?.trim() ?? ''),
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -803,8 +806,7 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                             ),
                             child: _cleanedPreview.isEmpty
                                 ? Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.center,
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Icon(
                                         Icons.image_outlined,
@@ -883,13 +885,15 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                             ),
                             child: TextFormField(
                               initialValue: _description,
-                              style: GoogleFonts.inter(color: _Palette.textDark),
+                              style:
+                                  GoogleFonts.inter(color: _Palette.textDark),
                               maxLines: 3,
                               decoration: _fieldDecoration(
                                 label: 'Short description of this item',
                                 icon: Icons.notes_rounded,
                               ),
-                              onSaved: (val) => _description = val?.trim() ?? '',
+                              onSaved: (val) =>
+                                  _description = val?.trim() ?? '',
                             ),
                           ),
                           const SizedBox(height: 18),
@@ -953,7 +957,8 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                           foregroundColor: _Palette.textMuted,
                           backgroundColor: Colors.white,
                           side: BorderSide(
-                            color: _Palette.milanoRedDeep.withValues(alpha: 0.14),
+                            color:
+                                _Palette.milanoRedDeep.withValues(alpha: 0.14),
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
@@ -976,8 +981,8 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                               ? const []
                               : [
                                   BoxShadow(
-                                    color:
-                                        _Palette.milanoRed.withValues(alpha: 0.32),
+                                    color: _Palette.milanoRed
+                                        .withValues(alpha: 0.32),
                                     blurRadius: 18,
                                     offset: const Offset(0, 8),
                                   ),
@@ -1038,10 +1043,7 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
               ),
             ],
           ),
-        )
-            .animate()
-            .fadeIn(duration: 220.ms, curve: Curves.easeOut)
-            .scale(
+        ).animate().fadeIn(duration: 220.ms, curve: Curves.easeOut).scale(
               begin: const Offset(0.96, 0.96),
               end: const Offset(1, 1),
               duration: 220.ms,

@@ -96,8 +96,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late TextEditingController _emailController;
 
   static const List<String> _monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
 
   String _todayLabel() {
@@ -256,7 +266,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               children: [
                                 _buildHeaderCard(r, isMobile),
                                 const SizedBox(height: 32),
-
                                 Row(
                                   children: [
                                     Container(
@@ -264,8 +273,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       height: 20,
                                       decoration: BoxDecoration(
                                         color: _Palette.milanoRed,
-                                        borderRadius:
-                                            BorderRadius.circular(4),
+                                        borderRadius: BorderRadius.circular(4),
                                       ),
                                     ),
                                     const SizedBox(width: 8),
@@ -281,9 +289,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                                 const SizedBox(height: 16),
                                 _buildDetailsGrid(r, isMobile),
-
                                 const SizedBox(height: 32),
-
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
@@ -316,33 +322,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           _isEditing = false;
                                           _populateFields();
                                         }),
-                                        icon: const Icon(Icons.close,
-                                            size: 18),
+                                        icon: const Icon(Icons.close, size: 18),
                                         label: const Text('Done'),
                                         style: TextButton.styleFrom(
-                                          foregroundColor:
-                                              _Palette.milanoRed,
+                                          foregroundColor: _Palette.milanoRed,
                                         ),
                                       )
                                     else
                                       TextButton.icon(
                                         onPressed: () =>
                                             setState(() => _isEditing = true),
-                                        icon: const Icon(Icons.edit,
-                                            size: 18),
+                                        icon: const Icon(Icons.edit, size: 18),
                                         label: const Text('Edit'),
                                         style: TextButton.styleFrom(
-                                          foregroundColor:
-                                              _Palette.milanoRed,
+                                          foregroundColor: _Palette.milanoRed,
                                         ),
                                       ),
                                   ],
                                 ),
                                 const SizedBox(height: 16),
                                 _buildContactsSection(restaurantProv),
-
                                 const SizedBox(height: 32),
-
                                 Row(
                                   children: [
                                     Container(
@@ -350,8 +350,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       height: 20,
                                       decoration: BoxDecoration(
                                         color: _Palette.milanoRed,
-                                        borderRadius:
-                                            BorderRadius.circular(4),
+                                        borderRadius: BorderRadius.circular(4),
                                       ),
                                     ),
                                     const SizedBox(width: 8),
@@ -379,9 +378,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     value: 'Administrator',
                                   ),
                                 ]),
-
                                 const SizedBox(height: 40),
-
                                 SizedBox(
                                   width: double.infinity,
                                   child: OutlinedButton.icon(
@@ -403,8 +400,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         vertical: 16,
                                       ),
                                       shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(16),
+                                        borderRadius: BorderRadius.circular(16),
                                       ),
                                     ),
                                     icon: const Icon(Icons.logout, size: 18),

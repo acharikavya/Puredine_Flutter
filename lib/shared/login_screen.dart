@@ -397,9 +397,11 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
                                       width: 1,
                                     ),
                                   ),
-                                ).animate(
-                                  onPlay: (c) => c.repeat(reverse: true),
-                                ).scale(
+                                )
+                                    .animate(
+                                      onPlay: (c) => c.repeat(reverse: true),
+                                    )
+                                    .scale(
                                       duration: 1800.ms,
                                       begin: const Offset(0.92, 0.92),
                                       end: const Offset(1.04, 1.04),
@@ -560,10 +562,13 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
                                 ),
                               ),
                             ),
-                          ).animate().fadeIn(
+                          )
+                              .animate()
+                              .fadeIn(
                                 duration: 400.ms,
                                 delay: 180.ms,
-                              ).slideY(
+                              )
+                              .slideY(
                                 begin: 0.2,
                                 end: 0,
                                 duration: 400.ms,
@@ -702,7 +707,10 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
                             hint: 'Enter your email',
                             icon: Icons.mail_outline_rounded,
                             isCompact: isTinyScreen,
-                          ).animate().fadeIn(duration: 350.ms, delay: 80.ms).slideX(
+                          )
+                              .animate()
+                              .fadeIn(duration: 350.ms, delay: 80.ms)
+                              .slideX(
                                 begin: -0.03,
                                 end: 0,
                                 duration: 350.ms,
@@ -730,7 +738,10 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
                                 () => _obscurePassword = !_obscurePassword,
                               ),
                             ),
-                          ).animate().fadeIn(duration: 350.ms, delay: 140.ms).slideX(
+                          )
+                              .animate()
+                              .fadeIn(duration: 350.ms, delay: 140.ms)
+                              .slideX(
                                 begin: -0.03,
                                 end: 0,
                                 duration: 350.ms,
@@ -746,8 +757,7 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
                                   vertical: 4,
                                 ),
                                 minimumSize: Size.zero,
-                                tapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
                               onPressed: () => context.push('/forgot-password'),
                               child: Text(
@@ -788,8 +798,7 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
                                 onTap: auth.isLoading ? null : _handleLogin,
                                 child: Center(
                                   child: AnimatedSwitcher(
-                                    duration:
-                                        const Duration(milliseconds: 250),
+                                    duration: const Duration(milliseconds: 250),
                                     child: auth.isLoading
                                         ? const SizedBox(
                                             key: ValueKey('loading'),
@@ -898,9 +907,7 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
         color: _LoginPalette.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: hasFocus
-              ? _LoginPalette.milanoRed
-              : _LoginPalette.fieldBorder,
+          color: hasFocus ? _LoginPalette.milanoRed : _LoginPalette.fieldBorder,
           width: hasFocus ? 1.8 : 1.4,
         ),
         boxShadow: hasFocus

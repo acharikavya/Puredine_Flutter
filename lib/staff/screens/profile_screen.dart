@@ -320,8 +320,7 @@ class ProfileScreen extends StatelessWidget {
                         child: Column(
                           children: [
                             Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Row(
                                   children: [
@@ -337,8 +336,7 @@ class ProfileScreen extends StatelessWidget {
                                           begin: Alignment.topLeft,
                                           end: Alignment.bottomRight,
                                         ),
-                                        borderRadius:
-                                            BorderRadius.circular(11),
+                                        borderRadius: BorderRadius.circular(11),
                                         border: Border.all(
                                           color: _Palette.gold.withValues(
                                             alpha: 0.5,
@@ -445,8 +443,7 @@ class ProfileScreen extends StatelessWidget {
                                   ),
                                 ),
                                 child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     const Icon(
                                       Icons.logout_rounded,
@@ -548,7 +545,8 @@ class _SectionCard extends StatelessWidget {
   final IconData? icon;
   final Widget child;
 
-  const _SectionCard({required this.title, required this.icon, required this.child});
+  const _SectionCard(
+      {required this.title, required this.icon, required this.child});
 
   @override
   Widget build(BuildContext context) {

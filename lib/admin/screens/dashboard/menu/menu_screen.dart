@@ -112,8 +112,18 @@ class _MenuScreenState extends State<MenuScreen> {
   String _searchQuery = '';
 
   static const List<String> _monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
 
   String _todayLabel() {
@@ -924,8 +934,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                 ),
                                 style: OutlinedButton.styleFrom(
                                   side: BorderSide(
-                                    color:
-                                        Colors.white.withValues(alpha: 0.5),
+                                    color: Colors.white.withValues(alpha: 0.5),
                                     width: 1.5,
                                   ),
                                   padding: const EdgeInsets.symmetric(
@@ -1460,9 +1469,8 @@ class _MenuScreenState extends State<MenuScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: item.isAvailable
-                            ? _Palette.success
-                            : Colors.white,
+                        color:
+                            item.isAvailable ? _Palette.success : Colors.white,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
@@ -2100,7 +2108,8 @@ class _CategoryPill extends StatelessWidget {
             Icon(
               icon,
               size: 20,
-              color: isSelected ? _Palette.lemonChiffon : _Palette.milanoRedDeep,
+              color:
+                  isSelected ? _Palette.lemonChiffon : _Palette.milanoRedDeep,
             ),
             const SizedBox(height: 6),
             Text(

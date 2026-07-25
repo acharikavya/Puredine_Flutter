@@ -64,8 +64,18 @@ class _Palette {
 }
 
 const List<String> _kMonthNames = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 String _todayLabel() {
@@ -278,8 +288,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                           constraints: const BoxConstraints(maxWidth: 1100),
                           child: isWide
                               ? Row(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Expanded(
                                       flex: 5,

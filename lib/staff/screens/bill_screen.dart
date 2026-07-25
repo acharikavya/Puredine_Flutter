@@ -310,8 +310,7 @@ class BillScreen extends StatelessWidget {
                                         children: [
                                           Row(
                                             mainAxisAlignment:
-                                                MainAxisAlignment
-                                                    .spaceBetween,
+                                                MainAxisAlignment.spaceBetween,
                                             children: [
                                               Text(
                                                 'Total Amount',
@@ -349,8 +348,7 @@ class BillScreen extends StatelessWidget {
                                           const SizedBox(height: 10),
                                           if (order != null) ...[
                                             _ReceiptRow('Table', order.table),
-                                            if (order.customerName !=
-                                                null) ...[
+                                            if (order.customerName != null) ...[
                                               const SizedBox(height: 10),
                                               _ReceiptRow(
                                                 'Customer',
@@ -381,8 +379,7 @@ class BillScreen extends StatelessWidget {
                                           ),
                                           child: Row(
                                             mainAxisAlignment:
-                                                MainAxisAlignment
-                                                    .spaceBetween,
+                                                MainAxisAlignment.spaceBetween,
                                             children: [
                                               Text(
                                                 '${item.quantity}x ${item.name}',
@@ -478,8 +475,7 @@ class BillScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 12),
                                     PremiumBackButton(
-                                      label: auth.role ==
-                                              StaffRole.billingStaff
+                                      label: auth.role == StaffRole.billingStaff
                                           ? 'Back to Billing'
                                           : 'Back to Dashboard',
                                       onTap: goBack,

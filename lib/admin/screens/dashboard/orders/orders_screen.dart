@@ -236,7 +236,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                               shape: BoxShape.circle,
                               gradient: RadialGradient(
                                 colors: [
-                                  _OrdersTheme.lemonChiffon.withValues(alpha: 0.5),
+                                  _OrdersTheme.lemonChiffon
+                                      .withValues(alpha: 0.5),
                                   Colors.transparent,
                                 ],
                               ),
@@ -253,7 +254,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                               shape: BoxShape.circle,
                               gradient: RadialGradient(
                                 colors: [
-                                  _OrdersTheme.milanoRed.withValues(alpha: 0.07),
+                                  _OrdersTheme.milanoRed
+                                      .withValues(alpha: 0.07),
                                   Colors.transparent,
                                 ],
                               ),
@@ -456,7 +458,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: _OrdersTheme.goldSoft.withValues(alpha: 0.6),
+                                color: _OrdersTheme.goldSoft
+                                    .withValues(alpha: 0.6),
                                 width: 1.2,
                               ),
                             ),
@@ -525,7 +528,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: _OrdersTheme.goldSoft.withValues(alpha: 0.6),
+                                color: _OrdersTheme.goldSoft
+                                    .withValues(alpha: 0.6),
                                 width: 1.2,
                               ),
                             ),
@@ -573,7 +577,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: _OrdersTheme.gold.withValues(alpha: 0.6),
+                                      color: _OrdersTheme.gold
+                                          .withValues(alpha: 0.6),
                                       blurRadius: 8,
                                     ),
                                   ],
@@ -858,19 +863,22 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(
-                              color: _OrdersTheme.milanoRed.withValues(alpha: 0.2),
+                              color:
+                                  _OrdersTheme.milanoRed.withValues(alpha: 0.2),
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(
-                              color: _OrdersTheme.milanoRed.withValues(alpha: 0.12),
+                              color: _OrdersTheme.milanoRed
+                                  .withValues(alpha: 0.12),
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(
-                              color: _OrdersTheme.milanoRed.withValues(alpha: 0.55),
+                              color: _OrdersTheme.milanoRed
+                                  .withValues(alpha: 0.55),
                               width: 1.4,
                             ),
                           ),
@@ -948,7 +956,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        border: Border.all(color: _OrdersTheme.milanoRed.withValues(alpha: 0.2)),
+        border:
+            Border.all(color: _OrdersTheme.milanoRed.withValues(alpha: 0.2)),
         borderRadius: BorderRadius.circular(8),
       ),
       child: DropdownButtonHideUnderline(
@@ -1127,7 +1136,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
               ElevatedButton(
                 onPressed: () => _showOrderDetails(o),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _OrdersTheme.milanoRed.withValues(alpha: 0.08),
+                  backgroundColor:
+                      _OrdersTheme.milanoRed.withValues(alpha: 0.08),
                   foregroundColor: _OrdersTheme.milanoRed,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -1700,7 +1710,8 @@ class _PaymentDialogState extends State<_PaymentDialog> {
     return Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
-        side: BorderSide(color: _OrdersTheme.gold.withValues(alpha: 0.4), width: 1.2),
+        side: BorderSide(
+            color: _OrdersTheme.gold.withValues(alpha: 0.4), width: 1.2),
       ),
       elevation: 16,
       child: ConstrainedBox(
@@ -1870,7 +1881,8 @@ class _PaymentDialogState extends State<_PaymentDialog> {
                             borderRadius: BorderRadius.circular(100),
                           ),
                           elevation: 4,
-                          shadowColor: _OrdersTheme.milanoRed.withValues(alpha: 0.4),
+                          shadowColor:
+                              _OrdersTheme.milanoRed.withValues(alpha: 0.4),
                         ),
                       ),
                     ),
@@ -2012,7 +2024,8 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: _OrdersTheme.gold.withValues(alpha: 0.4), width: 1.2),
+        side: BorderSide(
+            color: _OrdersTheme.gold.withValues(alpha: 0.4), width: 1.2),
       ),
       elevation: 20,
       backgroundColor: Colors.white,
@@ -2458,7 +2471,8 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
                               vertical: 16,
                             ),
                             decoration: BoxDecoration(
-                              color: _OrdersTheme.lemonChiffon.withValues(alpha: 0.4),
+                              color: _OrdersTheme.lemonChiffon
+                                  .withValues(alpha: 0.4),
                               borderRadius: const BorderRadius.vertical(
                                 top: Radius.circular(12),
                               ),

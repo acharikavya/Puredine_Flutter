@@ -388,7 +388,8 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                                         : 'Add a new category to your menu',
                                     style: GoogleFonts.inter(
                                       fontSize: 12.5,
-                                      color: Colors.white.withValues(alpha: 0.85),
+                                      color:
+                                          Colors.white.withValues(alpha: 0.85),
                                     ),
                                   ),
                                 ],
@@ -507,7 +508,8 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: _Palette.lemonChiffon.withValues(alpha: 0.5),
+                              color:
+                                  _Palette.lemonChiffon.withValues(alpha: 0.5),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
@@ -560,7 +562,8 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                           foregroundColor: _Palette.textMuted,
                           backgroundColor: Colors.white,
                           side: BorderSide(
-                            color: _Palette.milanoRedDeep.withValues(alpha: 0.14),
+                            color:
+                                _Palette.milanoRedDeep.withValues(alpha: 0.14),
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
@@ -583,8 +586,8 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                               ? const []
                               : [
                                   BoxShadow(
-                                    color:
-                                        _Palette.milanoRed.withValues(alpha: 0.32),
+                                    color: _Palette.milanoRed
+                                        .withValues(alpha: 0.32),
                                     blurRadius: 18,
                                     offset: const Offset(0, 8),
                                   ),
@@ -647,10 +650,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
               ),
             ],
           ),
-        )
-            .animate()
-            .fadeIn(duration: 220.ms, curve: Curves.easeOut)
-            .scale(
+        ).animate().fadeIn(duration: 220.ms, curve: Curves.easeOut).scale(
               begin: const Offset(0.96, 0.96),
               end: const Offset(1, 1),
               duration: 220.ms,

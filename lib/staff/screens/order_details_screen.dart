@@ -76,8 +76,18 @@ class _Palette {
 }
 
 const List<String> _kMonthNames = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 String _todayLabel() {
@@ -360,8 +370,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                                         color: _Palette.milanoRed.withValues(
                                           alpha: 0.08,
                                         ),
-                                        borderRadius:
-                                            BorderRadius.circular(11),
+                                        borderRadius: BorderRadius.circular(11),
                                         border: Border.all(
                                           color: _Palette.gold.withValues(
                                             alpha: 0.3,
@@ -429,8 +438,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                             ),
                             const SizedBox(height: 14),
                             Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
                                   'Total',

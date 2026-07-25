@@ -76,10 +76,13 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
   List<MenuItem> get _filteredItems {
     final q = _searchQuery.trim().toLowerCase();
     if (q.isEmpty) return widget.allItems;
-    return widget.allItems.where((i) => i.name.toLowerCase().contains(q)).toList();
+    return widget.allItems
+        .where((i) => i.name.toLowerCase().contains(q))
+        .toList();
   }
 
-  Map<String, dynamic> _itemPayload(MenuItem item, {required String categoryId}) {
+  Map<String, dynamic> _itemPayload(MenuItem item,
+      {required String categoryId}) {
     return {
       'name': item.name,
       'description': item.description ?? '',
@@ -117,7 +120,8 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
         if (shouldBeSpecial && !isCurrentlySpecial) {
           // Move to Today's Special.
           futures.add(
-            MenuService.updateItem(item.id, _itemPayload(item, categoryId: catId)),
+            MenuService.updateItem(
+                item.id, _itemPayload(item, categoryId: catId)),
           );
         } else if (!shouldBeSpecial && isCurrentlySpecial) {
           // Remove from Today's Special — move to first non-special category.
@@ -149,7 +153,8 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
             content: const Text("Today's Special updated!"),
             backgroundColor: AppColors.success,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
       }
@@ -162,7 +167,8 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
             ),
             backgroundColor: AppColors.danger,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
       }
@@ -254,9 +260,11 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                 color: Colors.white.withOpacity(0.08),
                 shape: const CircleBorder(),
                 child: IconButton(
-                  icon: const Icon(Icons.close_rounded, color: _SpecialTheme.textOnMaroon),
+                  icon: const Icon(Icons.close_rounded,
+                      color: _SpecialTheme.textOnMaroon),
                   splashRadius: 22,
-                  onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+                  onPressed:
+                      _isSubmitting ? null : () => Navigator.pop(context),
                 ),
               ),
             ],
@@ -305,7 +313,8 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
               color: _SpecialTheme.gold.withOpacity(0.2),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.info_outline_rounded, size: 14, color: _SpecialTheme.goldDark),
+            child: const Icon(Icons.info_outline_rounded,
+                size: 14, color: _SpecialTheme.goldDark),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -341,23 +350,29 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
         ),
         child: TextField(
           onChanged: (v) => setState(() => _searchQuery = v),
-          style: GoogleFonts.inter(fontSize: 14, color: _SpecialTheme.maroonDeeper),
+          style: GoogleFonts.inter(
+              fontSize: 14, color: _SpecialTheme.maroonDeeper),
           decoration: InputDecoration(
             hintText: 'Search items...',
-            hintStyle: GoogleFonts.inter(color: Colors.grey.shade500, fontSize: 13.5),
-            prefixIcon: const Icon(Icons.search_rounded, size: 20, color: _SpecialTheme.maroon),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            hintStyle:
+                GoogleFonts.inter(color: Colors.grey.shade500, fontSize: 13.5),
+            prefixIcon: const Icon(Icons.search_rounded,
+                size: 20, color: _SpecialTheme.maroon),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _SpecialTheme.maroon.withOpacity(0.12)),
+              borderSide:
+                  BorderSide(color: _SpecialTheme.maroon.withOpacity(0.12)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _SpecialTheme.gold, width: 1.6),
+              borderSide:
+                  const BorderSide(color: _SpecialTheme.gold, width: 1.6),
             ),
             filled: true,
             fillColor: _SpecialTheme.creamLighter,
@@ -376,7 +391,8 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.restaurant_menu_rounded, size: 40, color: _SpecialTheme.maroon.withOpacity(0.3)),
+              Icon(Icons.restaurant_menu_rounded,
+                  size: 40, color: _SpecialTheme.maroon.withOpacity(0.3)),
               const SizedBox(height: 10),
               Text(
                 'No menu items available yet. Add items to your menu first.',
@@ -396,7 +412,8 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.search_off_rounded, size: 36, color: _SpecialTheme.maroon.withOpacity(0.3)),
+            Icon(Icons.search_off_rounded,
+                size: 36, color: _SpecialTheme.maroon.withOpacity(0.3)),
             const SizedBox(height: 8),
             Text(
               'No items found',
@@ -416,16 +433,21 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
         itemBuilder: (ctx, i) {
           final item = filtered[i];
           final isSelected = _specialItemIds.contains(item.id);
-          final displayName = item.name.trim().isEmpty ? 'Unnamed item' : item.name;
+          final displayName =
+              item.name.trim().isEmpty ? 'Unnamed item' : item.name;
           final price = item.price;
 
           return AnimatedContainer(
             duration: const Duration(milliseconds: 180),
             decoration: BoxDecoration(
-              color: isSelected ? _SpecialTheme.maroon.withOpacity(0.06) : _SpecialTheme.creamLighter,
+              color: isSelected
+                  ? _SpecialTheme.maroon.withOpacity(0.06)
+                  : _SpecialTheme.creamLighter,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isSelected ? _SpecialTheme.gold : Colors.black.withOpacity(0.06),
+                color: isSelected
+                    ? _SpecialTheme.gold
+                    : Colors.black.withOpacity(0.06),
                 width: isSelected ? 1.5 : 1,
               ),
               boxShadow: isSelected
@@ -462,13 +484,16 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.w600,
                   fontSize: 14.5,
-                  color: isSelected ? _SpecialTheme.maroonDeeper : AppColors.textDark,
+                  color: isSelected
+                      ? _SpecialTheme.maroonDeeper
+                      : AppColors.textDark,
                 ),
               ),
               subtitle: Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: _SpecialTheme.gold.withOpacity(0.18),
                     borderRadius: BorderRadius.circular(6),
@@ -498,7 +523,9 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                             color: _SpecialTheme.cream,
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Icon(Icons.broken_image_rounded, size: 20, color: _SpecialTheme.maroon.withOpacity(0.4)),
+                          child: Icon(Icons.broken_image_rounded,
+                              size: 20,
+                              color: _SpecialTheme.maroon.withOpacity(0.4)),
                         ),
                       ),
                     )
@@ -508,11 +535,15 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                       decoration: BoxDecoration(
                         color: _SpecialTheme.cream,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: _SpecialTheme.maroon.withOpacity(0.12)),
+                        border: Border.all(
+                            color: _SpecialTheme.maroon.withOpacity(0.12)),
                       ),
-                      child: Icon(Icons.fastfood_rounded, size: 20, color: _SpecialTheme.maroon.withOpacity(0.55)),
+                      child: Icon(Icons.fastfood_rounded,
+                          size: 20,
+                          color: _SpecialTheme.maroon.withOpacity(0.55)),
                     ),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
               controlAffinity: ListTileControlAffinity.trailing,
             ),
           );
@@ -525,7 +556,8 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
       decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: _SpecialTheme.maroon.withOpacity(0.1))),
+        border: Border(
+            top: BorderSide(color: _SpecialTheme.maroon.withOpacity(0.1))),
         color: _SpecialTheme.creamLighter,
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(22),
@@ -570,9 +602,11 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                 },
                 style: TextButton.styleFrom(
                   foregroundColor: _SpecialTheme.maroonDark,
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                 ),
-                child: Text('Cancel', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                child: Text('Cancel',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
               ),
               Container(
                 decoration: BoxDecoration(
@@ -589,7 +623,8 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                   ],
                 ),
                 child: ElevatedButton.icon(
-                  onPressed: (_isSubmitting || widget.allItems.isEmpty) ? null : _save,
+                  onPressed:
+                      (_isSubmitting || widget.allItems.isEmpty) ? null : _save,
                   icon: _isSubmitting
                       ? const SizedBox(
                           width: 14,
@@ -611,10 +646,12 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                     backgroundColor: Colors.transparent,
                     shadowColor: Colors.transparent,
                     disabledBackgroundColor: Colors.transparent,
-                    padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 22, vertical: 13),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
-                      side: BorderSide(color: _SpecialTheme.gold.withOpacity(0.5), width: 1),
+                      side: BorderSide(
+                          color: _SpecialTheme.gold.withOpacity(0.5), width: 1),
                     ),
                   ),
                 ),
@@ -646,7 +683,8 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
         decoration: BoxDecoration(
           color: _SpecialTheme.cream,
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: _SpecialTheme.gold.withOpacity(0.25), width: 1.2),
+          border: Border.all(
+              color: _SpecialTheme.gold.withOpacity(0.25), width: 1.2),
           boxShadow: [
             BoxShadow(
               color: _SpecialTheme.maroonDeeper.withOpacity(0.35),

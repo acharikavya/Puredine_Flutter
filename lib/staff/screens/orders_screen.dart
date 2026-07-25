@@ -76,8 +76,18 @@ class _Palette {
 }
 
 const List<String> _kMonthNames = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 String _todayLabel() {
@@ -357,7 +367,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                               final config = _getStatusConfig(order.status);
                               return _OrderCard(order: order, config: config)
                                   .animate()
-                                  .fade(duration: 400.ms, delay: (index * 50).ms)
+                                  .fade(
+                                      duration: 400.ms, delay: (index * 50).ms)
                                   .slideY(
                                     begin: 0.2,
                                     end: 0,
@@ -423,10 +434,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                                       _Palette.gold,
                                                       _Palette.goldLight,
                                                     ],
-                                                    begin:
-                                                        Alignment.topCenter,
-                                                    end: Alignment
-                                                        .bottomCenter,
+                                                    begin: Alignment.topCenter,
+                                                    end: Alignment.bottomCenter,
                                                   ),
                                                   borderRadius:
                                                       BorderRadius.circular(
@@ -1015,7 +1024,8 @@ class _HeaderCreateOrderButtonState extends State<_HeaderCreateOrderButton> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.add_circle_outline, color: Colors.white, size: 18),
+              const Icon(Icons.add_circle_outline,
+                  color: Colors.white, size: 18),
               const SizedBox(width: 8),
               Text(
                 'Create Order',

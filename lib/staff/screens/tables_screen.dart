@@ -74,8 +74,18 @@ class _Palette {
 }
 
 const List<String> _kMonthNames = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 String _todayLabel() {
@@ -269,8 +279,7 @@ class _TablesScreenState extends State<TablesScreen> {
                         ? Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: filters
-                                .map(
-                                    (f) => _buildFilterButton(f, isWide: true))
+                                .map((f) => _buildFilterButton(f, isWide: true))
                                 .toList(),
                           )
                         : SingleChildScrollView(
@@ -279,10 +288,9 @@ class _TablesScreenState extends State<TablesScreen> {
                               children: filters
                                   .map(
                                     (f) => Padding(
-                                      padding:
-                                          const EdgeInsets.only(right: 10),
-                                      child: _buildFilterButton(f,
-                                          isWide: false),
+                                      padding: const EdgeInsets.only(right: 10),
+                                      child:
+                                          _buildFilterButton(f, isWide: false),
                                     ),
                                   )
                                   .toList(),
@@ -351,19 +359,16 @@ class _TablesScreenState extends State<TablesScreen> {
                           constraints: const BoxConstraints(maxWidth: 1280),
                           child: isWide
                               ? Row(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     // Sidebar Filter Panel
                                     Container(
                                       width: 240,
-                                      margin:
-                                          const EdgeInsets.only(right: 24),
+                                      margin: const EdgeInsets.only(right: 24),
                                       padding: const EdgeInsets.all(20),
                                       decoration: BoxDecoration(
                                         color: Colors.white,
-                                        borderRadius:
-                                            BorderRadius.circular(26),
+                                        borderRadius: BorderRadius.circular(26),
                                         border: Border.all(
                                           color: _Palette.milanoRedDeep
                                               .withValues(alpha: 0.10),
@@ -396,8 +401,7 @@ class _TablesScreenState extends State<TablesScreen> {
                                   ],
                                 )
                               : Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     filterList,
                                     const SizedBox(height: 20),
@@ -466,8 +470,7 @@ class _TablesScreenState extends State<TablesScreen> {
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                 decoration: BoxDecoration(
                   color: isActive
                       ? Colors.white.withValues(alpha: 0.25)
@@ -930,8 +933,7 @@ class _TableCard extends StatelessWidget {
 
           Expanded(
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
               child: Row(
                 children: [
                   // Icon container
@@ -953,8 +955,7 @@ class _TableCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child:
-                        Icon(config.icon, size: 26, color: config.textColor),
+                    child: Icon(config.icon, size: 26, color: config.textColor),
                   ),
                   const SizedBox(width: 16),
                   Expanded(

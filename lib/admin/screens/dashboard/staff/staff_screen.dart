@@ -95,8 +95,18 @@ class _StaffScreenState extends State<StaffScreen> {
   final _phoneCtrl = TextEditingController();
 
   static const List<String> _monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
 
   String _todayLabel() {
@@ -638,8 +648,7 @@ class _StaffScreenState extends State<StaffScreen> {
                                       height: 18,
                                       decoration: BoxDecoration(
                                         color: _Palette.milanoRed,
-                                        borderRadius:
-                                            BorderRadius.circular(4),
+                                        borderRadius: BorderRadius.circular(4),
                                       ),
                                     ),
                                     const SizedBox(width: 8),
@@ -998,7 +1007,10 @@ class _StaffScreenState extends State<StaffScreen> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [_Palette.cardWhite, _Palette.canvasDeep.withValues(alpha: 0.4)],
+          colors: [
+            _Palette.cardWhite,
+            _Palette.canvasDeep.withValues(alpha: 0.4)
+          ],
         ),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
@@ -1290,7 +1302,10 @@ class _StaffScreenState extends State<StaffScreen> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [_Palette.cardWhite, _Palette.canvasDeep.withValues(alpha: 0.35)],
+          colors: [
+            _Palette.cardWhite,
+            _Palette.canvasDeep.withValues(alpha: 0.35)
+          ],
         ),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(

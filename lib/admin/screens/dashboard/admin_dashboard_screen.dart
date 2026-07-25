@@ -160,8 +160,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   ];
 
   static const List<String> _monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
 
   String _todayLabel() {
@@ -540,142 +550,139 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               child: SafeArea(
                 bottom: false,
                 child: isMobile
-                        ? Column(
-                            mainAxisSize: MainAxisSize.min,
+                    ? Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
+                              _StatusBadge(
+                                isActive: restaurant?.isActive ?? true,
+                              ),
+                              // Compact right-hand cluster — both
+                              // controls are now fixed-size circular
+                              // buttons (notification bell + profile
+                              // initial), so they sit tightly together
+                              // on the right without ever needing to
+                              // shrink or wrap.
                               Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  _StatusBadge(
-                                    isActive: restaurant?.isActive ?? true,
-                                  ),
-                                  // Compact right-hand cluster — both
-                                  // controls are now fixed-size circular
-                                  // buttons (notification bell + profile
-                                  // initial), so they sit tightly together
-                                  // on the right without ever needing to
-                                  // shrink or wrap.
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      _NotificationButton(),
-                                      const SizedBox(width: 12),
-                                      _ProfileChip(
-                                        email: auth.userEmail ??
-                                            'admin@restaurant.com',
-                                      ),
-                                    ],
+                                  _NotificationButton(),
+                                  const SizedBox(width: 12),
+                                  _ProfileChip(
+                                    email: auth.userEmail ??
+                                        'admin@restaurant.com',
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 20),
-                              Text(
-                                restaurant?.name ?? 'PureDine Admin',
-                                style: GoogleFonts.playfairDisplay(
-                                  fontSize: 30,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  letterSpacing: 1.0,
-                                  height: 1.1,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 10),
-                              _TitleDivider(),
-                              const SizedBox(height: 10),
-                              Text(
-                                (restaurant?.restaurantType ?? 'CAFE')
-                                    .toUpperCase(),
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  color: _Palette.lemonChiffon,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 3,
-                                ),
-                              ),
                             ],
-                          )
-                        : Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              // Left spacer — keeps the brand block visually
-                              // centered without ever competing for space
-                              // with the right-hand controls.
-                              const Expanded(child: SizedBox()),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            restaurant?.name ?? 'PureDine Admin',
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 30,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 1.0,
+                              height: 1.1,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 10),
+                          _TitleDivider(),
+                          const SizedBox(height: 10),
+                          Text(
+                            (restaurant?.restaurantType ?? 'CAFE')
+                                .toUpperCase(),
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: _Palette.lemonChiffon,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 3,
+                            ),
+                          ),
+                        ],
+                      )
+                    : Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Left spacer — keeps the brand block visually
+                          // centered without ever competing for space
+                          // with the right-hand controls.
+                          const Expanded(child: SizedBox()),
 
-                              // Center: Brand Info. FittedBox lets the
-                              // title shrink gracefully on narrower
-                              // desktop/tablet widths instead of
-                              // overlapping the controls beside it.
-                              Expanded(
-                                flex: 3,
-                                child: Column(
+                          // Center: Brand Info. FittedBox lets the
+                          // title shrink gracefully on narrower
+                          // desktop/tablet widths instead of
+                          // overlapping the controls beside it.
+                          Expanded(
+                            flex: 3,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    restaurant?.name ?? 'PureDine Admin',
+                                    style: GoogleFonts.playfairDisplay(
+                                      fontSize: 46,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      letterSpacing: 1.2,
+                                      height: 1.1,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                _TitleDivider(),
+                                const SizedBox(height: 12),
+                                Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: Text(
-                                        restaurant?.name ?? 'PureDine Admin',
-                                        style: GoogleFonts.playfairDisplay(
-                                          fontSize: 46,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                          letterSpacing: 1.2,
-                                          height: 1.1,
-                                        ),
+                                    Text(
+                                      (restaurant?.restaurantType ?? 'CAFE')
+                                          .toUpperCase(),
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14,
+                                        color: _Palette.lemonChiffon,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 3,
                                       ),
                                     ),
-                                    const SizedBox(height: 12),
-                                    _TitleDivider(),
-                                    const SizedBox(height: 12),
-                                    Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          (restaurant?.restaurantType ??
-                                                  'CAFE')
-                                              .toUpperCase(),
-                                          style: GoogleFonts.inter(
-                                            fontSize: 14,
-                                            color: _Palette.lemonChiffon,
-                                            fontWeight: FontWeight.bold,
-                                            letterSpacing: 3,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 14),
-                                        _StatusBadge(
-                                          isActive:
-                                              restaurant?.isActive ?? true,
-                                        ),
-                                      ],
+                                    const SizedBox(width: 14),
+                                    _StatusBadge(
+                                      isActive: restaurant?.isActive ?? true,
                                     ),
                                   ],
                                 ),
-                              ),
-
-                              // Right: Notification + Profile — both fixed
-                              // 40x40 circular buttons (bell icon, avatar
-                              // initial), aligned to the right on wide
-                              // screens exactly as on mobile.
-                              Expanded(
-                                child: Align(
-                                  alignment: Alignment.centerRight,
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      _NotificationButton(),
-                                      const SizedBox(width: 16),
-                                      _ProfileChip(
-                                        email: auth.userEmail ??
-                                            'admin@restaurant.com',
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
+
+                          // Right: Notification + Profile — both fixed
+                          // 40x40 circular buttons (bell icon, avatar
+                          // initial), aligned to the right on wide
+                          // screens exactly as on mobile.
+                          Expanded(
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _NotificationButton(),
+                                  const SizedBox(width: 16),
+                                  _ProfileChip(
+                                    email: auth.userEmail ??
+                                        'admin@restaurant.com',
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
               ),
             ),
           ],
@@ -1591,8 +1598,7 @@ class _TopToastWidgetState extends State<_TopToastWidget>
                           widthFactor: value.clamp(0.0, 1.0),
                           child: Container(
                             height: 3,
-                            color:
-                                _Palette.milanoRed.withValues(alpha: 0.55),
+                            color: _Palette.milanoRed.withValues(alpha: 0.55),
                           ),
                         ),
                       );

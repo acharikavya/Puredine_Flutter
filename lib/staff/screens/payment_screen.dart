@@ -73,8 +73,18 @@ class _Palette {
 }
 
 const List<String> _kMonthNames = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 String _todayLabel() {
@@ -295,8 +305,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                         color: _Palette.milanoRed.withValues(
                                           alpha: 0.08,
                                         ),
-                                        borderRadius:
-                                            BorderRadius.circular(10),
+                                        borderRadius: BorderRadius.circular(10),
                                         border: Border.all(
                                           color: _Palette.gold.withValues(
                                             alpha: 0.3,
@@ -613,9 +622,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                                 ],
                                               )
                                             : null,
-                                        color: isSelected
-                                            ? null
-                                            : _Palette.canvas,
+                                        color:
+                                            isSelected ? null : _Palette.canvas,
                                         borderRadius: BorderRadius.circular(
                                           11,
                                         ),

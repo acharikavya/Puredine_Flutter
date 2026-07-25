@@ -440,11 +440,10 @@ class _BillingScreenState extends State<BillingScreen> {
                                                     width: 4,
                                                     height: 14,
                                                     decoration: BoxDecoration(
-                                                      color:
-                                                          _Palette.milanoRed,
+                                                      color: _Palette.milanoRed,
                                                       borderRadius:
-                                                          BorderRadius
-                                                              .circular(4),
+                                                          BorderRadius.circular(
+                                                              4),
                                                     ),
                                                   ),
                                                   const SizedBox(width: 8),
@@ -453,8 +452,7 @@ class _BillingScreenState extends State<BillingScreen> {
                                                     style: AppTheme.sans(
                                                       size: 12,
                                                       weight: FontWeight.w700,
-                                                      color:
-                                                          _Palette.textMuted,
+                                                      color: _Palette.textMuted,
                                                     ).copyWith(
                                                       letterSpacing: 1.0,
                                                     ),
@@ -909,8 +907,8 @@ class _BillingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSmall = MediaQuery.of(context).size.width < 400;
-    final isUnpaid =
-        order.status == OrderStatus.served || order.status == OrderStatus.billed;
+    final isUnpaid = order.status == OrderStatus.served ||
+        order.status == OrderStatus.billed;
 
     return GestureDetector(
       onTap: () {

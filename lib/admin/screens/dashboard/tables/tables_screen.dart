@@ -75,8 +75,18 @@ class _TablesScreenState extends State<TablesScreen> {
   final _capacityCtrl = TextEditingController(text: '4');
 
   static const List<String> _monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
 
   String _todayLabel() {
@@ -656,7 +666,8 @@ class _TablesScreenState extends State<TablesScreen> {
                     Expanded(
                       child: SingleChildScrollView(
                         padding: EdgeInsets.symmetric(
-                          horizontal: isMobile ? 16 : (size.width > 1400 ? 64 : 40),
+                          horizontal:
+                              isMobile ? 16 : (size.width > 1400 ? 64 : 40),
                           vertical: 24,
                         ),
                         child: Column(
@@ -1414,9 +1425,8 @@ class _TablesScreenState extends State<TablesScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 9,
                     fontWeight: FontWeight.bold,
-                    color: isOccupied
-                        ? _Palette.milanoRedDeep
-                        : _Palette.success,
+                    color:
+                        isOccupied ? _Palette.milanoRedDeep : _Palette.success,
                   ),
                 ),
               ),

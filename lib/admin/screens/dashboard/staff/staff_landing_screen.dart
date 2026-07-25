@@ -75,8 +75,18 @@ class StaffLandingScreen extends StatelessWidget {
   const StaffLandingScreen({super.key});
 
   static const List<String> _monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
 
   static String _todayLabel() {
@@ -700,9 +710,8 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.5,
-                        color: _isHovered
-                            ? Colors.white
-                            : _Palette.milanoRedDeep,
+                        color:
+                            _isHovered ? Colors.white : _Palette.milanoRedDeep,
                       ),
                     ),
                   ),
@@ -828,8 +837,7 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
                                     decoration: BoxDecoration(
                                       color: _Palette.milanoRed
                                           .withValues(alpha: 0.08),
-                                      borderRadius:
-                                          BorderRadius.circular(100),
+                                      borderRadius: BorderRadius.circular(100),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,

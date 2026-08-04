@@ -21,6 +21,25 @@ class StaffService {
     return StaffMember.fromJson(data);
   }
 
+  /// Updates an existing staff member's details (name, email, phone, role,
+  /// and optionally password). Mirrors `createStaff` exactly — same request
+  /// pattern, just targeted at the specific staff member's endpoint via
+  /// `ApiEndpoints.staffById` (the same endpoint `deleteStaff` already uses)
+  /// and sent as a PATCH instead of a POST, consistent with how
+  /// `toggleStaff` already uses PATCH for partial updates on a single staff
+  /// record.
+  static Future<StaffMember> updateStaff(
+    String staffId,
+    Map<String, dynamic> body,
+  ) async {
+    final data = await ApiService.patch(
+      ApiEndpoints.staffById(staffId),
+      body: body,
+      requiresAuth: true,
+    );
+    return StaffMember.fromJson(data);
+  }
+
   static Future<void> toggleStaff(String staffId) async {
     await ApiService.patch(
       ApiEndpoints.toggleStaff(staffId),

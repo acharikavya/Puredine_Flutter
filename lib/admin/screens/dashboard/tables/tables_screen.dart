@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -15,6 +16,17 @@ import 'package:restaurant_unified_app/utils/file_download_helper.dart';
 /// part of the same consistent brand instead of its own one-off theme.
 /// Used ONLY for this screen's restyle. Nothing here touches AppColors or
 /// any other file — pure UI enhancement, no logic changed anywhere here.
+///
+/// UI-ENHANCEMENT PASS 2: brings this screen's header up to the same
+/// distinctive "command bar" identity used on the Admin Orders screen — a
+/// richer four-stop diagonal gradient, a large faint watermark emblem,
+/// and a fine glass highlight line along the top edge. The full-screen
+/// backdrop gained an extra ambient glow + a diagonal sheen for more
+/// depth, and the stat cards picked up the same slim color-coded top cap
+/// used on the Orders screen's stat cards so each figure has its own
+/// subtle identity at a glance. No provider, service, filtering, dialog,
+/// QR-generation, or download logic was touched anywhere in this pass —
+/// only presentation changed.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   _Palette._();
@@ -22,6 +34,7 @@ class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D); // Primary maroon
   static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
   static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
+  static const Color milanoRedDarkest = Color(0xFF320A0A); // Fourth gradient stop
   static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow
   static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
   static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
@@ -189,46 +202,59 @@ class _TablesScreenState extends State<TablesScreen> {
         ),
         actionsAlignment: MainAxisAlignment.center,
         actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        // NOTE: the two buttons are wrapped in a single Row (instead of
+        // being passed to `actions` as separate Expanded items) because
+        // AlertDialog renders its `actions` list inside an internal
+        // OverflowBar, which does not provide the FlexParentData that
+        // Expanded needs — passing Expanded directly as an actions item
+        // throws "Incorrect use of ParentDataWidget". Wrapping them in one
+        // Row (itself a proper Flex) as the single actions item keeps the
+        // exact same equal-width, 10px-gapped button layout without the
+        // crash. (Same fix applied to StaffScreen's dialogs.)
         actions: [
-          Expanded(
-            child: OutlinedButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: _Palette.textMuted,
-                side: BorderSide(
-                  color: _Palette.milanoRedDeep.withValues(alpha: 0.15),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 13),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(
-                'Cancel',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w700),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _Palette.danger,
-                elevation: 2,
-                padding: const EdgeInsets.symmetric(vertical: 13),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _Palette.textMuted,
+                    side: BorderSide(
+                      color: _Palette.milanoRedDeep.withValues(alpha: 0.15),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+                  ),
                 ),
               ),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(
-                'Delete',
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _Palette.danger,
+                    elevation: 2,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: Text(
+                    'Delete',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         ],
       ),
@@ -453,6 +479,20 @@ class _TablesScreenState extends State<TablesScreen> {
     );
   }
 
+  /// Computes a dialog content width that always fits the current screen.
+  /// Desktop/tablet gets a fixed 420px width; on narrow phones the width
+  /// shrinks to (screen width − outer insets) so the dialog never
+  /// overflows. Mirrors the exact same helper added to StaffScreen's
+  /// `_showAddDialog`/`_showEditDialog`.
+  double _dialogWidth(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    const outerInset = 48.0; // matches insetPadding horizontal (24 + 24)
+    if (screenWidth < 480) {
+      return (screenWidth - outerInset).clamp(240.0, 420.0);
+    }
+    return 420.0;
+  }
+
   void _showAddDialog() {
     _tableNumCtrl.clear();
     _capacityCtrl.text = '4';
@@ -461,6 +501,10 @@ class _TablesScreenState extends State<TablesScreen> {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         backgroundColor: _Palette.cardWhite,
+        // Matches the mobile-safe insetPadding added to StaffScreen's
+        // dialogs so this dialog always has consistent breathing room from
+        // the screen edges on phones.
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
         icon: Container(
           width: 52,
           height: 52,
@@ -482,80 +526,100 @@ class _TablesScreenState extends State<TablesScreen> {
             color: _Palette.milanoRedDeep,
           ),
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _dialogField(
-              _tableNumCtrl,
-              'Table Number',
-              Icons.table_restaurant_outlined,
-            ),
-            const SizedBox(height: 14),
-            _dialogField(
-              _capacityCtrl,
-              'Capacity',
-              Icons.groups_outlined,
-              keyboardType: TextInputType.number,
-            ),
-          ],
+        // Width is derived from the actual screen size (see _dialogWidth)
+        // instead of sizing purely from intrinsic content width, so the
+        // dialog always fits comfortably on narrow phones — same
+        // responsive-width treatment as StaffScreen's Add/Edit dialogs.
+        content: SizedBox(
+          width: _dialogWidth(ctx),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _dialogField(
+                _tableNumCtrl,
+                'Table Number',
+                Icons.table_restaurant_outlined,
+              ),
+              const SizedBox(height: 14),
+              _dialogField(
+                _capacityCtrl,
+                'Capacity',
+                Icons.groups_outlined,
+                keyboardType: TextInputType.number,
+              ),
+            ],
+          ),
         ),
         actionsAlignment: MainAxisAlignment.center,
         actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        // NOTE: the two buttons are wrapped in a single Row (instead of
+        // being passed to `actions` as separate Expanded items) because
+        // AlertDialog renders its `actions` list inside an internal
+        // OverflowBar, which does not provide the FlexParentData that
+        // Expanded needs — passing Expanded directly as an actions item
+        // throws "Incorrect use of ParentDataWidget". Wrapping them in one
+        // Row (itself a proper Flex) as the single actions item keeps the
+        // exact same equal-width, 10px-gapped button layout without the
+        // crash. (Same fix applied to StaffScreen's dialogs.)
         actions: [
-          Expanded(
-            child: OutlinedButton(
-              onPressed: () => Navigator.pop(ctx),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: _Palette.textMuted,
-                side: BorderSide(
-                  color: _Palette.milanoRedDeep.withValues(alpha: 0.15),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 13),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(
-                'Cancel',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w700),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _Palette.milanoRed,
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 13),
-              ),
-              onPressed: () async {
-                Navigator.pop(ctx);
-                try {
-                  await TablesService.createTable({
-                    'table_number': _tableNumCtrl.text,
-                    'capacity': int.tryParse(_capacityCtrl.text) ?? 4,
-                  });
-                  _loadTables();
-                } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text('Failed: $e')));
-                  }
-                }
-              },
-              child: Text(
-                'Add',
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _Palette.textMuted,
+                    side: BorderSide(
+                      color: _Palette.milanoRedDeep.withValues(alpha: 0.15),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+                  ),
                 ),
               ),
-            ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _Palette.milanoRed,
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                  ),
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    try {
+                      await TablesService.createTable({
+                        'table_number': _tableNumCtrl.text,
+                        'capacity': int.tryParse(_capacityCtrl.text) ?? 4,
+                      });
+                      _loadTables();
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text('Failed: $e')));
+                      }
+                    }
+                  },
+                  child: Text(
+                    'Add',
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -642,6 +706,28 @@ class _TablesScreenState extends State<TablesScreen> {
                       ),
                     ),
                   ),
+                  // Extra low, wide glow further down the page — gives the
+                  // long tables list a second soft focal point instead of
+                  // all the ambient light sitting only near the header.
+                  // Matches the Admin Orders screen's Pass-2 backdrop
+                  // treatment.
+                  Positioned(
+                    top: 640,
+                    right: -110,
+                    child: Container(
+                      width: 230,
+                      height: 230,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            _Palette.milanoRedLight.withValues(alpha: 0.06),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                   Opacity(
                     opacity: 0.04,
                     child: Image.network(
@@ -652,6 +738,29 @@ class _TablesScreenState extends State<TablesScreen> {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ),
+
+          // Faint diagonal sheen sweeping across the body — a subtle extra
+          // layer of depth so the cream backdrop doesn't read as flat
+          // behind the header, echoing the glass-highlight language used
+          // in the header itself. Matches the Admin Orders screen exactly.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withValues(alpha: 0.28),
+                      Colors.transparent,
+                      Colors.transparent,
+                    ],
+                    stops: const [0.0, 0.35, 1.0],
+                  ),
+                ),
               ),
             ),
           ),
@@ -714,23 +823,34 @@ class _TablesScreenState extends State<TablesScreen> {
 
   /// Branded "floating navbar" header — mirrors the exact treatment used on
   /// AdminDashboardScreen / MenuScreen / OrdersScreen / ProfileScreen /
-  /// StaffLandingScreen / StaffScreen: rounded bottom corners, decorative
-  /// diagonal ribbon accents, a fine dotted texture strip, a glowing gold
-  /// title underline, and a compact circular "<" back control. Purely
-  /// visual; the navigation and add-table actions underneath are unchanged.
+  /// StaffLandingScreen / StaffScreen. UI-ENHANCEMENT PASS 2 pushes this
+  /// further into the same "command bar" identity used on the Admin
+  /// Orders screen: a richer four-stop diagonal gradient, a large faint
+  /// watermark emblem behind the title, and a fine glass highlight line
+  /// along the top edge. The previous long "Add Table" pill button
+  /// remains a compact circular icon button (table icon + small gold "+"
+  /// badge), tucked into the top row next to the back button — matching
+  /// the "add staff" icon button pattern used on StaffScreen's header.
+  /// Purely visual; the navigation and add-table actions underneath are
+  /// unchanged.
   Widget _buildHeader(bool isMobile) {
     return ClipRect(
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
+          // Richer four-stop diagonal maroon gradient — deeper and more
+          // dimensional than a flat three-stop wash, matching the Admin
+          // Orders screen's Pass-2 "faceted" surface language.
+          gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
               _Palette.milanoRedLight,
               _Palette.milanoRed,
               _Palette.milanoRedDeep,
+              _Palette.milanoRedDarkest,
             ],
+            stops: [0.0, 0.38, 0.72, 1.0],
           ),
           borderRadius: BorderRadius.only(
             bottomLeft: Radius.circular(isMobile ? 28 : 38),
@@ -757,6 +877,7 @@ class _TablesScreenState extends State<TablesScreen> {
             ),
           ],
         ),
+        clipBehavior: Clip.antiAlias,
         child: Stack(
           clipBehavior: Clip.none,
           children: [
@@ -801,6 +922,47 @@ class _TablesScreenState extends State<TablesScreen> {
                 ),
               ),
             ),
+            // Soft gold glow anchored behind the add-table icon button —
+            // matches the same glow StaffScreen uses behind its add-staff
+            // icon button.
+            Positioned(
+              top: -30,
+              right: 20,
+              child: Container(
+                width: 130,
+                height: 130,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      _Palette.lemonChiffon.withValues(alpha: 0.22),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // ── Large faint watermark emblem — a unique signature touch
+            // this header didn't previously have, sitting low-opacity and
+            // large behind the copy, never competing with the title or
+            // controls. Matches the Admin Orders screen's Pass-2
+            // watermark treatment.
+            Positioned(
+              right: isMobile ? -20 : -10,
+              bottom: isMobile ? -18 : -14,
+              child: IgnorePointer(
+                child: Opacity(
+                  opacity: 0.06,
+                  child: Icon(
+                    Icons.table_restaurant_rounded,
+                    size: isMobile ? 120 : 170,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+
             // Fine dotted texture accent, matching the app's refined
             // decorative language used across the other admin headers.
             Positioned(
@@ -828,6 +990,28 @@ class _TablesScreenState extends State<TablesScreen> {
               ),
             ),
 
+            // Fine glass highlight line along the very top edge, giving
+            // the full-width panel a polished, "premium glass" finish —
+            // matches the Admin Orders / Dashboard headers' top edge
+            // treatment.
+            Positioned(
+              top: 0,
+              left: 24,
+              right: 24,
+              child: Container(
+                height: 1,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.transparent,
+                      Colors.white.withValues(alpha: 0.35),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
             Padding(
               padding: EdgeInsets.fromLTRB(
                 isMobile ? 20 : 40,
@@ -846,7 +1030,7 @@ class _TablesScreenState extends State<TablesScreen> {
                           onTap: () => context.go('/admin/dashboard'),
                         ),
                         const Spacer(),
-                        if (!isMobile)
+                        if (!isMobile) ...[
                           Text(
                             _todayLabel(),
                             style: GoogleFonts.inter(
@@ -856,21 +1040,19 @@ class _TablesScreenState extends State<TablesScreen> {
                               color: Colors.white.withValues(alpha: 0.65),
                             ),
                           ),
+                          const SizedBox(width: 18),
+                          Container(
+                            width: 1,
+                            height: 18,
+                            color: Colors.white.withValues(alpha: 0.18),
+                          ),
+                          const SizedBox(width: 18),
+                        ],
+                        _addIconButton(),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    if (isMobile) ...[
-                      _titleBlock(fontSize: 26),
-                      const SizedBox(height: 20),
-                      SizedBox(width: double.infinity, child: _addButton()),
-                    ] else
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(child: _titleBlock(fontSize: 34)),
-                          _addButton(),
-                        ],
-                      ),
+                    const SizedBox(height: 18),
+                    _titleBlock(fontSize: isMobile ? 26 : 34),
                   ],
                 ),
               ),
@@ -878,7 +1060,7 @@ class _TablesScreenState extends State<TablesScreen> {
           ],
         ),
       ),
-    );
+    ).animate().fade(duration: 450.ms).slideY(begin: -0.1, duration: 450.ms);
   }
 
   Widget _titleBlock({required double fontSize}) {
@@ -910,23 +1092,73 @@ class _TablesScreenState extends State<TablesScreen> {
     );
   }
 
-  Widget _addButton() {
-    return ElevatedButton.icon(
-      onPressed: _showAddDialog,
-      icon: const Icon(Icons.add, size: 18, color: _Palette.milanoRedDeep),
-      label: Text(
-        'Add Table',
-        style: GoogleFonts.inter(
-          fontWeight: FontWeight.bold,
-          color: _Palette.milanoRedDeep,
+  /// Compact circular icon-only "add table" button, tucked into the top
+  /// right corner of the navbar next to the back button — replaces the
+  /// previous long "Add Table" pill button that sat beside/below the
+  /// title. Shows a table icon with a small gold "+" badge in the corner,
+  /// and matches the exact 46×46 circular styling StaffScreen uses for its
+  /// "add staff" icon button.
+  Widget _addIconButton() {
+    return Tooltip(
+      message: 'Add Table',
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: _showAddDialog,
+          child: Container(
+            width: 46,
+            height: 46,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _Palette.lemonChiffon,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.18),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.5),
+                width: 1.4,
+              ),
+            ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Center(
+                  child: Icon(
+                    Icons.table_restaurant_rounded,
+                    size: 22,
+                    color: _Palette.milanoRedDeep,
+                  ),
+                ),
+                Positioned(
+                  right: -3,
+                  bottom: -3,
+                  child: Container(
+                    width: 17,
+                    height: 17,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _Palette.milanoRedDeep,
+                      border: Border.all(color: Colors.white, width: 1.5),
+                    ),
+                    child: const Icon(
+                      Icons.add,
+                      size: 11,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-      ),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: _Palette.lemonChiffon,
-        elevation: 4,
-        shadowColor: Colors.black.withValues(alpha: 0.2),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -1015,6 +1247,12 @@ class _TablesScreenState extends State<TablesScreen> {
     );
   }
 
+  /// UI-ENHANCEMENT PASS 2: this stat card now carries the same slim
+  /// color-coded top cap used on the Admin Orders screen's stat cards
+  /// (a thin bar in the card's accent color, plus a small glowing dot
+  /// next to the label), so both admin screens share one consistent
+  /// "stat card" identity. Same label/value/color/icon inputs as before
+  /// — purely presentational restructuring, no data changed.
   Widget _buildStatCard(
     String label,
     String value,
@@ -1023,49 +1261,92 @@ class _TablesScreenState extends State<TablesScreen> {
     IconData icon,
   ) {
     Widget cardContent = Container(
-      padding: EdgeInsets.all(isMobile ? 16 : 20),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: _Palette.cardWhite,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
-        ),
-        boxShadow: _Palette.softShadow,
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.10),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: Column(
+          // Slim color-coded top cap — an instant visual cue tying this
+          // card to its meaning, matching the Admin Orders screen's stat
+          // cards exactly.
+          Container(height: 3, color: color.withValues(alpha: 0.65)),
+          Container(
+            padding: EdgeInsets.all(isMobile ? 16 : 20),
+            decoration: BoxDecoration(
+              color: _Palette.cardWhite,
+              border: Border.all(
+                color: color.withValues(alpha: 0.18),
+                width: 1,
+              ),
+            ),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  label,
-                  style: GoogleFonts.inter(
-                    color: _Palette.textMuted,
-                    fontSize: isMobile ? 11 : 13,
-                    fontWeight: FontWeight.w600,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              label,
+                              style: GoogleFonts.inter(
+                                color: _Palette.textMuted,
+                                fontSize: isMobile ? 11 : 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: color.withValues(alpha: 0.5),
+                                  blurRadius: 6,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        value,
+                        style: GoogleFonts.inter(
+                          color: color,
+                          fontSize: isMobile ? 20 : 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  value,
-                  style: GoogleFonts.inter(
-                    color: color,
-                    fontSize: isMobile ? 20 : 24,
-                    fontWeight: FontWeight.bold,
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
                   ),
+                  child: Icon(icon, color: color, size: isMobile ? 16 : 20),
                 ),
               ],
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: color, size: isMobile ? 16 : 20),
           ),
         ],
       ),

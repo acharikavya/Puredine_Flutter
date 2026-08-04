@@ -17,6 +17,19 @@ import 'package:flutter_animate/flutter_animate.dart';
 /// AppTheme, or any other file — pure UI enhancement, no logic changed
 /// anywhere in this file.
 ///
+/// UI-ENHANCEMENT PASS 2: the header was pushed further into its own
+/// distinctive "command bar" identity (four-stop gradient, large faint
+/// watermark emblem, glass highlight line, and a live "Available /
+/// Occupied / Total" readout strip built from the exact same counts the
+/// filter chips already use), the full-screen backdrop gained an extra
+/// diagonal sheen + a second ambient glow for more depth, the sidebar
+/// filter panel and its chips were restyled with per-filter icons and a
+/// richer active state, and each table tile now has a subtle hover/press
+/// lift so the floor plan feels like a considered, premium surface rather
+/// than a plain list of rows. No provider, controller, route, filtering,
+/// or data value was touched anywhere in this pass — only Container/
+/// Decoration/TextStyle-level presentation changed.
+///
 /// NOTE: this is a private class redeclared identically to the one in the
 /// other staff screens (private classes can't be shared across files
 /// without a new shared import, which would go beyond a pure UI-only
@@ -51,6 +64,21 @@ class _Palette {
         ),
       ];
 
+  /// Elevated/hover glow — a slightly stronger, warmer shadow used for
+  /// interactive/elevated elements, matching the Dashboard's feature cards.
+  static List<BoxShadow> get glowShadow => [
+        BoxShadow(
+          color: lemonChiffonDeep.withValues(alpha: 0.26),
+          blurRadius: 24,
+          offset: const Offset(0, 9),
+        ),
+        BoxShadow(
+          color: milanoRedDeep.withValues(alpha: 0.16),
+          blurRadius: 14,
+          offset: const Offset(0, 5),
+        ),
+      ];
+
   /// Richer navbar/header shadow stack — the same three-layer shadow
   /// language used on the Order Details / Dashboard headers (deep maroon
   /// drop shadow + soft ambient gold bloom + fine black contact shadow).
@@ -69,6 +97,21 @@ class _Palette {
           color: Colors.black.withValues(alpha: 0.10),
           blurRadius: 6,
           offset: const Offset(0, 2),
+        ),
+      ];
+
+  /// Soft inner "glass" shadow used on the header's stats readout strip —
+  /// pure decoration, gives the capsule a faint pressed-glass depth.
+  static List<BoxShadow> get statCapsuleShadow => [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.16),
+          blurRadius: 14,
+          offset: const Offset(0, 6),
+        ),
+        BoxShadow(
+          color: lemonChiffon.withValues(alpha: 0.06),
+          blurRadius: 8,
+          offset: const Offset(0, -2),
         ),
       ];
 }
@@ -146,19 +189,29 @@ class _TablesScreenState extends State<TablesScreen> {
     final tablesProvider = context.watch<TablesProvider>();
     final allTables = tablesProvider.tables;
 
+    final availableCount =
+        allTables.where((t) => t.status == TableStatus.available).length;
+    final occupiedCount =
+        allTables.where((t) => t.status == TableStatus.occupied).length;
+
     final filters = [
-      {'id': 'all', 'label': 'All', 'count': allTables.length},
+      {
+        'id': 'all',
+        'label': 'All',
+        'count': allTables.length,
+        'icon': Icons.grid_view_rounded,
+      },
       {
         'id': 'available',
         'label': 'Available',
-        'count':
-            allTables.where((t) => t.status == TableStatus.available).length,
+        'count': availableCount,
+        'icon': Icons.check_circle_rounded,
       },
       {
         'id': 'occupied',
         'label': 'Occupied',
-        'count':
-            allTables.where((t) => t.status == TableStatus.occupied).length,
+        'count': occupiedCount,
+        'icon': Icons.people_rounded,
       },
     ];
 
@@ -249,18 +302,66 @@ class _TablesScreenState extends State<TablesScreen> {
                       ),
                     ),
                   ),
+                  // Extra low, wide glow further down the page — gives a
+                  // long floor plan a second soft focal point instead of
+                  // all the ambient light sitting only near the header.
+                  Positioned(
+                    top: 640,
+                    left: -70,
+                    child: Container(
+                      width: 260,
+                      height: 260,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            _Palette.milanoRedLight.withValues(alpha: 0.05),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
+
+          // Faint diagonal sheen sweeping across the whole page — a subtle
+          // extra layer of depth so the cream backdrop doesn't read as flat
+          // behind the header, echoing the glass-highlight language used
+          // in the header itself.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withValues(alpha: 0.30),
+                      Colors.transparent,
+                      Colors.transparent,
+                    ],
+                    stops: const [0.0, 0.35, 1.0],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
           Column(
             children: [
               // ── Header — same Dark Maroon gradient + gold accents used
-              // throughout every other staff screen. ────────────────────
+              // throughout every other staff screen, now restyled into a
+              // richer "command bar" with a live stats readout. ─────────
               _ScreenHeader(
                 title: 'Floor Plan',
                 subtitle: 'Real-time Table Status',
                 dateLabel: _todayLabel(),
+                totalCount: allTables.length,
+                availableCount: availableCount,
+                occupiedCount: occupiedCount,
                 onBack: () {
                   if (context.canPop()) {
                     context.pop();
@@ -367,7 +468,15 @@ class _TablesScreenState extends State<TablesScreen> {
                                       margin: const EdgeInsets.only(right: 24),
                                       padding: const EdgeInsets.all(20),
                                       decoration: BoxDecoration(
-                                        color: Colors.white,
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            Colors.white,
+                                            _Palette.canvasDeep
+                                                .withValues(alpha: 0.4),
+                                          ],
+                                        ),
                                         borderRadius: BorderRadius.circular(26),
                                         border: Border.all(
                                           color: _Palette.milanoRedDeep
@@ -379,13 +488,36 @@ class _TablesScreenState extends State<TablesScreen> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            'VIEW OPTIONS',
-                                            style: AppTheme.sans(
-                                              size: 10,
-                                              weight: FontWeight.w800,
-                                              color: _Palette.textMuted,
-                                            ).copyWith(letterSpacing: 1.5),
+                                          Row(
+                                            children: [
+                                              Container(
+                                                width: 4,
+                                                height: 14,
+                                                decoration: BoxDecoration(
+                                                  gradient: LinearGradient(
+                                                    begin:
+                                                        Alignment.topCenter,
+                                                    end: Alignment
+                                                        .bottomCenter,
+                                                    colors: [
+                                                      _Palette.milanoRedLight,
+                                                      _Palette.milanoRed,
+                                                    ],
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(2),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Text(
+                                                'VIEW OPTIONS',
+                                                style: AppTheme.sans(
+                                                  size: 10,
+                                                  weight: FontWeight.w800,
+                                                  color: _Palette.textMuted,
+                                                ).copyWith(letterSpacing: 1.5),
+                                              ),
+                                            ],
                                           ),
                                           const SizedBox(height: 16),
                                           filterList,
@@ -424,6 +556,7 @@ class _TablesScreenState extends State<TablesScreen> {
   Widget _buildFilterButton(Map<String, dynamic> f, {required bool isWide}) {
     final isActive = _activeFilter == f['id'];
     final count = f['count'] as int;
+    final icon = f['icon'] as IconData;
 
     return Padding(
       padding: isWide ? const EdgeInsets.only(bottom: 8) : EdgeInsets.zero,
@@ -432,7 +565,7 @@ class _TablesScreenState extends State<TablesScreen> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             gradient: isActive
                 ? LinearGradient(
@@ -441,8 +574,8 @@ class _TablesScreenState extends State<TablesScreen> {
                     end: Alignment.bottomRight,
                   )
                 : null,
-            color: isActive ? null : _Palette.canvas,
-            borderRadius: BorderRadius.circular(14),
+            color: isActive ? null : Colors.white,
+            borderRadius: BorderRadius.circular(15),
             border: Border.all(
               color: isActive
                   ? _Palette.lemonChiffonDeep.withValues(alpha: 0.7)
@@ -452,22 +585,45 @@ class _TablesScreenState extends State<TablesScreen> {
                 ? [
                     BoxShadow(
                       color: _Palette.gold.withValues(alpha: 0.35),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
+                      blurRadius: 14,
+                      offset: const Offset(0, 5),
                     ),
                   ]
-                : null,
+                : _Palette.softShadow,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                f['label'] as String,
-                style: AppTheme.sans(
-                  size: 13,
-                  weight: FontWeight.w700,
-                  color: isActive ? Colors.white : _Palette.textDark,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 26,
+                    height: 26,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isActive
+                          ? Colors.white.withValues(alpha: 0.28)
+                          : _Palette.milanoRedDeep.withValues(alpha: 0.06),
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 14,
+                      color:
+                          isActive ? Colors.white : _Palette.milanoRedDeep,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    f['label'] as String,
+                    style: AppTheme.sans(
+                      size: 13,
+                      weight: FontWeight.w700,
+                      color: isActive ? Colors.white : _Palette.textDark,
+                    ),
+                  ),
+                ],
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
@@ -521,24 +677,32 @@ class _TitleDivider extends StatelessWidget {
   }
 }
 
-// ─── Screen header — same Dark Maroon gradient treatment, bigger rounded
-// "floating navbar" corners, a richer 3-layer shadow stack, layered
-// ribbon glows, a fine dotted texture accent, and the current date on
-// wide screens, plus the same thin-gold-border brand icon chip used
-// across every other staff screen. The back control is now a compact,
-// icon-only "‹" chip — no arrow icon, no "Back" label — matching the
-// Order Details screen's header control exactly. The onBack callback is
-// identical to before. ─────────────────────────────────────────────────
+// ─── Screen header — restyled into its own distinctive "command bar"
+// identity: a richer four-stop diagonal gradient, a large faint watermark
+// emblem behind the title, a fine glass highlight line along the top edge,
+// layered ribbon glows, a dotted texture accent, and (new) a live
+// "Available / Occupied / Total" readout strip built from the exact same
+// counts already computed for the filter chips — no new data source, no
+// logic, purely a display of values already available at the call site.
+// The back control remains the same compact, icon-only "‹" chip used on
+// the Order Details screen's header, wired to the identical onBack
+// callback as before. ────────────────────────────────────────────────────
 class _ScreenHeader extends StatelessWidget {
   final String title;
   final String subtitle;
   final String dateLabel;
+  final int totalCount;
+  final int availableCount;
+  final int occupiedCount;
   final VoidCallback onBack;
 
   const _ScreenHeader({
     required this.title,
     required this.subtitle,
     required this.dateLabel,
+    required this.totalCount,
+    required this.availableCount,
+    required this.occupiedCount,
     required this.onBack,
   });
 
@@ -550,6 +714,9 @@ class _ScreenHeader extends StatelessWidget {
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
+          // Richer four-stop diagonal maroon gradient — deeper and more
+          // dimensional than a flat three-stop wash, matching the
+          // Dashboard hero's "faceted" surface language.
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -557,7 +724,9 @@ class _ScreenHeader extends StatelessWidget {
               _Palette.milanoRedLight,
               _Palette.milanoRed,
               _Palette.milanoRedDeep,
+              Color(0xFF320A0A),
             ],
+            stops: [0.0, 0.38, 0.72, 1.0],
           ),
           borderRadius: BorderRadius.only(
             bottomLeft: Radius.circular(isMobile ? 28 : 38),
@@ -571,6 +740,7 @@ class _ScreenHeader extends StatelessWidget {
           ),
           boxShadow: _Palette.heroShadow,
         ),
+        clipBehavior: Clip.antiAlias,
         child: Stack(
           children: [
             // Subtle decorative diagonal ribbon accents — purely cosmetic,
@@ -652,6 +822,25 @@ class _ScreenHeader extends StatelessWidget {
                 ),
               ),
             ),
+
+            // ── Large faint watermark emblem — a unique signature touch,
+            // sits low-opacity and large behind the copy, never competing
+            // with the title or the stats strip.
+            Positioned(
+              right: isMobile ? -30 : -10,
+              bottom: isMobile ? -24 : -18,
+              child: IgnorePointer(
+                child: Opacity(
+                  opacity: 0.07,
+                  child: Icon(
+                    Icons.table_restaurant_rounded,
+                    size: isMobile ? 140 : 190,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+
             // Fine dotted texture accent, matching the refined decorative
             // language used on the dashboard / menu-management headers.
             Positioned(
@@ -678,6 +867,28 @@ class _ScreenHeader extends StatelessWidget {
                 ),
               ),
             ),
+
+            // Fine glass highlight line along the very top edge, giving
+            // the full-width panel a polished, "premium glass" finish —
+            // matches the Dashboard hero's top edge treatment.
+            Positioned(
+              top: 0,
+              left: 24,
+              right: 24,
+              child: Container(
+                height: 1,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.transparent,
+                      Colors.white.withValues(alpha: 0.35),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
             SafeArea(
               bottom: false,
               child: Padding(
@@ -713,13 +924,27 @@ class _ScreenHeader extends StatelessWidget {
                                 width: 1,
                               ),
                             ),
-                            child: Text(
-                              dateLabel,
-                              style: AppTheme.sans(
-                                size: 12,
-                                weight: FontWeight.w600,
-                                color: Colors.white.withValues(alpha: 0.75),
-                              ).copyWith(letterSpacing: 0.3),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.calendar_today_rounded,
+                                  size: 12,
+                                  color: _Palette.lemonChiffon.withValues(
+                                    alpha: 0.85,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  dateLabel,
+                                  style: AppTheme.sans(
+                                    size: 12,
+                                    weight: FontWeight.w600,
+                                    color:
+                                        Colors.white.withValues(alpha: 0.75),
+                                  ).copyWith(letterSpacing: 0.3),
+                                ),
+                              ],
                             ),
                           ),
                       ],
@@ -806,17 +1031,85 @@ class _ScreenHeader extends StatelessWidget {
                               width: 1,
                             ),
                           ),
-                          child: Text(
-                            dateLabel,
-                            style: AppTheme.sans(
-                              size: 10.5,
-                              weight: FontWeight.w600,
-                              color: Colors.white.withValues(alpha: 0.7),
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.calendar_today_rounded,
+                                size: 10,
+                                color: _Palette.lemonChiffon.withValues(
+                                  alpha: 0.8,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                dateLabel,
+                                style: AppTheme.sans(
+                                  size: 10.5,
+                                  weight: FontWeight.w600,
+                                  color: Colors.white.withValues(alpha: 0.7),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
                     ],
+
+                    const SizedBox(height: 18),
+
+                    // ── Live stats readout strip — Available / Occupied /
+                    // Total, built straight from the same counts already
+                    // powering the filter chips below. Purely a display
+                    // addition; no new data source and no logic change.
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.22),
+                            Colors.black.withValues(alpha: 0.14),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.10),
+                        ),
+                        boxShadow: _Palette.statCapsuleShadow,
+                      ),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _HeaderStatPill(
+                              icon: Icons.check_circle_rounded,
+                              value: '$availableCount',
+                              label: 'Available',
+                              accent: const Color(0xFF34D399),
+                            ),
+                            const _HeaderStatDivider(),
+                            _HeaderStatPill(
+                              icon: Icons.people_rounded,
+                              value: '$occupiedCount',
+                              label: 'Occupied',
+                              accent: const Color(0xFF60A5FA),
+                            ),
+                            const _HeaderStatDivider(),
+                            _HeaderStatPill(
+                              icon: Icons.grid_view_rounded,
+                              value: '$totalCount',
+                              label: 'Total',
+                              accent: _Palette.lemonChiffon,
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                        .animate()
+                        .fade(duration: 550.ms, delay: 200.ms)
+                        .slideY(begin: 0.2, duration: 550.ms, delay: 200.ms),
                   ],
                 ),
               ),
@@ -825,6 +1118,85 @@ class _ScreenHeader extends StatelessWidget {
         ),
       ),
     ).animate().fade(duration: 450.ms).slideY(begin: -0.15, duration: 450.ms);
+  }
+}
+
+/// Slim vertical divider used between stat pills in the header's readout
+/// strip — purely decorative spacing element, no logic.
+class _HeaderStatDivider extends StatelessWidget {
+  const _HeaderStatDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 28,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      color: Colors.white.withValues(alpha: 0.10),
+    );
+  }
+}
+
+/// A single stat readout module (icon badge + value + label) used inside
+/// the header's live stats strip. Purely presentational — takes whatever
+/// value/label/accent it's given.
+class _HeaderStatPill extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color accent;
+
+  const _HeaderStatPill({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.10),
+            ),
+            child: Icon(icon, size: 13, color: accent),
+          ),
+          const SizedBox(width: 9),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                value,
+                style: AppTheme.sans(
+                  size: 15,
+                  weight: FontWeight.w900,
+                  color: Colors.white,
+                ),
+              ),
+              Text(
+                label.toUpperCase(),
+                style: AppTheme.sans(
+                  size: 8.5,
+                  weight: FontWeight.w700,
+                  color: Colors.white.withValues(alpha: 0.6),
+                ).copyWith(letterSpacing: 0.4),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -897,136 +1269,181 @@ class _BackChevronButtonState extends State<_BackChevronButton> {
 // Restyled to sit on the warm canvas background and pick up the same
 // rounded-corner, soft-shadow, gold-touch language as the rest of the app,
 // with a more generous, professional footprint (bigger icon chip, more
-// breathing room, a slightly taller card via the grid's mainAxisExtent),
-// while keeping each table's own status color (blue = occupied, green =
-// available) fully intact. No logic changed — same table data, same
-// config, same layout structure.
-class _TableCard extends StatelessWidget {
+// breathing room), while keeping each table's own status color (blue =
+// occupied, green = available) fully intact. UI-ENHANCEMENT PASS 2: now a
+// stateful widget with a subtle hover/press lift (scale + stronger glow +
+// warmer border), so each tile in the floor plan reads as an interactive
+// surface rather than a static row — no logic changed, same table data,
+// same config, same layout structure.
+class _TableCard extends StatefulWidget {
   final TableModel table;
   final _TableDisplayConfig config;
 
   const _TableCard({required this.table, required this.config});
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: config.cardBorder, width: 1.2),
-        boxShadow: _Palette.softShadow,
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Row(
-        children: [
-          // Left gradient strip
-          Container(
-            width: 6,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: config.gradient,
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-          ),
+  State<_TableCard> createState() => _TableCardState();
+}
 
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-              child: Row(
-                children: [
-                  // Icon container
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color: config.bg,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: _Palette.gold.withValues(alpha: 0.28),
-                        width: 1.2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: config.textColor.withValues(alpha: 0.14),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Icon(config.icon, size: 26, color: config.textColor),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          table.name,
-                          style: AppTheme.serif(
-                            size: 17,
-                            weight: FontWeight.w800,
-                            color: _Palette.textDark,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 5),
-                        Text(
-                          config.label,
-                          style: AppTheme.sans(
-                            size: 12,
-                            weight: FontWeight.w600,
-                            color: config.textColor,
-                          ),
-                        ),
-                      ],
+class _TableCardState extends State<_TableCard> {
+  bool _isHovered = false;
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final config = widget.config;
+    final table = widget.table;
+    final bool isElevated = _isHovered || _isPressed;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _isPressed = true),
+        onTapUp: (_) => setState(() => _isPressed = false),
+        onTapCancel: () => setState(() => _isPressed = false),
+        child: AnimatedScale(
+          scale: _isPressed ? 0.985 : (_isHovered ? 1.01 : 1.0),
+          duration: 150.ms,
+          curve: Curves.easeOut,
+          child: AnimatedContainer(
+            duration: 200.ms,
+            curve: Curves.easeOut,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: isElevated
+                    ? config.textColor.withValues(alpha: 0.45)
+                    : config.cardBorder,
+                width: isElevated ? 1.5 : 1.2,
+              ),
+              boxShadow: isElevated ? _Palette.glowShadow : _Palette.softShadow,
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Row(
+              children: [
+                // Left gradient strip
+                Container(
+                  width: 6,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: config.gradient,
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  // Status pill on right
-                  Container(
+                ),
+
+                Expanded(
+                  child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 13,
-                      vertical: 7,
-                    ),
-                    decoration: BoxDecoration(
-                      color: config.bg,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: config.textColor.withValues(alpha: 0.18),
-                      ),
+                      horizontal: 18,
+                      vertical: 14,
                     ),
                     child: Row(
-                      mainAxisSize: MainAxisSize.min,
                       children: [
+                        // Icon container
                         Container(
-                          width: 6,
-                          height: 6,
+                          width: 52,
+                          height: 52,
                           decoration: BoxDecoration(
+                            color: config.bg,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: _Palette.gold.withValues(alpha: 0.28),
+                              width: 1.2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: config.textColor.withValues(
+                                  alpha: isElevated ? 0.22 : 0.14,
+                                ),
+                                blurRadius: isElevated ? 14 : 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            config.icon,
+                            size: 26,
                             color: config.textColor,
-                            shape: BoxShape.circle,
                           ),
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          config.label,
-                          style: AppTheme.sans(
-                            size: 11,
-                            weight: FontWeight.w700,
-                            color: config.textColor,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                table.name,
+                                style: AppTheme.serif(
+                                  size: 17,
+                                  weight: FontWeight.w800,
+                                  color: _Palette.textDark,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                config.label,
+                                style: AppTheme.sans(
+                                  size: 12,
+                                  weight: FontWeight.w600,
+                                  color: config.textColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Status pill on right
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 13,
+                            vertical: 7,
+                          ),
+                          decoration: BoxDecoration(
+                            color: config.bg,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: config.textColor.withValues(alpha: 0.18),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  color: config.textColor,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                config.label,
+                                style: AppTheme.sans(
+                                  size: 11,
+                                  weight: FontWeight.w700,
+                                  color: config.textColor,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

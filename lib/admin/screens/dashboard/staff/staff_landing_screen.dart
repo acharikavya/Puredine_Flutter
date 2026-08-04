@@ -11,6 +11,17 @@ import 'package:restaurant_unified_app/core/constants.dart';
 /// one-off theme. Used ONLY for this screen's restyle. Nothing here touches
 /// AppColors or any other file — pure UI enhancement, no logic changed
 /// anywhere here.
+///
+/// UI-ENHANCEMENT PASS 2: the header was pushed further into its own
+/// distinctive "command bar" identity (a richer four-stop diagonal
+/// gradient, a large faint watermark emblem, and a fine glass highlight
+/// line along the top edge) matching the Orders / Admin Dashboard screens'
+/// Pass-2 treatment, and the full-screen backdrop gained an extra diagonal
+/// sheen plus a secondary ambient glow for more depth. The role cards
+/// picked up a slim gold top cap so they carry the same color-coded
+/// identity language used on the Orders stat cards. No navigation, hover
+/// state, sizing, or card-selection logic was touched anywhere in this
+/// pass — only presentation changed.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   _Palette._();
@@ -18,6 +29,7 @@ class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
   static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
   static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
+  static const Color milanoRedDarkest = Color(0xFF2E0808); // Fourth gradient stop
   static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow (Accent)
   static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
   static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
@@ -28,10 +40,14 @@ class _Palette {
   static const Color success = Color(0xFF2E9E5B);
   static const Color danger = Color(0xFFC62828);
 
+  // UI-ENHANCEMENT PASS 2: promoted from a flat 3-stop wash to a richer
+  // 4-stop diagonal gradient with explicit stops — matches the Orders
+  // screen header's "faceted" surface language exactly.
   static const LinearGradient headerGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [milanoRedLight, milanoRed, milanoRedDeep],
+    colors: [milanoRedLight, milanoRed, milanoRedDeep, milanoRedDarkest],
+    stops: [0.0, 0.38, 0.72, 1.0],
   );
 
   /// Themed soft shadow for resting cards/panels — matches MenuScreen's and
@@ -99,6 +115,23 @@ class StaffLandingScreen extends StatelessWidget {
     final size = MediaQuery.of(context).size;
     final isMobile = size.width < 600;
 
+    // ── Card sizing ──────────────────────────────────────────────────────
+    // Cards are now narrow, tall rectangles (instead of near-squares) and,
+    // on mobile, their width is derived from the actual available screen
+    // width so both cards always sit side-by-side without ever forcing the
+    // horizontal scroll fallback on typical phone screens. Purely a sizing
+    // change — card content, hover behaviour, and navigation are untouched.
+    final double horizontalPadding = isMobile ? 16 : 40;
+    final double cardSpacing = isMobile ? 16 : 40;
+    final double mobileCardWidth = ((size.width -
+                (horizontalPadding * 2) -
+                cardSpacing) /
+            2)
+        .clamp(130.0, 172.0);
+    final double cardWidth = isMobile ? mobileCardWidth : 240;
+    final double cardHeight =
+        isMobile ? (cardWidth * 2.2).clamp(300.0, 360.0) : 380;
+
     return Scaffold(
       backgroundColor: _Palette.canvas,
       body: Stack(
@@ -164,6 +197,28 @@ class StaffLandingScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+                  // UI-ENHANCEMENT PASS 2: extra low, wide glow further down
+                  // the page — gives the role-card area a second soft focal
+                  // point instead of all the ambient light sitting only
+                  // near the header. Matches the Orders / Admin Dashboard
+                  // screens' Pass-2 backdrop.
+                  Positioned(
+                    top: 560,
+                    left: -100,
+                    child: Container(
+                      width: 240,
+                      height: 240,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            _Palette.milanoRedLight.withValues(alpha: 0.06),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                   Opacity(
                     opacity: 0.04,
                     child: Image.network(
@@ -174,6 +229,30 @@ class StaffLandingScreen extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ),
+
+          // UI-ENHANCEMENT PASS 2: faint diagonal sheen sweeping across the
+          // whole body — a subtle extra layer of depth so the cream backdrop
+          // doesn't read as flat behind the header, echoing the glass-
+          // highlight language used in the header itself. Purely cosmetic,
+          // sits above the ambient blobs and below all real content.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withValues(alpha: 0.26),
+                      Colors.transparent,
+                      Colors.transparent,
+                    ],
+                    stops: const [0.0, 0.35, 1.0],
+                  ),
+                ),
               ),
             ),
           ),
@@ -192,7 +271,7 @@ class StaffLandingScreen extends StatelessWidget {
                       constraints: const BoxConstraints(maxWidth: 1000),
                       child: Padding(
                         padding: EdgeInsets.symmetric(
-                          horizontal: isMobile ? 20 : 40,
+                          horizontal: horizontalPadding,
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -235,31 +314,49 @@ class StaffLandingScreen extends StatelessWidget {
                               ],
                             ),
                             const SizedBox(height: 28),
+                            // ── Role cards ──────────────────────────────
+                            // Forced onto a single row instead of wrapping
+                            // to a second line. Card width/height are now
+                            // computed above so both narrow, rectangular
+                            // cards fit the mobile viewport without needing
+                            // to scroll; the horizontal scroll fallback
+                            // stays in place as a safety net for unusually
+                            // narrow screens. Card content, hover behaviour,
+                            // and navigation are completely unchanged.
                             Center(
-                              child: Wrap(
-                                spacing: isMobile ? 20 : 40,
-                                runSpacing: isMobile ? 20 : 30,
-                                alignment: WrapAlignment.center,
-                                children: [
-                                  _StaffTypeCard(
-                                    title: 'Billing Staff',
-                                    description:
-                                        'Manage cashier terminals and transaction logs.',
-                                    icon: Icons.receipt_long_rounded,
-                                    role: 'cashier',
-                                    index: 0,
-                                    isMobile: isMobile,
-                                  ),
-                                  _StaffTypeCard(
-                                    title: 'Serving Staff',
-                                    description:
-                                        'Manage floor staff and service assignments.',
-                                    icon: Icons.restaurant_rounded,
-                                    role: 'server',
-                                    index: 1,
-                                    isMobile: isMobile,
-                                  ),
-                                ],
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                physics: const BouncingScrollPhysics(),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    _StaffTypeCard(
+                                      title: 'Billing Staff',
+                                      description:
+                                          'Manage cashier terminals and transaction logs.',
+                                      icon: Icons.receipt_long_rounded,
+                                      role: 'cashier',
+                                      index: 0,
+                                      isMobile: isMobile,
+                                      width: cardWidth,
+                                      height: cardHeight,
+                                    ),
+                                    SizedBox(width: cardSpacing),
+                                    _StaffTypeCard(
+                                      title: 'Serving Staff',
+                                      description:
+                                          'Manage floor staff and service assignments.',
+                                      icon: Icons.restaurant_rounded,
+                                      role: 'server',
+                                      index: 1,
+                                      isMobile: isMobile,
+                                      width: cardWidth,
+                                      height: cardHeight,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ],
@@ -276,14 +373,15 @@ class StaffLandingScreen extends StatelessWidget {
     ).animate().fadeIn();
   }
 
-  /// Branded "floating navbar" header — mirrors the premium treatment used
-  /// on AdminDashboardScreen / MenuScreen / OrdersScreen: a richer 3-stop
-  /// gradient, rounded bottom corners, decorative diagonal ribbon accents,
-  /// a soft radial glow behind the title block, and a fine dotted texture
-  /// strip. The back control is now a compact icon-only "‹" chevron button
-  /// (no arrow icon, no "Back" label) matching the other admin screens.
-  /// Purely visual; the navigation action underneath (context.go) is
-  /// unchanged.
+  /// Branded "floating navbar" header — mirrors the exact Pass-2 treatment
+  /// used on the Orders / AdminDashboardScreen / MenuScreen headers: a
+  /// richer four-stop diagonal gradient, rounded bottom corners, decorative
+  /// diagonal ribbon accents, a soft radial glow behind the title block, a
+  /// large faint watermark emblem, a fine glass highlight line along the
+  /// very top edge, and a fine dotted texture strip. The back control is
+  /// still the compact icon-only "‹" chevron button (no arrow icon, no
+  /// "Back" label) matching the other admin screens. Purely visual; the
+  /// navigation action underneath (context.go) is unchanged.
   Widget _buildCustomHeader(BuildContext context, bool isMobile) {
     return ClipRect(
       child: Container(
@@ -299,12 +397,12 @@ class StaffLandingScreen extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: _Palette.milanoRed.withValues(alpha: 0.34),
+              color: _Palette.milanoRedDeep.withValues(alpha: 0.35),
               blurRadius: 36,
               offset: const Offset(0, 16),
             ),
             BoxShadow(
-              color: _Palette.lemonChiffon.withValues(alpha: 0.10),
+              color: _Palette.lemonChiffon.withValues(alpha: 0.12),
               blurRadius: 18,
               offset: const Offset(0, 4),
             ),
@@ -315,162 +413,208 @@ class StaffLandingScreen extends StatelessWidget {
             ),
           ],
         ),
-        child: Stack(
-          children: [
-            // Subtle decorative diagonal ribbon accents (purely cosmetic,
-            // matches the dashboard/menu/orders headers for a consistent
-            // brand feel).
-            Positioned(
-              top: -60,
-              right: -40,
-              child: Transform.rotate(
-                angle: -0.5,
-                child: Container(
-                  width: 260,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        _Palette.lemonChiffon.withValues(alpha: 0.18),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: -50,
-              left: -60,
-              child: Transform.rotate(
-                angle: 0.4,
-                child: Container(
-                  width: 230,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.white.withValues(alpha: 0.07),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            // Soft radial glow behind the title block, adding depth without
-            // affecting any layout or logic.
-            Positioned(
-              top: 10,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Container(
-                  width: 260,
-                  height: 130,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        _Palette.lemonChiffon.withValues(alpha: 0.10),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            // Fine dotted texture accent, matching the app's refined
-            // decorative language used across the other admin headers.
-            Positioned(
-              top: 8,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: List.generate(
-                    5,
-                    (i) => Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
-                      width: 4,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _Palette.lemonChiffon.withValues(
-                          alpha: i == 2 ? 0.9 : 0.32,
-                        ),
+        child: ClipRect(
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Subtle decorative diagonal ribbon accents (purely cosmetic,
+              // matches the dashboard/menu/orders headers for a consistent
+              // brand feel).
+              Positioned(
+                top: -60,
+                right: -40,
+                child: Transform.rotate(
+                  angle: -0.5,
+                  child: Container(
+                    width: 260,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          _Palette.lemonChiffon.withValues(alpha: 0.18),
+                          Colors.transparent,
+                        ],
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
+              Positioned(
+                bottom: -50,
+                left: -60,
+                child: Transform.rotate(
+                  angle: 0.4,
+                  child: Container(
+                    width: 230,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.white.withValues(alpha: 0.07),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // Soft radial glow behind the title block, adding depth
+              // without affecting any layout or logic.
+              Positioned(
+                top: 10,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    width: 260,
+                    height: 130,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          _Palette.lemonChiffon.withValues(alpha: 0.10),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
 
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                isMobile ? 20 : 40,
-                isMobile ? 16 : 24,
-                isMobile ? 20 : 40,
-                isMobile ? 20 : 28,
-              ),
-              child: SafeArea(
-                bottom: false,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        // Compact icon-only back control — no arrow icon,
-                        // no "Back" label, just a clean "‹" glyph in a
-                        // circular glass button matching the app's other
-                        // header controls.
-                        _BackChevronButton(
-                          onTap: () => context.go('/admin/dashboard'),
-                        ),
-                        const Spacer(),
-                        if (!isMobile)
-                          Text(
-                            _todayLabel(),
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.3,
-                              color: Colors.white.withValues(alpha: 0.65),
-                            ),
-                          ),
-                      ],
+              // ── Large faint watermark emblem — a unique signature touch
+              // this header didn't previously have, sitting low-opacity and
+              // large behind the copy, never competing with the title.
+              // Matches the Orders / Admin Dashboard hero's Pass-2
+              // watermark treatment.
+              Positioned(
+                right: isMobile ? -22 : -12,
+                bottom: isMobile ? -20 : -16,
+                child: IgnorePointer(
+                  child: Opacity(
+                    opacity: 0.06,
+                    child: Icon(
+                      Icons.badge_rounded,
+                      size: isMobile ? 120 : 170,
+                      color: Colors.white,
                     ),
-                    const SizedBox(height: 18),
-                    Text(
-                      'Staff Management',
-                      style: GoogleFonts.playfairDisplay(
-                        color: Colors.white,
-                        fontSize: isMobile ? 26 : 34,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.6,
-                        height: 1.1,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    const _TitleDivider(),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Select a role to manage credentials and access.',
-                      style: GoogleFonts.inter(
-                        color: _Palette.lemonChiffon,
-                        fontSize: isMobile ? 12 : 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ],
+
+              // Fine dotted texture accent, matching the app's refined
+              // decorative language used across the other admin headers.
+              Positioned(
+                top: 8,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(
+                      5,
+                      (i) => Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        width: 4,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _Palette.lemonChiffon.withValues(
+                            alpha: i == 2 ? 0.9 : 0.32,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Fine glass highlight line along the very top edge, giving
+              // the full-width panel a polished, "premium glass" finish —
+              // matches the Orders / Admin Dashboard headers' top edge
+              // treatment.
+              Positioned(
+                top: 0,
+                left: 24,
+                right: 24,
+                child: Container(
+                  height: 1,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.transparent,
+                        Colors.white.withValues(alpha: 0.35),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  isMobile ? 20 : 40,
+                  isMobile ? 16 : 24,
+                  isMobile ? 20 : 40,
+                  isMobile ? 20 : 28,
+                ),
+                child: SafeArea(
+                  bottom: false,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          // Compact icon-only back control — no arrow icon,
+                          // no "Back" label, just a clean "‹" glyph in a
+                          // circular glass button matching the app's other
+                          // header controls.
+                          _BackChevronButton(
+                            onTap: () => context.go('/admin/dashboard'),
+                          ),
+                          const Spacer(),
+                          if (!isMobile)
+                            Text(
+                              _todayLabel(),
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.3,
+                                color: Colors.white.withValues(alpha: 0.65),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      Text(
+                        'Staff Management',
+                        style: GoogleFonts.playfairDisplay(
+                          color: Colors.white,
+                          fontSize: isMobile ? 26 : 34,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.6,
+                          height: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      const _TitleDivider(),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Select a role to manage credentials and access.',
+                        style: GoogleFonts.inter(
+                          color: _Palette.lemonChiffon,
+                          fontSize: isMobile ? 12 : 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    );
+    ).animate().fade(duration: 450.ms).slideY(begin: -0.1, duration: 450.ms);
   }
 }
 
@@ -569,6 +713,8 @@ class _StaffTypeCard extends StatefulWidget {
   final IconData icon;
   final int index;
   final bool isMobile;
+  final double width;
+  final double height;
 
   const _StaffTypeCard({
     required this.title,
@@ -577,6 +723,8 @@ class _StaffTypeCard extends StatefulWidget {
     required this.icon,
     required this.index,
     required this.isMobile,
+    required this.width,
+    required this.height,
   });
 
   @override
@@ -588,6 +736,20 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
 
   @override
   Widget build(BuildContext context) {
+    // Slightly denser content metrics on mobile, where cards are narrow,
+    // tall rectangles rather than near-squares — keeps the icon, title,
+    // and description comfortably inside the smaller footprint without
+    // touching any hover logic, navigation, or card behaviour.
+    final double iconBoxSize = widget.isMobile ? 58 : 72;
+    final double iconSize = widget.isMobile ? 26 : 32;
+    final double titleFontSize = widget.isMobile ? 17 : 28;
+    final double descriptionFontSize = widget.isMobile ? 12 : 14;
+    final double contentPadding = widget.isMobile ? 16 : 32;
+    // UI-ENHANCEMENT PASS 2: slim gold top-cap height, matching the Orders
+    // screen's stat-card identity strip. Reserved from the card's own fixed
+    // height so it never disturbs the existing content layout below it.
+    final double topCapHeight = 3;
+
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
@@ -597,8 +759,8 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
-          width: widget.isMobile ? 280 : 320,
-          height: widget.isMobile ? 260 : 320, // Slightly shorter on mobile
+          width: widget.width,
+          height: widget.height, // Now a tall rectangle, not a square
           transform: _isHovered
               ? (Matrix4.identity()..translate(0.0, -6.0))
               : Matrix4.identity(),
@@ -618,7 +780,7 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
                     ]
                   : [_Palette.cardWhite, _Palette.cardWhite],
             ),
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(widget.isMobile ? 22 : 28),
             border: Border.all(
               color: _isHovered
                   ? _Palette.milanoRed
@@ -627,11 +789,11 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
             ),
             boxShadow: _isHovered ? _Palette.glowShadow : _Palette.softShadow,
           ),
-          // The card has a fixed width/height (kept exactly as before, for a
-          // consistent grid). Decorative corner accents now live in a
-          // ClipRRect + Stack that is bounded by this exact width/height, so
-          // they can bleed right up to the rounded edge without any risk of
-          // overflowing outside the card.
+          // The card has a fixed width/height (passed in from the parent so
+          // it can be computed responsively). Decorative corner accents now
+          // live in a ClipRRect + Stack that is bounded by this exact
+          // width/height, so they can bleed right up to the rounded edge
+          // without any risk of overflowing outside the card.
           //
           // The main content (icon + spacing + title + description + the
           // hint row, which always reserves its height even at opacity 0)
@@ -644,7 +806,7 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
           // safely instead of forcing it into the parent's constraints, so
           // the same centered layout renders with zero overflow risk.
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(widget.isMobile ? 22 : 28),
             child: Stack(
               children: [
                 // ── Decorative corner glow (purely cosmetic) ─────────────
@@ -685,29 +847,45 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
                     ),
                   ),
                 ),
+                // UI-ENHANCEMENT PASS 2: slim gold top cap spanning the full
+                // width of the card — echoes the Orders screen's stat-card
+                // color-coded identity strip. Purely decorative, sits above
+                // the corner glows and below the step-index tag.
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    height: topCapHeight,
+                    color: _isHovered
+                        ? _Palette.milanoRed.withValues(alpha: 0.85)
+                        : _Palette.lemonChiffon.withValues(alpha: 0.75),
+                  ),
+                ),
                 // ── Step index tag, flush to the top-left corner ─────────
                 Positioned(
                   top: 0,
                   left: 0,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 7,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: widget.isMobile ? 11 : 14,
+                      vertical: widget.isMobile ? 5 : 7,
                     ),
                     decoration: BoxDecoration(
                       color: _isHovered
                           ? _Palette.milanoRedDeep
                           : _Palette.lemonChiffon.withValues(alpha: 0.55),
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(26),
-                        bottomRight: Radius.circular(18),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(widget.isMobile ? 20 : 26),
+                        bottomRight: Radius.circular(widget.isMobile ? 14 : 18),
                       ),
                     ),
                     child: Text(
                       '0${widget.index + 1}',
                       style: GoogleFonts.inter(
-                        fontSize: 11,
+                        fontSize: widget.isMobile ? 10 : 11,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.5,
                         color:
@@ -718,7 +896,7 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
                 ),
                 // ── Main content ──────────────────────────────────────────
                 Padding(
-                  padding: EdgeInsets.all(widget.isMobile ? 24 : 32),
+                  padding: EdgeInsets.all(contentPadding),
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       return SingleChildScrollView(
@@ -736,7 +914,7 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
                               // a more premium "badge" look.
                               AnimatedContainer(
                                 duration: const Duration(milliseconds: 300),
-                                padding: const EdgeInsets.all(6),
+                                padding: EdgeInsets.all(widget.isMobile ? 5 : 6),
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
@@ -750,8 +928,8 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
                                 ),
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 300),
-                                  width: 72,
-                                  height: 72,
+                                  width: iconBoxSize,
+                                  height: iconBoxSize,
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       begin: Alignment.topLeft,
@@ -768,7 +946,8 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
                                                   .withValues(alpha: 0.5),
                                             ],
                                     ),
-                                    borderRadius: BorderRadius.circular(20),
+                                    borderRadius: BorderRadius.circular(
+                                        widget.isMobile ? 16 : 20),
                                     boxShadow: _isHovered
                                         ? [
                                             BoxShadow(
@@ -792,34 +971,35 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
                                     color: _isHovered
                                         ? Colors.white
                                         : _Palette.milanoRedDeep,
-                                    size: 32,
+                                    size: iconSize,
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 28),
+                              SizedBox(height: widget.isMobile ? 16 : 28),
                               // ── Title ───────────────────────────────────
                               Text(
                                 widget.title,
+                                textAlign: TextAlign.center,
                                 style: GoogleFonts.playfairDisplay(
                                   color: _Palette.milanoRedDeep,
-                                  fontSize: widget.isMobile ? 22 : 28,
+                                  fontSize: titleFontSize,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              SizedBox(height: widget.isMobile ? 6 : 8),
                               const _TitleDivider(),
-                              const SizedBox(height: 14),
+                              SizedBox(height: widget.isMobile ? 10 : 14),
                               // ── Description ─────────────────────────────
                               Text(
                                 widget.description,
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.inter(
                                   color: _Palette.textMuted,
-                                  fontSize: 14,
-                                  height: 1.6,
+                                  fontSize: descriptionFontSize,
+                                  height: 1.5,
                                 ),
                               ),
-                              const SizedBox(height: 18),
+                              SizedBox(height: widget.isMobile ? 12 : 18),
                               // ── Hint pill (appears on hover) ────────────
                               AnimatedOpacity(
                                 duration: const Duration(milliseconds: 250),
@@ -830,9 +1010,9 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
                                       ? Offset.zero
                                       : const Offset(0, 0.3),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 8,
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: widget.isMobile ? 12 : 16,
+                                      vertical: widget.isMobile ? 6 : 8,
                                     ),
                                     decoration: BoxDecoration(
                                       color: _Palette.milanoRed
@@ -846,15 +1026,15 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
                                           'Manage',
                                           style: GoogleFonts.inter(
                                             color: _Palette.milanoRed,
-                                            fontSize: 13,
+                                            fontSize: widget.isMobile ? 12 : 13,
                                             fontWeight: FontWeight.w700,
                                           ),
                                         ),
                                         const SizedBox(width: 4),
-                                        const Icon(
+                                        Icon(
                                           Icons.arrow_forward_rounded,
                                           color: _Palette.milanoRed,
-                                          size: 16,
+                                          size: widget.isMobile ? 14 : 16,
                                         ),
                                       ],
                                     ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:pdf/pdf.dart';
@@ -13,12 +14,25 @@ import '../../core/currency_utils.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────
 /// Local "Theme 1 — Dark Maroon × Soft Cream × Gold Glow" palette — matches
-/// the Order Details / Dashboard / Menu Management screens exactly (#8B1D1D
-/// primary / #F4C430 gold accent), so this screen now reads as part of the
-/// same cohesive, professional brand. Used ONLY for this screen's visual
-/// layer. Nothing here touches AppColors, AppTheme, or any other file, and
-/// no logic — PDF generation, printing, sharing, navigation — changed
-/// anywhere in this file.
+/// the Order Details / Dashboard / Menu Management / Payment screens
+/// exactly (#8B1D1D primary / #F4C430 gold accent), so this screen now
+/// reads as part of the same cohesive, professional brand. Used ONLY for
+/// this screen's visual layer. Nothing here touches AppColors, AppTheme,
+/// or any other file, and no logic — PDF generation, printing, sharing,
+/// navigation — changed anywhere in this file.
+///
+/// UI-ENHANCEMENT PASS 2: brings this screen's header and section cards up
+/// to the same distinctive "command bar" identity used on the Payment /
+/// Create Order / Orders screens — a four-stop diagonal gradient header, a
+/// large faint watermark emblem, a glass highlight line along the top
+/// edge, and a new live quick-stats readout strip (Total Paid / Items /
+/// Method) built entirely from values already available at the call site.
+/// The full-screen backdrop gained an extra ambient glow + a diagonal
+/// sheen for more depth, and the receipt-detail / order-items sections
+/// picked up a slim color-coded accent rail down the left edge, matching
+/// the Payment / Create Order screens' card treatment. No provider,
+/// controller, route, PDF, or payment logic was touched anywhere in this
+/// pass — only presentation changed.
 ///
 /// NOTE: this is a private class redeclared identically to the ones in
 /// the other staff screens (private classes can't be shared across files
@@ -29,6 +43,7 @@ class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
   static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
   static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
+  static const Color milanoRedDarkest = Color(0xFF320A0A); // Fourth gradient stop
   static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow (Accent)
   static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
   static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
@@ -41,8 +56,8 @@ class _Palette {
   static const Color successBg = Color(0xFFF0FDF4);
 
   /// Themed soft shadow for resting cards/panels — matches the exact
-  /// softShadow used on Menu/Dashboard/Order Details so every card on this
-  /// screen carries the same warm, branded elevation.
+  /// softShadow used on Menu/Dashboard/Order Details/Payment so every
+  /// card on this screen carries the same warm, branded elevation.
   static List<BoxShadow> get softShadow => [
         BoxShadow(
           color: milanoRedDeep.withValues(alpha: 0.07),
@@ -57,8 +72,9 @@ class _Palette {
       ];
 
   /// Richer navbar/header shadow stack — the same three-layer shadow
-  /// language used on the Order Details / Dashboard headers (deep maroon
-  /// drop shadow + soft ambient gold bloom + fine black contact shadow).
+  /// language used on the Order Details / Dashboard / Payment headers
+  /// (deep maroon drop shadow + soft ambient gold bloom + fine black
+  /// contact shadow).
   static List<BoxShadow> get heroShadow => [
         BoxShadow(
           color: milanoRedDeep.withValues(alpha: 0.40),
@@ -76,6 +92,43 @@ class _Palette {
           offset: const Offset(0, 2),
         ),
       ];
+
+  /// Soft inner "glass" shadow used on the header's quick-stats readout
+  /// strip — pure decoration, gives the capsule a faint pressed-glass
+  /// depth. Matches the Payment / Create Order / Orders screens'
+  /// statCapsuleShadow exactly.
+  static List<BoxShadow> get statCapsuleShadow => [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.16),
+          blurRadius: 14,
+          offset: const Offset(0, 6),
+        ),
+        BoxShadow(
+          color: lemonChiffon.withValues(alpha: 0.06),
+          blurRadius: 8,
+          offset: const Offset(0, -2),
+        ),
+      ];
+}
+
+const List<String> _kMonthNames = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
+String _todayLabel() {
+  final now = DateTime.now();
+  return '${_kMonthNames[now.month - 1]} ${now.day}, ${now.year}';
 }
 
 class BillScreen extends StatelessWidget {
@@ -104,15 +157,23 @@ class BillScreen extends StatelessWidget {
         ? context.go('/staff/billing')
         : context.go('/staff/dashboard');
 
+    // Purely display values for the header's quick-stats strip — derived
+    // from data already available here (order + constructor fields). No
+    // new data source, no logic change.
+    final itemsCount = order?.itemsDetails.length ?? 0;
+
     return Scaffold(
       backgroundColor: _Palette.canvas,
+      // Full-screen, edge-to-edge treatment — header now draws behind the
+      // status bar, matching the Order Details / Payment screens.
+      extendBodyBehindAppBar: true,
       body: Stack(
         children: [
           // ── Ambient background dressing ─────────────────────────────────
           // Purely decorative — soft gold/ruby glows plus a faint textured
-          // photograph, matching the Menu Management / Dashboard screens'
-          // "foggy" backdrop so the whole app feels like one cohesive
-          // brand.
+          // photograph, matching the Menu Management / Dashboard / Payment
+          // screens' "foggy" backdrop so the whole app feels like one
+          // cohesive brand.
           Positioned.fill(
             child: Container(
               color: _Palette.canvas,
@@ -169,6 +230,28 @@ class BillScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+                  // Extra low, wide glow further down the page — gives the
+                  // long scroll area a second soft focal point instead of
+                  // all the ambient light sitting only near the header.
+                  // Matches the Payment / Orders / Order Details screens'
+                  // Pass-2 backdrop treatment.
+                  Positioned(
+                    top: 640,
+                    left: -70,
+                    child: Container(
+                      width: 250,
+                      height: 250,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            _Palette.milanoRedLight.withValues(alpha: 0.05),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                   Opacity(
                     opacity: 0.04,
                     child: Image.network(
@@ -182,20 +265,50 @@ class BillScreen extends StatelessWidget {
               ),
             ),
           ),
+
+          // Faint diagonal sheen sweeping across the whole page — a subtle
+          // extra layer of depth so the cream backdrop doesn't read as
+          // flat behind the header, echoing the glass-highlight language
+          // used in the header itself. Matches the Payment / Orders /
+          // Order Details screens exactly.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withValues(alpha: 0.30),
+                      Colors.transparent,
+                      Colors.transparent,
+                    ],
+                    stops: const [0.0, 0.35, 1.0],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
           Column(
             children: [
               // ── Header — same Dark Maroon gradient, rounded "floating
               // navbar" corners, dotted texture accent, and diagonal
-              // ribbon glows used on the Menu Management screen's header,
-              // so every screen reads as one cohesive, unique brand. This
-              // screen never had a header before — the back arrow simply
-              // triggers the exact same navigation as the "Back to
-              // Billing / Back to Dashboard" button already at the
-              // bottom of the receipt, so no new behavior is introduced.
+              // ribbon glows used throughout the app, now restyled into a
+              // richer "command bar" with a live quick-stats readout. This
+              // screen never had a header before this pass — the back
+              // arrow simply triggers the exact same navigation as the
+              // "Back to Billing / Back to Dashboard" button already at
+              // the bottom of the receipt, so no new behavior is
+              // introduced. ─────────────────────────────────────────────
               _ScreenHeader(
                 title: 'Payment Receipt',
                 subtitle: billNumber,
+                dateLabel: _todayLabel(),
                 onBack: goBack,
+                totalPaidLabel: '₹$finalTotal',
+                itemsCount: itemsCount,
+                methodLabel: paymentMethod.toUpperCase(),
               ),
 
               Expanded(
@@ -293,9 +406,13 @@ class BillScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 24),
 
-                                    // Receipt details
+                                    // Receipt details — UI-ENHANCEMENT
+                                    // PASS 2: wrapped with a slim maroon
+                                    // accent rail down the left edge,
+                                    // matching the Payment / Create Order
+                                    // screens' card treatment. Same
+                                    // content as before.
                                     Container(
-                                      padding: const EdgeInsets.all(20),
                                       decoration: BoxDecoration(
                                         color: _Palette.canvas,
                                         borderRadius: BorderRadius.circular(
@@ -306,148 +423,285 @@ class BillScreen extends StatelessWidget {
                                               .withValues(alpha: 0.08),
                                         ),
                                       ),
-                                      child: Column(
+                                      clipBehavior: Clip.antiAlias,
+                                      child: Stack(
                                         children: [
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                'Total Amount',
-                                                style: AppTheme.sans(
-                                                  size: 12,
-                                                  weight: FontWeight.w700,
-                                                  color: _Palette.textMuted,
+                                          Positioned(
+                                            top: 0,
+                                            bottom: 0,
+                                            left: 0,
+                                            child: Container(
+                                              width: 5,
+                                              decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                  begin:
+                                                      Alignment.topCenter,
+                                                  end: Alignment
+                                                      .bottomCenter,
+                                                  colors: [
+                                                    _Palette.milanoRed
+                                                        .withValues(
+                                                      alpha: 0.85,
+                                                    ),
+                                                    _Palette.milanoRed
+                                                        .withValues(
+                                                      alpha: 0.35,
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
-                                              Text(
-                                                '₹$finalTotal',
-                                                style: AppTheme.serif(
-                                                  size: 32,
-                                                  weight: FontWeight.w900,
-                                                  color: _Palette.textDark,
-                                                ),
-                                              ),
-                                            ],
+                                            ),
                                           ),
                                           Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              vertical: 12,
+                                            padding: const EdgeInsets.all(20),
+                                            child: Column(
+                                              children: [
+                                                Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    Text(
+                                                      'Total Amount',
+                                                      style: AppTheme.sans(
+                                                        size: 12,
+                                                        weight:
+                                                            FontWeight.w700,
+                                                        color: _Palette
+                                                            .textMuted,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      '₹$finalTotal',
+                                                      style: AppTheme.serif(
+                                                        size: 32,
+                                                        weight:
+                                                            FontWeight.w900,
+                                                        color:
+                                                            _Palette.textDark,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets
+                                                          .symmetric(
+                                                    vertical: 12,
+                                                  ),
+                                                  child: Divider(
+                                                    color: _Palette
+                                                        .milanoRedDeep
+                                                        .withValues(
+                                                      alpha: 0.10,
+                                                    ),
+                                                    height: 1,
+                                                  ),
+                                                ),
+                                                _ReceiptRow(
+                                                  'Bill Number',
+                                                  billNumber,
+                                                  mono: true,
+                                                ),
+                                                const SizedBox(height: 10),
+                                                if (order != null) ...[
+                                                  _ReceiptRow(
+                                                    'Table',
+                                                    order.table,
+                                                  ),
+                                                  if (order.customerName !=
+                                                      null) ...[
+                                                    const SizedBox(
+                                                      height: 10,
+                                                    ),
+                                                    _ReceiptRow(
+                                                      'Customer',
+                                                      order.customerName!,
+                                                    ),
+                                                  ],
+                                                ],
+                                                const SizedBox(height: 10),
+                                                _ReceiptRow(
+                                                  'Date',
+                                                  _formatDate(),
+                                                ),
+                                                const SizedBox(height: 10),
+                                                _ReceiptRow(
+                                                  'Payment Method',
+                                                  paymentMethod.toUpperCase(),
+                                                ),
+                                              ],
                                             ),
-                                            child: Divider(
-                                              color: _Palette.milanoRedDeep
-                                                  .withValues(alpha: 0.10),
-                                              height: 1,
-                                            ),
-                                          ),
-                                          _ReceiptRow(
-                                            'Bill Number',
-                                            billNumber,
-                                            mono: true,
-                                          ),
-                                          const SizedBox(height: 10),
-                                          if (order != null) ...[
-                                            _ReceiptRow('Table', order.table),
-                                            if (order.customerName != null) ...[
-                                              const SizedBox(height: 10),
-                                              _ReceiptRow(
-                                                'Customer',
-                                                order.customerName!,
-                                              ),
-                                            ],
-                                          ],
-                                          const SizedBox(height: 10),
-                                          _ReceiptRow('Date', _formatDate()),
-                                          const SizedBox(height: 10),
-                                          _ReceiptRow(
-                                            'Payment Method',
-                                            paymentMethod.toUpperCase(),
                                           ),
                                         ],
                                       ),
                                     ),
                                     const SizedBox(height: 20),
 
-                                    // Breakdown
-                                    if (order != null) ...[
-                                      const _SectionHeader('Order Items'),
-                                      const SizedBox(height: 10),
-                                      ...order.itemsDetails.map(
-                                        (item) => Padding(
-                                          padding: const EdgeInsets.only(
-                                            bottom: 6,
+                                    // Breakdown — UI-ENHANCEMENT PASS 2:
+                                    // now wrapped with a slim gold accent
+                                    // rail down the left edge, matching
+                                    // the "Items" section on the Payment
+                                    // screen. Same content as before.
+                                    if (order != null)
+                                      Container(
+                                        width: double.infinity,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(
+                                            18,
                                           ),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                '${item.quantity}x ${item.name}',
-                                                style: AppTheme.sans(
-                                                  size: 13,
-                                                  color: _Palette.textMuted,
+                                          border: Border.all(
+                                            color: _Palette.milanoRedDeep
+                                                .withValues(alpha: 0.08),
+                                          ),
+                                        ),
+                                        clipBehavior: Clip.antiAlias,
+                                        child: Stack(
+                                          children: [
+                                            Positioned(
+                                              top: 0,
+                                              bottom: 0,
+                                              left: 0,
+                                              child: Container(
+                                                width: 5,
+                                                decoration: BoxDecoration(
+                                                  gradient: LinearGradient(
+                                                    begin:
+                                                        Alignment.topCenter,
+                                                    end: Alignment
+                                                        .bottomCenter,
+                                                    colors: [
+                                                      _Palette.gold
+                                                          .withValues(
+                                                        alpha: 0.85,
+                                                      ),
+                                                      _Palette.gold
+                                                          .withValues(
+                                                        alpha: 0.35,
+                                                      ),
+                                                    ],
+                                                  ),
                                                 ),
                                               ),
-                                              Text(
-                                                '₹${(item.quantity * (double.tryParse(item.price) ?? 0)).round()}',
-                                                style: AppTheme.sans(
-                                                  size: 13,
-                                                  weight: FontWeight.w600,
-                                                  color: _Palette.textDark,
-                                                ),
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.all(
+                                                18,
                                               ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      Divider(
-                                        height: 20,
-                                        color: _Palette.milanoRedDeep
-                                            .withValues(alpha: 0.10),
-                                      ),
-                                      if (order.subtotal > 0) ...[
-                                        _BreakdownRow(
-                                          'Subtotal',
-                                          '₹${order.subtotal.round()}',
-                                        ),
-                                        const SizedBox(height: 6),
-                                      ],
-                                      if (order.tax > 0) ...[
-                                        _BreakdownRow(
-                                          'Tax',
-                                          '₹${order.tax.round()}',
-                                        ),
-                                        const SizedBox(height: 6),
-                                      ],
-                                      _BreakdownRow('Tip', '₹$tipAmount'),
-                                      Divider(
-                                        height: 16,
-                                        color: _Palette.milanoRedDeep
-                                            .withValues(alpha: 0.10),
-                                      ),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            'Total Paid',
-                                            style: AppTheme.sans(
-                                              size: 16,
-                                              weight: FontWeight.w800,
-                                              color: _Palette.textDark,
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  const _SectionHeader(
+                                                    'Order Items',
+                                                  ),
+                                                  const SizedBox(height: 12),
+                                                  ...order.itemsDetails.map(
+                                                    (item) => Padding(
+                                                      padding:
+                                                          const EdgeInsets
+                                                              .only(
+                                                        bottom: 6,
+                                                      ),
+                                                      child: Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .spaceBetween,
+                                                        children: [
+                                                          Text(
+                                                            '${item.quantity}x ${item.name}',
+                                                            style: AppTheme
+                                                                .sans(
+                                                              size: 13,
+                                                              color: _Palette
+                                                                  .textMuted,
+                                                            ),
+                                                          ),
+                                                          Text(
+                                                            '₹${(item.quantity * (double.tryParse(item.price) ?? 0)).round()}',
+                                                            style: AppTheme
+                                                                .sans(
+                                                              size: 13,
+                                                              weight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                              color: _Palette
+                                                                  .textDark,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Divider(
+                                                    height: 20,
+                                                    color: _Palette
+                                                        .milanoRedDeep
+                                                        .withValues(
+                                                      alpha: 0.10,
+                                                    ),
+                                                  ),
+                                                  if (order.subtotal >
+                                                      0) ...[
+                                                    _BreakdownRow(
+                                                      'Subtotal',
+                                                      '₹${order.subtotal.round()}',
+                                                    ),
+                                                    const SizedBox(height: 6),
+                                                  ],
+                                                  if (order.tax > 0) ...[
+                                                    _BreakdownRow(
+                                                      'Tax',
+                                                      '₹${order.tax.round()}',
+                                                    ),
+                                                    const SizedBox(height: 6),
+                                                  ],
+                                                  _BreakdownRow(
+                                                    'Tip',
+                                                    '₹$tipAmount',
+                                                  ),
+                                                  Divider(
+                                                    height: 16,
+                                                    color: _Palette
+                                                        .milanoRedDeep
+                                                        .withValues(
+                                                      alpha: 0.10,
+                                                    ),
+                                                  ),
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Text(
+                                                        'Total Paid',
+                                                        style: AppTheme.sans(
+                                                          size: 16,
+                                                          weight:
+                                                              FontWeight.w800,
+                                                          color: _Palette
+                                                              .textDark,
+                                                        ),
+                                                      ),
+                                                      Text(
+                                                        '₹$finalTotal',
+                                                        style: AppTheme.sans(
+                                                          size: 20,
+                                                          weight:
+                                                              FontWeight.w900,
+                                                          color: _Palette
+                                                              .milanoRedDeep,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
                                             ),
-                                          ),
-                                          Text(
-                                            '₹$finalTotal',
-                                            style: AppTheme.sans(
-                                              size: 20,
-                                              weight: FontWeight.w900,
-                                              color: _Palette.milanoRedDeep,
-                                            ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
-                                    ],
 
                                     const SizedBox(height: 24),
 
@@ -796,14 +1050,16 @@ class BillScreen extends StatelessWidget {
 }
 
 /// Small decorative gradient divider placed beneath a title — purely
-/// cosmetic, mirrors the same accent used on the Menu Management screen.
+/// cosmetic, mirrors the same accent used on the Menu Management / Order
+/// Details / Payment screens.
 class _TitleDivider extends StatelessWidget {
-  const _TitleDivider();
+  final double width;
+  const _TitleDivider({this.width = 46});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 46,
+      width: width,
       height: 3,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(4),
@@ -819,26 +1075,36 @@ class _TitleDivider extends StatelessWidget {
   }
 }
 
-// ─── Screen header — same Dark Maroon gradient treatment, bigger rounded
-// "floating navbar" corners, a richer 3-layer shadow stack, layered
-// ribbon glows, and a fine dotted texture accent, plus the same
-// thin-gold-border language used throughout, so the top bar reads as one
-// cohesive, unique brand across the whole app. This screen previously had
-// no header at all — the back arrow here simply calls the exact same
-// navigation already used by the "Back to Billing / Back to Dashboard"
-// button below, so no new behavior is introduced, only a visual entry
-// point that matches the rest of the app. The back control itself keeps
-// its original compact icon-only shape (no "Back" label was ever
-// present here). ─────────────────────────────────────────────────────────
+// ─── Screen header — restyled into its own distinctive "command bar"
+// identity, matching the Payment / Order Details / Orders screens'
+// Pass-2 treatment exactly: a richer four-stop diagonal gradient, a
+// large faint watermark emblem behind the title, a fine glass highlight
+// line along the top edge, layered ribbon glows, a dotted texture
+// accent, and a floating date pill on wide screens. UI-ENHANCEMENT PASS
+// 2 adds a live quick-stats readout strip (Total Paid / Items / Method)
+// built from values already available at the call site — no new data
+// source, purely a display addition. The back control is now the same
+// compact, icon-only "‹" chip used on the Payment / Order Details
+// screens' header, and it still calls the exact same navigation as the
+// "Back to Billing / Back to Dashboard" button below — no new behavior
+// introduced, only a richer, more unique visual treatment. ────────────
 class _ScreenHeader extends StatelessWidget {
   final String title;
   final String subtitle;
+  final String dateLabel;
   final VoidCallback onBack;
+  final String totalPaidLabel;
+  final int itemsCount;
+  final String methodLabel;
 
   const _ScreenHeader({
     required this.title,
     required this.subtitle,
+    required this.dateLabel,
     required this.onBack,
+    required this.totalPaidLabel,
+    required this.itemsCount,
+    required this.methodLabel,
   });
 
   @override
@@ -849,14 +1115,20 @@ class _ScreenHeader extends StatelessWidget {
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
+          // Richer four-stop diagonal maroon gradient — deeper and more
+          // dimensional than a flat three-stop wash, matching the
+          // Payment / Order Details / Orders screens' "faceted" surface
+          // language.
           gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
             colors: [
               _Palette.milanoRedLight,
               _Palette.milanoRed,
               _Palette.milanoRedDeep,
+              _Palette.milanoRedDarkest,
             ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            stops: [0.0, 0.38, 0.72, 1.0],
           ),
           // Softly rounded bottom corners give the header a modern,
           // "floating navbar" feel that matches the rest of the app
@@ -865,8 +1137,11 @@ class _ScreenHeader extends StatelessWidget {
             bottomLeft: Radius.circular(isMobile ? 28 : 38),
             bottomRight: Radius.circular(isMobile ? 28 : 38),
           ),
-          border: const Border(
-            bottom: BorderSide(color: _Palette.lemonChiffon, width: 4),
+          border: Border(
+            bottom: BorderSide(
+              color: _Palette.lemonChiffon.withValues(alpha: 0.9),
+              width: 4,
+            ),
           ),
           boxShadow: _Palette.heroShadow,
         ),
@@ -915,7 +1190,7 @@ class _ScreenHeader extends StatelessWidget {
               ),
             ),
             // Soft gold radial glow behind the brand icon, echoing the
-            // Dashboard/Order Details header treatment.
+            // Dashboard / Order Details / Payment header treatment.
             Positioned(
               top: -50,
               left: -20,
@@ -933,6 +1208,46 @@ class _ScreenHeader extends StatelessWidget {
                 ),
               ),
             ),
+            // Extra ambient gold glow, lower-right — matches the fuller
+            // "full-screen backdrop" glow used on the Payment / Order
+            // Details headers.
+            Positioned(
+              bottom: -70,
+              right: -20,
+              child: Container(
+                width: 180,
+                height: 180,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      _Palette.gold.withValues(alpha: 0.08),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // ── Large faint watermark emblem — a unique signature touch,
+            // sits low-opacity and large behind the copy, never competing
+            // with the title or the stats strip. Matches the Payment /
+            // Order Details / Orders screens' Pass-2 header exactly.
+            Positioned(
+              right: isMobile ? -30 : -10,
+              bottom: isMobile ? -22 : -16,
+              child: IgnorePointer(
+                child: Opacity(
+                  opacity: 0.07,
+                  child: Icon(
+                    Icons.receipt_long_rounded,
+                    size: isMobile ? 140 : 190,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+
             // Fine dotted texture accent, matching the app's refined
             // decorative language used on the other headers.
             Positioned(
@@ -951,10 +1266,32 @@ class _ScreenHeader extends StatelessWidget {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: _Palette.lemonChiffon.withValues(
-                          alpha: i == 2 ? 0.85 : 0.3,
+                          alpha: i == 2 ? 0.9 : 0.32,
                         ),
                       ),
                     ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Fine glass highlight line along the very top edge, giving
+            // the full-width panel a polished, "premium glass" finish —
+            // matches the Dashboard / Payment / Order Details headers'
+            // top edge treatment.
+            Positioned(
+              top: 0,
+              left: 24,
+              right: 24,
+              child: Container(
+                height: 1,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.transparent,
+                      Colors.white.withValues(alpha: 0.35),
+                      Colors.transparent,
+                    ],
                   ),
                 ),
               ),
@@ -964,110 +1301,383 @@ class _ScreenHeader extends StatelessWidget {
               bottom: false,
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
-                  isMobile ? 16 : 20,
-                  isMobile ? 18 : 16,
-                  isMobile ? 20 : 24,
+                  isMobile ? 16 : 24,
+                  16,
+                  isMobile ? 16 : 24,
                   22,
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    GestureDetector(
-                      onTap: onBack,
-                      child: Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.14),
-                          borderRadius: BorderRadius.circular(13),
-                          border: Border.all(
-                            color: _Palette.lemonChiffon.withValues(
-                              alpha: 0.4,
-                            ),
-                            width: 1.2,
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.arrow_back_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    // ── Brand icon chip — thin gold border + soft gold
-                    // glow, matching every other screen's header icon. ──
-                    Container(
-                      padding: const EdgeInsets.all(9),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: _Palette.gold.withValues(alpha: 0.75),
-                          width: 1.2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: _Palette.gold.withValues(alpha: 0.25),
-                            blurRadius: 10,
-                            spreadRadius: 0.5,
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.receipt_long_rounded,
-                        color: _Palette.lemonChiffon,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: AppTheme.serif(
-                              size: 20,
-                              weight: FontWeight.w800,
-                              color: Colors.white,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 6),
-                          _TitleDivider(),
-                          const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        // ── Icon-only back control — a single "‹" glyph,
+                        // no arrow icon and no "Back" label, matching the
+                        // Payment / Order Details screens' header
+                        // control. This still calls the exact same
+                        // onBack callback, so no navigation behavior is
+                        // new. ────────────────────────────────────────
+                        _BackChevronButton(onTap: onBack),
+                        const Spacer(),
+                        if (!isMobile)
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
+                              horizontal: 12,
+                              vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.14),
-                              borderRadius: BorderRadius.circular(8),
+                              color: Colors.white.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: _Palette.gold.withValues(alpha: 0.35),
+                                color: _Palette.lemonChiffon.withValues(
+                                  alpha: 0.25,
+                                ),
+                                width: 1,
                               ),
                             ),
-                            child: Text(
-                              subtitle,
-                              style: AppTheme.sans(
-                                size: 12,
-                                weight: FontWeight.w700,
-                                color: _Palette.lemonChiffon,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.calendar_today_rounded,
+                                  size: 12,
+                                  color: _Palette.lemonChiffon.withValues(
+                                    alpha: 0.85,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  dateLabel,
+                                  style: AppTheme.sans(
+                                    size: 12,
+                                    weight: FontWeight.w600,
+                                    color:
+                                        Colors.white.withValues(alpha: 0.75),
+                                  ).copyWith(letterSpacing: 0.3),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
+                      ],
                     ),
+                    const SizedBox(height: 18),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // ── Brand icon chip — thin gold border + soft
+                        // gold glow, matching every other staff screen's
+                        // header icon. ────────────────────────────────
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: _Palette.gold.withValues(alpha: 0.8),
+                              width: 1.3,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: _Palette.gold.withValues(alpha: 0.3),
+                                blurRadius: 14,
+                                spreadRadius: 0.5,
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.receipt_long_rounded,
+                            color: _Palette.lemonChiffon,
+                            size: 23,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                style: AppTheme.serif(
+                                  size: isMobile ? 22 : 26,
+                                  weight: FontWeight.w900,
+                                  color: Colors.white,
+                                ).copyWith(height: 1.1),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 8),
+                              const _TitleDivider(),
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: _Palette.gold.withValues(
+                                      alpha: 0.4,
+                                    ),
+                                  ),
+                                ),
+                                child: Text(
+                                  subtitle,
+                                  style: AppTheme.sans(
+                                    size: 12,
+                                    weight: FontWeight.w700,
+                                    color: _Palette.lemonChiffon,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (isMobile) ...[
+                      const SizedBox(height: 14),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: _Palette.lemonChiffon.withValues(
+                                alpha: 0.25,
+                              ),
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            dateLabel,
+                            style: AppTheme.sans(
+                              size: 10.5,
+                              weight: FontWeight.w600,
+                              color: Colors.white.withValues(alpha: 0.7),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 16),
+
+                    // ── Live quick-stats readout strip — Total Paid /
+                    // Items / Method, built straight from values already
+                    // available at the call site. Purely a display
+                    // addition; no new data source and no logic change.
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.22),
+                            Colors.black.withValues(alpha: 0.14),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.10),
+                        ),
+                        boxShadow: _Palette.statCapsuleShadow,
+                      ),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _HeaderStatPill(
+                              icon: Icons.payments_rounded,
+                              value: totalPaidLabel,
+                              label: 'Total Paid',
+                              accent: const Color(0xFF34D399),
+                            ),
+                            const _HeaderStatDivider(),
+                            _HeaderStatPill(
+                              icon: Icons.shopping_basket_rounded,
+                              value: '$itemsCount',
+                              label: 'Items',
+                              accent: const Color(0xFFFBBF24),
+                            ),
+                            const _HeaderStatDivider(),
+                            _HeaderStatPill(
+                              icon: Icons.credit_card_rounded,
+                              value: methodLabel,
+                              label: 'Method',
+                              accent: Colors.white70,
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                        .animate()
+                        .fade(duration: 550.ms, delay: 200.ms)
+                        .slideY(begin: 0.2, duration: 550.ms, delay: 200.ms),
                   ],
                 ),
               ),
             ),
           ],
+        ),
+      ),
+    ).animate().fade(duration: 450.ms).slideY(begin: -0.15, duration: 450.ms);
+  }
+}
+
+/// Slim vertical divider used between stat pills in the header's readout
+/// strip — purely decorative spacing element, no logic. Matches the
+/// Payment / Order Details / Orders screens' Pass-2 header strip exactly.
+class _HeaderStatDivider extends StatelessWidget {
+  const _HeaderStatDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 28,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      color: Colors.white.withValues(alpha: 0.10),
+    );
+  }
+}
+
+/// A single stat readout module (icon badge + value + label) used inside
+/// the header's live stats strip. Purely presentational — takes whatever
+/// value/label/accent it's given.
+class _HeaderStatPill extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color accent;
+
+  const _HeaderStatPill({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      constraints: const BoxConstraints(maxWidth: 130),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.10),
+            ),
+            child: Icon(icon, size: 13, color: accent),
+          ),
+          const SizedBox(width: 9),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  value,
+                  style: AppTheme.sans(
+                    size: 14,
+                    weight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  label.toUpperCase(),
+                  style: AppTheme.sans(
+                    size: 8.5,
+                    weight: FontWeight.w700,
+                    color: Colors.white.withValues(alpha: 0.6),
+                  ).copyWith(letterSpacing: 0.4),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Compact icon-only "back" control — a circular glass button showing
+/// only a plain "‹" glyph. Replaces the previous arrow_back_rounded icon
+/// box with the same minimal, professional control used on the Payment /
+/// Order Details screens' header, for a consistent brand-wide top bar.
+/// Still calls the exact same onTap/onBack callback — no navigation
+/// logic touched.
+class _BackChevronButton extends StatefulWidget {
+  final VoidCallback onTap;
+  const _BackChevronButton({required this.onTap});
+
+  @override
+  State<_BackChevronButton> createState() => _BackChevronButtonState();
+}
+
+class _BackChevronButtonState extends State<_BackChevronButton> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 40,
+          height: 40,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: _isHovered
+                ? Colors.white.withValues(alpha: 0.20)
+                : Colors.white.withValues(alpha: 0.10),
+            border: Border.all(
+              color: _isHovered
+                  ? _Palette.lemonChiffon.withValues(alpha: 0.7)
+                  : _Palette.lemonChiffon.withValues(alpha: 0.4),
+              width: 1.2,
+            ),
+            boxShadow: _isHovered
+                ? [
+                    BoxShadow(
+                      color: _Palette.lemonChiffon.withValues(alpha: 0.25),
+                      blurRadius: 10,
+                      spreadRadius: 1,
+                    ),
+                  ]
+                : null,
+          ),
+          child: Text(
+            '‹',
+            style: AppTheme.sans(
+              size: 24,
+              weight: FontWeight.w900,
+              color: Colors.white,
+            ).copyWith(height: 1.0),
+          ),
         ),
       ),
     );

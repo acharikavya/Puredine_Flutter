@@ -13,11 +13,20 @@ import 'package:restaurant_unified_app/admin/services/menu_service.dart';
 /// decorative language (ribbon accents, dotted divider line, radial glow,
 /// title underline) used on the Menu screen's navbar, so the dialog reads
 /// as part of the same brand the moment it opens.
+///
+/// UI-ENHANCEMENT PASS 2: the header was pushed further into its own
+/// distinctive "command bar" identity (a richer four-stop diagonal
+/// gradient, a faint watermark emblem behind the icon block, and a fine
+/// glass highlight line along the top edge) matching the Orders / Admin
+/// Dashboard / staff-side screens' Pass-2 treatment. No form validation,
+/// submit logic, MenuService calls, or dialog-dismiss behavior was touched
+/// anywhere in this pass — only presentation changed.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
   static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
   static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
+  static const Color milanoRedDarkest = Color(0xFF2E0808); // Fourth gradient stop
   static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow (Accent)
   static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
   static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
@@ -26,6 +35,16 @@ class _Palette {
   static const Color textDark = Color(0xFF3A1608);
   static const Color textMuted = Color(0xFF8A6F5E);
   static const Color danger = Color(0xFFC62828);
+
+  // UI-ENHANCEMENT PASS 2: promoted from a flat 3-stop wash to a richer
+  // 4-stop diagonal gradient with explicit stops — matches the Orders
+  // screen header's "faceted" surface language exactly.
+  static const LinearGradient headerGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [milanoRedLight, milanoRed, milanoRedDeep, milanoRedDarkest],
+    stops: [0.0, 0.4, 0.75, 1.0],
+  );
 
   /// Themed soft shadow for resting surfaces — mirrors the shared shadow
   /// language used across MenuScreen / AdminDashboardScreen.
@@ -193,23 +212,17 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // ── Header (mini navbar) ─────────────────────────────────
-              // Mirrors the Menu screen's header treatment: brand gradient,
-              // decorative diagonal ribbons, a soft radial glow behind the
-              // icon block, a fine dotted accent line, and a gold underline
+              // Mirrors the Orders/Dashboard Pass-2 header treatment: a
+              // richer four-stop brand gradient, decorative diagonal
+              // ribbons, a soft radial glow behind the icon block, a large
+              // faint watermark emblem, a fine glass highlight line along
+              // the top edge, a dotted texture accent, and a gold underline
               // beneath the title — so the dialog feels like a natural
-              // extension of the same navbar language used app-wide.
+              // extension of the same "command bar" language used app-wide.
               ClipRect(
                 child: Container(
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        _Palette.milanoRedLight,
-                        _Palette.milanoRed,
-                        _Palette.milanoRedDeep,
-                      ],
-                    ),
+                    gradient: _Palette.headerGradient,
                     border: const Border(
                       bottom: BorderSide(
                         color: _Palette.lemonChiffon,
@@ -218,207 +231,261 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: _Palette.milanoRed.withValues(alpha: 0.30),
-                        blurRadius: 20,
+                        color: _Palette.milanoRedDeep.withValues(alpha: 0.32),
+                        blurRadius: 22,
                         offset: const Offset(0, 8),
                       ),
                       BoxShadow(
-                        color: _Palette.lemonChiffon.withValues(alpha: 0.08),
+                        color: _Palette.lemonChiffon.withValues(alpha: 0.10),
                         blurRadius: 10,
                         offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                  child: Stack(
-                    children: [
-                      // Decorative diagonal ribbon accents (purely cosmetic)
-                      Positioned(
-                        top: -46,
-                        right: -30,
-                        child: Transform.rotate(
-                          angle: -0.5,
-                          child: Container(
-                            width: 180,
-                            height: 74,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  _Palette.lemonChiffon.withValues(alpha: 0.20),
-                                  Colors.transparent,
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        bottom: -40,
-                        left: -40,
-                        child: Transform.rotate(
-                          angle: 0.4,
-                          child: Container(
-                            width: 160,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.white.withValues(alpha: 0.07),
-                                  Colors.transparent,
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Soft radial glow behind the icon block, adding depth
-                      // without affecting any layout or logic.
-                      Positioned(
-                        top: -30,
-                        left: -20,
-                        child: Container(
-                          width: 140,
-                          height: 140,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: RadialGradient(
-                              colors: [
-                                _Palette.lemonChiffon.withValues(alpha: 0.14),
-                                Colors.transparent,
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Fine dotted texture accent — matches the dashed dot
-                      // row used on the Menu/Dashboard headers.
-                      Positioned(
-                        top: 8,
-                        left: 0,
-                        right: 0,
-                        child: Center(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: List.generate(
-                              5,
-                              (i) => Container(
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 3),
-                                width: 3.5,
-                                height: 3.5,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: _Palette.lemonChiffon.withValues(
-                                    alpha: i == 2 ? 0.85 : 0.28,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 24, 16, 20),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
+                  child: ClipRect(
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        // Decorative diagonal ribbon accents (purely
+                        // cosmetic)
+                        Positioned(
+                          top: -46,
+                          right: -30,
+                          child: Transform.rotate(
+                            angle: -0.5,
+                            child: Container(
+                              width: 180,
+                              height: 74,
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.14),
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: _Palette.lemonChiffon
-                                      .withValues(alpha: 0.4),
-                                  width: 1.2,
+                                gradient: LinearGradient(
+                                  colors: [
+                                    _Palette.lemonChiffon
+                                        .withValues(alpha: 0.20),
+                                    Colors.transparent,
+                                  ],
                                 ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: _Palette.lemonChiffon
-                                        .withValues(alpha: 0.18),
-                                    blurRadius: 12,
-                                    spreadRadius: 1,
-                                  ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: -40,
+                          left: -40,
+                          child: Transform.rotate(
+                            angle: 0.4,
+                            child: Container(
+                              width: 160,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.white.withValues(alpha: 0.07),
+                                    Colors.transparent,
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Soft radial glow behind the icon block, adding
+                        // depth without affecting any layout or logic.
+                        Positioned(
+                          top: -30,
+                          left: -20,
+                          child: Container(
+                            width: 140,
+                            height: 140,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  _Palette.lemonChiffon.withValues(alpha: 0.14),
+                                  Colors.transparent,
                                 ],
                               ),
+                            ),
+                          ),
+                        ),
+
+                        // ── Faint watermark emblem — a unique signature
+                        // touch this header didn't previously have,
+                        // sitting low-opacity behind the copy on the right
+                        // edge, never competing with the title or close
+                        // button. Matches the Orders / Admin Dashboard
+                        // hero's Pass-2 watermark treatment, scaled down
+                        // for the dialog's compact header.
+                        Positioned(
+                          right: -14,
+                          bottom: -16,
+                          child: IgnorePointer(
+                            child: Opacity(
+                              opacity: 0.07,
                               child: Icon(
                                 isEditing
                                     ? Icons.edit_rounded
                                     : Icons.create_new_folder_rounded,
-                                color: _Palette.lemonChiffon,
-                                size: 23,
+                                size: 96,
+                                color: Colors.white,
                               ),
                             ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    isEditing
-                                        ? 'Edit Category'
-                                        : 'Create Category',
-                                    style: GoogleFonts.playfairDisplay(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                      height: 1.1,
-                                      letterSpacing: 0.3,
+                          ),
+                        ),
+
+                        // Fine dotted texture accent — matches the dashed
+                        // dot row used on the Menu/Dashboard headers.
+                        Positioned(
+                          top: 8,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: List.generate(
+                                5,
+                                (i) => Container(
+                                  margin: const EdgeInsets.symmetric(
+                                      horizontal: 3),
+                                  width: 3.5,
+                                  height: 3.5,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: _Palette.lemonChiffon.withValues(
+                                      alpha: i == 2 ? 0.85 : 0.28,
                                     ),
                                   ),
-                                  const SizedBox(height: 9),
-                                  Container(
-                                    width: 48,
-                                    height: 2.5,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(4),
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          _Palette.lemonChiffon
-                                              .withValues(alpha: 0.9),
-                                          Colors.transparent,
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    isEditing
-                                        ? 'Update the details for this category'
-                                        : 'Add a new category to your menu',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 12.5,
-                                      color:
-                                          Colors.white.withValues(alpha: 0.85),
-                                    ),
-                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // Fine glass highlight line along the very top
+                        // edge, giving the header a polished, "premium
+                        // glass" finish — matches the Orders / Admin
+                        // Dashboard headers' top edge treatment.
+                        Positioned(
+                          top: 0,
+                          left: 20,
+                          right: 20,
+                          child: Container(
+                            height: 1,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.transparent,
+                                  Colors.white.withValues(alpha: 0.35),
+                                  Colors.transparent,
                                 ],
                               ),
                             ),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.10),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.14),
-                                ),
-                              ),
-                              child: IconButton(
-                                onPressed: _isLoading
-                                    ? null
-                                    : () => Navigator.of(context).pop(false),
-                                icon: const Icon(
-                                  Icons.close_rounded,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                                splashRadius: 20,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ],
+
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 24, 16, 20),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.14),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: _Palette.lemonChiffon
+                                        .withValues(alpha: 0.4),
+                                    width: 1.2,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: _Palette.lemonChiffon
+                                          .withValues(alpha: 0.18),
+                                      blurRadius: 12,
+                                      spreadRadius: 1,
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  isEditing
+                                      ? Icons.edit_rounded
+                                      : Icons.create_new_folder_rounded,
+                                  color: _Palette.lemonChiffon,
+                                  size: 23,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      isEditing
+                                          ? 'Edit Category'
+                                          : 'Create Category',
+                                      style: GoogleFonts.playfairDisplay(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                        height: 1.1,
+                                        letterSpacing: 0.3,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 9),
+                                    Container(
+                                      width: 48,
+                                      height: 2.5,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(4),
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            _Palette.lemonChiffon
+                                                .withValues(alpha: 0.9),
+                                            Colors.transparent,
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      isEditing
+                                          ? 'Update the details for this category'
+                                          : 'Add a new category to your menu',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12.5,
+                                        color: Colors.white
+                                            .withValues(alpha: 0.85),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.10),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color:
+                                        Colors.white.withValues(alpha: 0.14),
+                                  ),
+                                ),
+                                child: IconButton(
+                                  onPressed: _isLoading
+                                      ? null
+                                      : () => Navigator.of(context).pop(false),
+                                  icon: const Icon(
+                                    Icons.close_rounded,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                  splashRadius: 20,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

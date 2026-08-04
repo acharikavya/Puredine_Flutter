@@ -13,11 +13,19 @@ import 'package:restaurant_unified_app/admin/services/menu_service.dart';
 /// texture line, radial glow, gold underline) used across the Menu screen
 /// navbar and the Category dialog, so every surface in the admin flow
 /// reads as one cohesive, professional brand.
+///
+/// UI-ENHANCEMENT PASS 2: brings this dialog's header up to the same
+/// richer "command bar" identity used on the Orders/Menu screens — a
+/// deeper four-stop diagonal gradient, a large faint watermark emblem
+/// behind the title copy, and a fine glass highlight line along the very
+/// top edge. No form fields, validation, save/submit, or image-cleaning
+/// logic was touched anywhere in this pass — presentation only.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
   static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
   static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
+  static const Color milanoRedDarkest = Color(0xFF2E0909); // Fourth gradient stop
   static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow (Accent)
   static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
   static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
@@ -409,6 +417,12 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
               // brand gradient, decorative diagonal ribbons, a soft radial
               // glow behind the icon block, a fine dotted accent line, and
               // a gold underline beneath the title.
+              //
+              // UI-ENHANCEMENT PASS 2: upgraded from a three-stop to a
+              // richer four-stop diagonal gradient, a large faint
+              // watermark emblem tucked behind the copy, and a fine glass
+              // highlight line along the very top edge — matching the
+              // Orders/Menu screens' Pass-2 "command bar" treatment.
               ClipRect(
                 child: Container(
                   decoration: BoxDecoration(
@@ -419,7 +433,9 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                         _Palette.milanoRedLight,
                         _Palette.milanoRed,
                         _Palette.milanoRedDeep,
+                        _Palette.milanoRedDarkest,
                       ],
+                      stops: [0.0, 0.38, 0.72, 1.0],
                     ),
                     border: const Border(
                       bottom: BorderSide(
@@ -429,18 +445,19 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: _Palette.milanoRed.withValues(alpha: 0.30),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
+                        color: _Palette.milanoRed.withValues(alpha: 0.34),
+                        blurRadius: 24,
+                        offset: const Offset(0, 10),
                       ),
                       BoxShadow(
-                        color: _Palette.lemonChiffon.withValues(alpha: 0.08),
+                        color: _Palette.lemonChiffon.withValues(alpha: 0.10),
                         blurRadius: 10,
                         offset: const Offset(0, 2),
                       ),
                     ],
                   ),
                   child: Stack(
+                    clipBehavior: Clip.none,
                     children: [
                       // Decorative diagonal ribbon accents (purely cosmetic)
                       Positioned(
@@ -500,6 +517,29 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                           ),
                         ),
                       ),
+                      // UI-ENHANCEMENT PASS 2: large faint watermark
+                      // emblem — a unique signature touch this header
+                      // didn't previously have, sitting low-opacity and
+                      // large behind the copy, never competing with the
+                      // title or the close button. Icon swaps between
+                      // "edit" and "add" to echo the header's own state,
+                      // purely decorative.
+                      Positioned(
+                        right: -14,
+                        bottom: -16,
+                        child: IgnorePointer(
+                          child: Opacity(
+                            opacity: 0.07,
+                            child: Icon(
+                              isEditing
+                                  ? Icons.edit_note_rounded
+                                  : Icons.restaurant_menu_rounded,
+                              size: 108,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
                       // Fine dotted texture accent — matches the dashed dot
                       // row used on the Menu/Dashboard headers.
                       Positioned(
@@ -523,6 +563,28 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                                   ),
                                 ),
                               ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      // UI-ENHANCEMENT PASS 2: fine glass highlight line
+                      // along the very top edge of the header — purely
+                      // cosmetic, gives the header a more polished,
+                      // "premium panel" finish matching the Menu/Orders
+                      // headers' top edge treatment.
+                      Positioned(
+                        top: 0,
+                        left: 20,
+                        right: 20,
+                        child: Container(
+                          height: 1,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.transparent,
+                                Colors.white.withValues(alpha: 0.32),
+                                Colors.transparent,
+                              ],
                             ),
                           ),
                         ),

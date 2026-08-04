@@ -17,6 +17,19 @@ import 'package:flutter_animate/flutter_animate.dart';
 /// layer. Nothing here touches AppColors, AppTheme, or any other file —
 /// pure UI enhancement, no logic changed anywhere in this file.
 ///
+/// UI-ENHANCEMENT PASS 2: the hero header was pushed further into its own
+/// distinctive "command bar" identity (four-stop gradient, a large faint
+/// watermark emblem, a glass highlight line along the top edge), the
+/// full-screen backdrop gained an extra diagonal sheen + a second ambient
+/// glow lower on the page, the section cards now sit on a very subtle
+/// warm gradient instead of flat white, and the Quick Access links plus
+/// the Sign Out control picked up a soft hover/press lift so the screen
+/// feels like an interactive, considered surface rather than a static
+/// settings page. No provider, controller, route, or logout logic was
+/// touched anywhere in this pass — every onTap/onBack callback is wired
+/// to the exact same function as before; only Container/Decoration/
+/// TextStyle-level presentation changed.
+///
 /// NOTE: this is a private class redeclared identically to the ones in
 /// the other staff screens (private classes can't be shared across files
 /// without a new shared import, which would go beyond a pure UI-only
@@ -50,6 +63,22 @@ class _Palette {
           color: Colors.black.withValues(alpha: 0.03),
           blurRadius: 4,
           offset: const Offset(0, 2),
+        ),
+      ];
+
+  /// Elevated/hover glow — a slightly stronger, warmer shadow used for
+  /// interactive/elevated elements, matching the Dashboard's feature
+  /// cards and the Tables floor-plan tiles.
+  static List<BoxShadow> get glowShadow => [
+        BoxShadow(
+          color: lemonChiffonDeep.withValues(alpha: 0.24),
+          blurRadius: 22,
+          offset: const Offset(0, 8),
+        ),
+        BoxShadow(
+          color: milanoRedDeep.withValues(alpha: 0.14),
+          blurRadius: 12,
+          offset: const Offset(0, 4),
         ),
       ];
 
@@ -179,7 +208,50 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+                  // Extra low, wide glow further down the page — gives the
+                  // scroll area a second soft focal point instead of all
+                  // the ambient light sitting only near the hero header.
+                  Positioned(
+                    top: 620,
+                    left: -70,
+                    child: Container(
+                      width: 260,
+                      height: 260,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            _Palette.milanoRedLight.withValues(alpha: 0.05),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
+              ),
+            ),
+          ),
+
+          // Faint diagonal sheen sweeping across the whole page — a subtle
+          // extra layer of depth so the cream backdrop doesn't read as
+          // flat behind the hero, echoing the glass-highlight language
+          // used in the hero itself.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withValues(alpha: 0.30),
+                      Colors.transparent,
+                      Colors.transparent,
+                    ],
+                    stops: const [0.0, 0.35, 1.0],
+                  ),
+                ),
               ),
             ),
           ),
@@ -410,8 +482,9 @@ class ProfileScreen extends StatelessWidget {
                               ],
                             ),
                             const SizedBox(height: 20),
-                            // Full-width logout button
-                            GestureDetector(
+                            // Full-width logout button — now with a soft
+                            // hover/press lift, same async onTap logic.
+                            _SignOutButton(
                               onTap: () async {
                                 final navigator = GoRouter.of(context);
                                 final rootAuth = context.read<AuthProvider>();
@@ -419,49 +492,6 @@ class ProfileScreen extends StatelessWidget {
                                 await rootAuth.logout();
                                 navigator.go('/login');
                               },
-                              child: Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      _Palette.dangerBg,
-                                      _Palette.dangerBg.withValues(
-                                        alpha: 0.6,
-                                      ),
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(15),
-                                  border: Border.all(
-                                    color: _Palette.danger.withValues(
-                                      alpha: 0.25,
-                                    ),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(
-                                      Icons.logout_rounded,
-                                      color: _Palette.danger,
-                                      size: 18,
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      'Sign Out',
-                                      style: AppTheme.sans(
-                                        size: 14,
-                                        weight: FontWeight.w700,
-                                        color: _Palette.danger,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
                             ),
                           ],
                         ),
@@ -537,9 +567,11 @@ class _TitleDivider extends StatelessWidget {
 // Order Details / Menu Management screens' panels, plus the same thin
 // gold accent bar used as a section marker and an optional leading icon
 // chip, so every card on this screen reads as part of the same Theme 1
-// brand. Sizing bumped slightly (radius, padding) for a more generous,
-// professional footprint. Purely presentational — wraps the exact same
-// child content as before.
+// brand. UI-ENHANCEMENT PASS 2: the flat white fill became a very subtle
+// warm gradient (white → a whisper of canvas) and the icon chip picked
+// up a soft colored glow, for a touch more depth without changing the
+// card's footprint or its content. Purely presentational — wraps the
+// exact same child content as before.
 class _SectionCard extends StatelessWidget {
   final String? title;
   final IconData? icon;
@@ -554,7 +586,14 @@ class _SectionCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white,
+            _Palette.canvasDeep.withValues(alpha: 0.28),
+          ],
+        ),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
@@ -586,6 +625,15 @@ class _SectionCard extends StatelessWidget {
                           alpha: 0.10,
                         ),
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _Palette.milanoRedDeep.withValues(
+                            alpha: 0.10,
+                          ),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
                     ),
                     child: Icon(
                       icon,
@@ -637,12 +685,16 @@ class _SectionCard extends StatelessWidget {
 // dotted texture accent, layered ribbon + gold glows used on the Order
 // Details / Menu Management screens' header, plus the same thin-gold-
 // border language as the brand icon chip elsewhere, so this screen and
-// every other staff screen read as one cohesive, unique brand. The back
-// chevron control has been removed from the top of this header per
-// request — the `onBack` callback is still accepted and passed in
-// unchanged (so the call site in ProfileScreen didn't need to change),
-// it's simply no longer rendered here. Purely a presentational change —
-// no data changed. ────────────────────────────────────────────────────
+// every other staff screen read as one cohesive, unique brand.
+// UI-ENHANCEMENT PASS 2: the gradient is now a richer four-stop diagonal
+// wash, a large faint watermark emblem sits low-opacity behind the
+// avatar/name block, and a fine glass highlight line runs along the very
+// top edge — matching the Dashboard/Orders/Tables headers' "command bar"
+// identity. The back chevron control remains removed from the top of
+// this header per the earlier request — the `onBack` callback is still
+// accepted and passed in unchanged (so the call site in ProfileScreen
+// didn't need to change), it's simply not rendered here. Purely a
+// presentational change — no data changed. ─────────────────────────────
 class _ProfileHeroHeader extends StatelessWidget {
   final String name;
   final String initials;
@@ -668,6 +720,9 @@ class _ProfileHeroHeader extends StatelessWidget {
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
+          // Richer four-stop diagonal maroon gradient — deeper and more
+          // dimensional than a flat three-stop wash, matching the
+          // Dashboard hero's "faceted" surface language.
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -675,7 +730,9 @@ class _ProfileHeroHeader extends StatelessWidget {
               _Palette.milanoRedLight,
               _Palette.milanoRed,
               _Palette.milanoRedDeep,
+              Color(0xFF320A0A),
             ],
+            stops: [0.0, 0.38, 0.72, 1.0],
           ),
           // Softly rounded bottom corners give the header a modern,
           // "floating navbar" feel that matches the Order Details / Menu
@@ -692,6 +749,7 @@ class _ProfileHeroHeader extends StatelessWidget {
           ),
           boxShadow: _Palette.heroShadow,
         ),
+        clipBehavior: Clip.antiAlias,
         child: Stack(
           children: [
             // Subtle decorative diagonal ribbon accents (purely cosmetic,
@@ -773,6 +831,25 @@ class _ProfileHeroHeader extends StatelessWidget {
                 ),
               ),
             ),
+
+            // ── Large faint watermark emblem — a unique signature touch,
+            // sits low-opacity and large behind the copy, never competing
+            // with the avatar or name.
+            Positioned(
+              right: isMobile ? -30 : -10,
+              bottom: isMobile ? -26 : -20,
+              child: IgnorePointer(
+                child: Opacity(
+                  opacity: 0.07,
+                  child: Icon(
+                    Icons.badge_rounded,
+                    size: isMobile ? 130 : 175,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+
             // Fine dotted texture accent, matching the app's refined
             // decorative language used on the Order Details / Menu
             // Management header.
@@ -800,6 +877,28 @@ class _ProfileHeroHeader extends StatelessWidget {
                 ),
               ),
             ),
+
+            // Fine glass highlight line along the very top edge, giving
+            // the full-width panel a polished, "premium glass" finish —
+            // matches the Dashboard/Orders/Tables headers' top edge.
+            Positioned(
+              top: 0,
+              left: 24,
+              right: 24,
+              child: Container(
+                height: 1,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.transparent,
+                      Colors.white.withValues(alpha: 0.35),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
             SafeArea(
               bottom: false,
               child: Padding(
@@ -1023,6 +1122,13 @@ class _ProfileRow extends StatelessWidget {
               color: _Palette.gold.withValues(alpha: 0.2),
               width: 1,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: iconColor.withValues(alpha: 0.10),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
           child: Icon(icon, color: iconColor, size: 20),
         ),
@@ -1059,9 +1165,11 @@ class _ProfileRow extends StatelessWidget {
 }
 
 // ─── Quick Link — same warm rounded icon chip + arrow language as the
-// rest of the screen, now with a subtle branded background tint on
-// press. Same label/onTap/accentColor content as before. ────────────
-class _QuickLink extends StatelessWidget {
+// rest of the screen, now with a soft hover/press lift (a faint tinted
+// background + a slightly bolder arrow chip) in addition to the existing
+// ripple, so each link clearly reads as tappable on both touch and
+// pointer devices. Same label/onTap/accentColor content as before. ────
+class _QuickLink extends StatefulWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
@@ -1075,53 +1183,181 @@ class _QuickLink extends StatelessWidget {
   });
 
   @override
+  State<_QuickLink> createState() => _QuickLinkState();
+}
+
+class _QuickLinkState extends State<_QuickLink> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      splashColor: accentColor.withValues(alpha: 0.08),
-      highlightColor: accentColor.withValues(alpha: 0.04),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(13),
-                border: Border.all(
-                  color: _Palette.gold.withValues(alpha: 0.2),
-                  width: 1,
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: InkWell(
+        onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(14),
+        splashColor: widget.accentColor.withValues(alpha: 0.08),
+        highlightColor: widget.accentColor.withValues(alpha: 0.04),
+        child: AnimatedContainer(
+          duration: 180.ms,
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: _isHovered
+                ? widget.accentColor.withValues(alpha: 0.05)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: widget.accentColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(13),
+                  border: Border.all(
+                    color: _isHovered
+                        ? widget.accentColor.withValues(alpha: 0.4)
+                        : _Palette.gold.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                  boxShadow: _isHovered
+                      ? [
+                          BoxShadow(
+                            color: widget.accentColor.withValues(alpha: 0.22),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Icon(widget.icon, color: widget.accentColor, size: 20),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  widget.label,
+                  style: AppTheme.sans(
+                    size: 14,
+                    weight: FontWeight.w700,
+                    color: _Palette.textDark,
+                  ),
                 ),
               ),
-              child: Icon(icon, color: accentColor, size: 20),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                label,
-                style: AppTheme.sans(
-                  size: 14,
-                  weight: FontWeight.w700,
-                  color: _Palette.textDark,
+              AnimatedContainer(
+                duration: 180.ms,
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: _isHovered
+                      ? widget.accentColor.withValues(alpha: 0.14)
+                      : _Palette.canvasDeep,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: _isHovered
+                      ? widget.accentColor
+                      : _Palette.textMuted.withValues(alpha: 0.7),
+                  size: 12,
                 ),
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: _Palette.canvasDeep,
-                shape: BoxShape.circle,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Sign Out Button — same soft "danger" gradient chip, same icon +
+// label, and the exact same async onTap callback as before, now wrapped
+// in a small stateful shell so it gets a subtle hover/press lift (a
+// touch more shadow + a faint scale) matching the interactive feel of
+// the rest of the redesigned screen.
+class _SignOutButton extends StatefulWidget {
+  final Future<void> Function() onTap;
+
+  const _SignOutButton({required this.onTap});
+
+  @override
+  State<_SignOutButton> createState() => _SignOutButtonState();
+}
+
+class _SignOutButtonState extends State<_SignOutButton> {
+  bool _isHovered = false;
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isElevated = _isHovered || _isPressed;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        onTapDown: (_) => setState(() => _isPressed = true),
+        onTapUp: (_) => setState(() => _isPressed = false),
+        onTapCancel: () => setState(() => _isPressed = false),
+        child: AnimatedScale(
+          scale: _isPressed ? 0.985 : (_isHovered ? 1.01 : 1.0),
+          duration: 150.ms,
+          curve: Curves.easeOut,
+          child: AnimatedContainer(
+            duration: 180.ms,
+            curve: Curves.easeOut,
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  _Palette.dangerBg,
+                  _Palette.dangerBg.withValues(alpha: 0.6),
+                ],
               ),
-              child: Icon(
-                Icons.arrow_forward_ios_rounded,
-                color: _Palette.textMuted.withValues(alpha: 0.7),
-                size: 12,
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(
+                color: _Palette.danger.withValues(
+                  alpha: isElevated ? 0.45 : 0.25,
+                ),
+                width: isElevated ? 1.4 : 1,
               ),
+              boxShadow: isElevated
+                  ? [
+                      BoxShadow(
+                        color: _Palette.danger.withValues(alpha: 0.18),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ]
+                  : null,
             ),
-          ],
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.logout_rounded,
+                  color: _Palette.danger,
+                  size: 18,
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Sign Out',
+                  style: AppTheme.sans(
+                    size: 14,
+                    weight: FontWeight.w700,
+                    color: _Palette.danger,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

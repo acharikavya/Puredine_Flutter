@@ -11,17 +11,31 @@ import '../contexts/auth_provider.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────
 /// Local "Theme 1 — Dark Maroon × Soft Cream × Gold Glow" palette — matches
-/// the Menu Management / Create Order / Dashboard screens exactly
-/// (#8B1D1D primary / #F4C430 gold accent), so this screen now reads as
-/// part of the same cohesive, professional brand instead of its own
-/// one-off theme. Used ONLY for this screen's visual layer. Nothing here
-/// touches AppColors, AppTheme, or any other file — pure UI enhancement,
-/// no logic changed anywhere in this file.
+/// the Menu Management / Create Order / Dashboard / Orders / Order Details
+/// screens exactly (#8B1D1D primary / #F4C430 gold accent), so this screen
+/// now reads as part of the same cohesive, professional brand instead of
+/// its own one-off theme. Used ONLY for this screen's visual layer.
+/// Nothing here touches AppColors, AppTheme, or any other file — pure UI
+/// enhancement, no logic changed anywhere in this file.
+///
+/// UI-ENHANCEMENT PASS 2: brings this screen's header up to the same
+/// distinctive "command bar" identity used on the Orders / Order Details
+/// screens — a four-stop diagonal gradient, a large faint watermark
+/// emblem, a glass highlight line along the top edge, and a new live
+/// quick-stats readout strip (New Orders / Accepted / Sort order) built
+/// entirely from values already computed in build(). The full-screen
+/// backdrop gained an extra ambient glow + a diagonal sheen for more
+/// depth, and both the stat boxes and each order card picked up a slim
+/// color-coded accent rail down the left edge, matching the Orders
+/// screen's card treatment. No provider, controller, route, sort, or
+/// status-transition logic was touched anywhere in this pass — only
+/// presentation changed.
 ///
 /// NOTE: this is a private class redeclared identically to the ones in
-/// create_order_screen.dart / menu_screen.dart / dashboard_screen.dart
-/// (private classes can't be shared across files without a new shared
-/// import, which would go beyond a pure UI-only change here).
+/// create_order_screen.dart / menu_screen.dart / dashboard_screen.dart /
+/// orders_screen.dart / order_details_screen.dart (private classes can't
+/// be shared across files without a new shared import, which would go
+/// beyond a pure UI-only change here).
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
@@ -40,8 +54,8 @@ class _Palette {
   static const Color successBg = Color(0xFFEAF7EF);
 
   /// Themed soft shadow for resting cards/panels — matches the exact
-  /// softShadow used on Menu/Create Order/Dashboard so every card on this
-  /// page carries the same warm, branded elevation.
+  /// softShadow used on Menu/Create Order/Dashboard/Orders/Order Details
+  /// so every card on this page carries the same warm, branded elevation.
   static List<BoxShadow> get softShadow => [
         BoxShadow(
           color: milanoRedDeep.withValues(alpha: 0.07),
@@ -56,8 +70,9 @@ class _Palette {
       ];
 
   /// Richer navbar/header shadow stack — the same three-layer shadow
-  /// language used on the Create Order / Dashboard headers (deep maroon
-  /// drop shadow + soft ambient gold bloom + fine black contact shadow).
+  /// language used on the Create Order / Dashboard / Orders / Order
+  /// Details headers (deep maroon drop shadow + soft ambient gold bloom
+  /// + fine black contact shadow).
   static List<BoxShadow> get heroShadow => [
         BoxShadow(
           color: milanoRedDeep.withValues(alpha: 0.40),
@@ -73,6 +88,23 @@ class _Palette {
           color: Colors.black.withValues(alpha: 0.10),
           blurRadius: 6,
           offset: const Offset(0, 2),
+        ),
+      ];
+
+  /// Soft inner "glass" shadow used on the header's quick-stats readout
+  /// strip — pure decoration, gives the capsule a faint pressed-glass
+  /// depth. Matches the Orders / Order Details screens' statCapsuleShadow
+  /// exactly.
+  static List<BoxShadow> get statCapsuleShadow => [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.16),
+          blurRadius: 14,
+          offset: const Offset(0, 6),
+        ),
+        BoxShadow(
+          color: lemonChiffon.withValues(alpha: 0.06),
+          blurRadius: 8,
+          offset: const Offset(0, -2),
         ),
       ];
 }
@@ -140,15 +172,17 @@ class _NewOrdersScreenState extends State<NewOrdersScreen> {
     return Scaffold(
       backgroundColor: _Palette.canvas,
       // Full-screen, edge-to-edge treatment — header now draws behind the
-      // status bar, matching the Create Order / Dashboard screens.
+      // status bar, matching the Create Order / Dashboard / Orders /
+      // Order Details screens.
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [
           // ── Ambient background dressing ─────────────────────────────────
           // Purely decorative — soft gold/maroon glows layered over the
-          // existing canvas wash, matching the Menu Management screen's
-          // "foggy" backdrop so the whole admin/staff experience feels like
-          // one cohesive brand. No logic touched — visuals only.
+          // existing canvas wash, matching the Menu Management / Orders /
+          // Order Details screens' "foggy" backdrop so the whole
+          // admin/staff experience feels like one cohesive brand. No
+          // logic touched — visuals only.
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -216,20 +250,70 @@ class _NewOrdersScreenState extends State<NewOrdersScreen> {
                       ),
                     ),
                   ),
+                  // Extra low, wide glow further down the page — gives a
+                  // long order list a second soft focal point instead of
+                  // all the ambient light sitting only near the header.
+                  // Matches the Orders / Order Details screens' Pass-2
+                  // backdrop treatment.
+                  Positioned(
+                    top: 620,
+                    left: -70,
+                    child: Container(
+                      width: 260,
+                      height: 260,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            _Palette.milanoRedLight.withValues(alpha: 0.05),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
+
+          // Faint diagonal sheen sweeping across the whole page — a subtle
+          // extra layer of depth so the cream backdrop doesn't read as
+          // flat behind the header, echoing the glass-highlight language
+          // used in the header itself. Matches the Orders / Order
+          // Details screens exactly.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withValues(alpha: 0.30),
+                      Colors.transparent,
+                      Colors.transparent,
+                    ],
+                    stops: const [0.0, 0.35, 1.0],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
           Column(
             children: [
               // ── Header — same Dark Maroon gradient + thin gold accents
               // used throughout the Create Order / Menu Management /
-              // Dashboard screens, so the top bar and the order cards
-              // below read as one brand moment. ────────────────────────
+              // Dashboard / Orders / Order Details screens, now restyled
+              // into a richer "command bar" with a live quick-stats
+              // readout. ───────────────────────────────────────────────
               _ScreenHeader(
                 title: 'New Orders',
                 subtitle: 'Incoming Kitchen Orders',
                 dateLabel: _todayLabel(),
+                newOrdersCount: newOrders.length,
+                acceptedCount: acceptedCount,
                 onBack: () => context.pop(),
                 onRefresh: () {
                   final token = context.read<StaffAuthProvider>().token;
@@ -276,6 +360,7 @@ class _NewOrdersScreenState extends State<NewOrdersScreen> {
                     icon: Icons.notifications_outlined,
                     iconColor: _Palette.milanoRedDeep,
                     iconBg: _Palette.milanoRed.withValues(alpha: 0.10),
+                    accentColor: _Palette.milanoRed,
                     label: 'New Orders',
                     value: '${newOrders.length}',
                   ).animate().fade().scale(
@@ -289,6 +374,7 @@ class _NewOrdersScreenState extends State<NewOrdersScreen> {
                     icon: Icons.check_circle_outline,
                     iconColor: _Palette.lemonChiffonDeep,
                     iconBg: _Palette.lemonChiffonDeep.withValues(alpha: 0.14),
+                    accentColor: _Palette.gold,
                     label: 'Accepted',
                     value: '$acceptedCount',
                   ).animate().fade().scale(
@@ -333,8 +419,8 @@ class _NewOrdersScreenState extends State<NewOrdersScreen> {
 
 /// Small decorative gradient divider placed beneath the header title —
 /// purely cosmetic, mirrors the accent used under section titles on the
-/// Menu Management / Create Order / Dashboard screens for a consistent
-/// brand language.
+/// Menu Management / Create Order / Dashboard / Orders / Order Details
+/// screens for a consistent brand language.
 class _TitleDivider extends StatelessWidget {
   final double width;
   const _TitleDivider({this.width = 48});
@@ -358,19 +444,25 @@ class _TitleDivider extends StatelessWidget {
   }
 }
 
-// ─── Screen header — same Dark Maroon gradient treatment as the Create
-// Order / Menu Management / Dashboard screens: bigger rounded bottom
-// corners, a richer 3-layer shadow stack, layered ribbon glows, a fine
-// dotted texture accent, a floating date pill, and the same thin-gold-
-// border language used on the order-number chip below. The back control
-// is now a compact, icon-only "‹" chip — no label, no arrow glyph — for a
-// cleaner, more premium top bar (same treatment as Menu Management). The
-// onBack/onRefresh/onToggleSort callbacks are identical to before — this
-// is a pure visual replacement of the previous simpler header. ──────────
+// ─── Screen header — restyled into its own distinctive "command bar"
+// identity, matching the Orders / Order Details screens' Pass-2
+// treatment exactly: a richer four-stop diagonal gradient, a large faint
+// watermark emblem behind the title, a fine glass highlight line along
+// the top edge, layered ribbon glows, a dotted texture accent, a
+// floating date pill, and the same thin-gold-border language used on
+// the order-number chip below. UI-ENHANCEMENT PASS 2 adds a live
+// quick-stats readout strip (New Orders / Accepted / Sort order) built
+// from values already computed in build() — no new data source, purely
+// a display of values already available at the call site. The back
+// control remains the same compact, icon-only "‹" chip, and the
+// refresh/sort controls are identical to before — this is a purely
+// presentational change. ─────────────────────────────────────────────
 class _ScreenHeader extends StatelessWidget {
   final String title;
   final String subtitle;
   final String dateLabel;
+  final int newOrdersCount;
+  final int acceptedCount;
   final VoidCallback onBack;
   final VoidCallback onRefresh;
   final bool showNewestFirst;
@@ -380,6 +472,8 @@ class _ScreenHeader extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.dateLabel,
+    required this.newOrdersCount,
+    required this.acceptedCount,
     required this.onBack,
     required this.onRefresh,
     required this.showNewestFirst,
@@ -394,6 +488,9 @@ class _ScreenHeader extends StatelessWidget {
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
+          // Richer four-stop diagonal maroon gradient — deeper and more
+          // dimensional than a flat three-stop wash, matching the
+          // Orders / Order Details screens' "faceted" surface language.
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -401,7 +498,9 @@ class _ScreenHeader extends StatelessWidget {
               _Palette.milanoRedLight,
               _Palette.milanoRed,
               _Palette.milanoRedDeep,
+              Color(0xFF320A0A),
             ],
+            stops: [0.0, 0.38, 0.72, 1.0],
           ),
           borderRadius: BorderRadius.only(
             bottomLeft: Radius.circular(isMobile ? 28 : 38),
@@ -415,11 +514,12 @@ class _ScreenHeader extends StatelessWidget {
           ),
           boxShadow: _Palette.heroShadow,
         ),
+        clipBehavior: Clip.antiAlias,
         child: Stack(
           children: [
             // Subtle decorative diagonal ribbon accents — purely cosmetic,
-            // matches the Menu Management / Create Order / Dashboard
-            // headers for a consistent brand feel.
+            // matches every other staff screen's header for a consistent
+            // brand feel.
             Positioned(
               top: -60,
               right: -40,
@@ -459,7 +559,7 @@ class _ScreenHeader extends StatelessWidget {
               ),
             ),
             // Soft gold radial glow behind the brand icon, echoing the
-            // Dashboard hero treatment.
+            // Dashboard / Orders hero treatment.
             Positioned(
               top: -50,
               left: -20,
@@ -496,6 +596,26 @@ class _ScreenHeader extends StatelessWidget {
                 ),
               ),
             ),
+
+            // ── Large faint watermark emblem — a unique signature touch,
+            // sits low-opacity and large behind the copy, never competing
+            // with the title or the stats strip. Matches the Orders /
+            // Order Details screens' Pass-2 header exactly.
+            Positioned(
+              right: isMobile ? -30 : -10,
+              bottom: isMobile ? -22 : -16,
+              child: IgnorePointer(
+                child: Opacity(
+                  opacity: 0.07,
+                  child: Icon(
+                    Icons.receipt_long_rounded,
+                    size: isMobile ? 140 : 190,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+
             // Fine dotted texture accent, matching the refined decorative
             // language used on the dashboard / menu-management headers.
             Positioned(
@@ -522,6 +642,29 @@ class _ScreenHeader extends StatelessWidget {
                 ),
               ),
             ),
+
+            // Fine glass highlight line along the very top edge, giving
+            // the full-width panel a polished, "premium glass" finish —
+            // matches the Dashboard / Orders / Order Details hero's top
+            // edge treatment.
+            Positioned(
+              top: 0,
+              left: 24,
+              right: 24,
+              child: Container(
+                height: 1,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.transparent,
+                      Colors.white.withValues(alpha: 0.35),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
             SafeArea(
               bottom: false,
               child: Padding(
@@ -538,7 +681,8 @@ class _ScreenHeader extends StatelessWidget {
                       children: [
                         // ── Icon-only back control — a single "‹" glyph,
                         // no arrow icon and no "Back" label, matching the
-                        // Menu Management screen's header control. ──────
+                        // Menu Management / Orders / Order Details
+                        // screens' header control. ────────────────────
                         _BackChevronButton(onTap: onBack),
                         const Spacer(),
                         if (!isMobile)
@@ -557,13 +701,27 @@ class _ScreenHeader extends StatelessWidget {
                                 width: 1,
                               ),
                             ),
-                            child: Text(
-                              dateLabel,
-                              style: AppTheme.sans(
-                                size: 12,
-                                weight: FontWeight.w600,
-                                color: Colors.white.withValues(alpha: 0.75),
-                              ).copyWith(letterSpacing: 0.3),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.calendar_today_rounded,
+                                  size: 12,
+                                  color: _Palette.lemonChiffon.withValues(
+                                    alpha: 0.85,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  dateLabel,
+                                  style: AppTheme.sans(
+                                    size: 12,
+                                    weight: FontWeight.w600,
+                                    color:
+                                        Colors.white.withValues(alpha: 0.75),
+                                  ).copyWith(letterSpacing: 0.3),
+                                ),
+                              ],
                             ),
                           ),
                       ],
@@ -606,8 +764,8 @@ class _ScreenHeader extends StatelessWidget {
                               Text(
                                 title,
                                 style: AppTheme.serif(
-                                  size: isMobile ? 23 : 27,
-                                  weight: FontWeight.w800,
+                                  size: isMobile ? 22 : 26,
+                                  weight: FontWeight.w900,
                                   color: Colors.white,
                                 ).copyWith(height: 1.1),
                                 maxLines: 1,
@@ -620,8 +778,8 @@ class _ScreenHeader extends StatelessWidget {
                                 subtitle,
                                 style: AppTheme.sans(
                                   size: 12.5,
-                                  weight: FontWeight.w500,
-                                  color: Colors.white.withValues(alpha: 0.78),
+                                  weight: FontWeight.w600,
+                                  color: _Palette.lemonChiffon,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -636,8 +794,8 @@ class _ScreenHeader extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    if (isMobile)
+                    if (isMobile) ...[
+                      const SizedBox(height: 14),
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Container(
@@ -645,7 +803,6 @@ class _ScreenHeader extends StatelessWidget {
                             horizontal: 10,
                             vertical: 5,
                           ),
-                          margin: const EdgeInsets.only(bottom: 12),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(20),
@@ -656,16 +813,32 @@ class _ScreenHeader extends StatelessWidget {
                               width: 1,
                             ),
                           ),
-                          child: Text(
-                            dateLabel,
-                            style: AppTheme.sans(
-                              size: 10.5,
-                              weight: FontWeight.w600,
-                              color: Colors.white.withValues(alpha: 0.7),
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.calendar_today_rounded,
+                                size: 10,
+                                color: _Palette.lemonChiffon.withValues(
+                                  alpha: 0.8,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                dateLabel,
+                                style: AppTheme.sans(
+                                  size: 10.5,
+                                  weight: FontWeight.w600,
+                                  color: Colors.white.withValues(alpha: 0.7),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
+                    ],
+
+                    const SizedBox(height: 16),
                     Align(
                       alignment: Alignment.centerRight,
                       child: _HeaderSortChip(
@@ -677,6 +850,64 @@ class _ScreenHeader extends StatelessWidget {
                         onTap: onToggleSort,
                       ),
                     ),
+
+                    const SizedBox(height: 16),
+
+                    // ── Live quick-stats readout strip — New Orders /
+                    // Accepted / Sort order, built straight from values
+                    // already computed in build(). Purely a display
+                    // addition; no new data source and no logic change.
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.22),
+                            Colors.black.withValues(alpha: 0.14),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.10),
+                        ),
+                        boxShadow: _Palette.statCapsuleShadow,
+                      ),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _HeaderStatPill(
+                              icon: Icons.notifications_active_rounded,
+                              value: '$newOrdersCount',
+                              label: 'New',
+                              accent: const Color(0xFFFBBF24),
+                            ),
+                            const _HeaderStatDivider(),
+                            _HeaderStatPill(
+                              icon: Icons.check_circle_outline_rounded,
+                              value: '$acceptedCount',
+                              label: 'Accepted',
+                              accent: const Color(0xFF34D399),
+                            ),
+                            const _HeaderStatDivider(),
+                            _HeaderStatPill(
+                              icon: showNewestFirst
+                                  ? Icons.arrow_downward_rounded
+                                  : Icons.arrow_upward_rounded,
+                              value:
+                                  showNewestFirst ? 'Newest' : 'Oldest',
+                              label: 'Sort',
+                              accent: Colors.white70,
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                        .animate()
+                        .fade(duration: 550.ms, delay: 200.ms)
+                        .slideY(begin: 0.2, duration: 550.ms, delay: 200.ms),
                   ],
                 ),
               ),
@@ -688,10 +919,96 @@ class _ScreenHeader extends StatelessWidget {
   }
 }
 
+/// Slim vertical divider used between stat pills in the header's readout
+/// strip — purely decorative spacing element, no logic. Matches the
+/// Orders / Order Details screens' Pass-2 header strip exactly.
+class _HeaderStatDivider extends StatelessWidget {
+  const _HeaderStatDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 28,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      color: Colors.white.withValues(alpha: 0.10),
+    );
+  }
+}
+
+/// A single stat readout module (icon badge + value + label) used inside
+/// the header's live stats strip. Purely presentational — takes whatever
+/// value/label/accent it's given.
+class _HeaderStatPill extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color accent;
+
+  const _HeaderStatPill({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      constraints: const BoxConstraints(maxWidth: 130),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.10),
+            ),
+            child: Icon(icon, size: 13, color: accent),
+          ),
+          const SizedBox(width: 9),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  value,
+                  style: AppTheme.sans(
+                    size: 14,
+                    weight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  label.toUpperCase(),
+                  style: AppTheme.sans(
+                    size: 8.5,
+                    weight: FontWeight.w700,
+                    color: Colors.white.withValues(alpha: 0.6),
+                  ).copyWith(letterSpacing: 0.4),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Compact icon-only "back" control — a circular glass button showing
 /// only a plain "‹" glyph. Replaces the previous arrow-icon + "Back"
 /// label combo with the same minimal, professional control used on the
-/// Menu Management screen's header, for a consistent brand-wide top bar.
+/// Menu Management / Orders / Order Details screens' header, for a
+/// consistent brand-wide top bar.
 class _BackChevronButton extends StatefulWidget {
   final VoidCallback onTap;
   const _BackChevronButton({required this.onTap});
@@ -857,10 +1174,15 @@ class _HeaderSortChipState extends State<_HeaderSortChip> {
   }
 }
 
+// ─── Stat box — UI-ENHANCEMENT PASS 2 adds a slim color-coded accent
+// rail down the left edge (matching the Orders / Order Details screens'
+// card treatment), giving each stat box an instant color cue tying it
+// to its meaning. Same content, same values — purely presentational.
 class _StatBox extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final Color iconBg;
+  final Color accentColor;
   final String label;
   final String value;
 
@@ -870,12 +1192,12 @@ class _StatBox extends StatelessWidget {
     required this.iconBg,
     required this.label,
     required this.value,
+    this.accentColor = _Palette.gold,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 18),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
@@ -884,38 +1206,64 @@ class _StatBox extends StatelessWidget {
         ),
         boxShadow: _Palette.softShadow,
       ),
-      child: Column(
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
         children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: iconBg,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: _Palette.gold.withValues(alpha: 0.35),
-                width: 1,
+          Positioned(
+            top: 0,
+            bottom: 0,
+            left: 0,
+            child: Container(
+              width: 5,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    accentColor.withValues(alpha: 0.85),
+                    accentColor.withValues(alpha: 0.35),
+                  ],
+                ),
               ),
             ),
-            child: Icon(icon, color: iconColor, size: 26),
           ),
-          const SizedBox(height: 12),
-          Text(
-            label,
-            style: AppTheme.sans(
-              size: 11,
-              color: _Palette.textMuted,
-              weight: FontWeight.w700,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: AppTheme.serif(
-              size: 34,
-              weight: FontWeight.w900,
-              color: _Palette.textDark,
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 18),
+            child: Column(
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: iconBg,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: _Palette.gold.withValues(alpha: 0.35),
+                      width: 1,
+                    ),
+                  ),
+                  child: Icon(icon, color: iconColor, size: 26),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  label,
+                  style: AppTheme.sans(
+                    size: 11,
+                    color: _Palette.textMuted,
+                    weight: FontWeight.w700,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: AppTheme.serif(
+                    size: 34,
+                    weight: FontWeight.w900,
+                    color: _Palette.textDark,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -927,8 +1275,12 @@ class _StatBox extends StatelessWidget {
 // ─── Order Card ─────────────────────────────────────────────────────────
 // Restyled to Theme 1 with more generous, evenly-balanced spacing and a
 // slightly larger footprint so it reads as a proper, professional card
-// rather than a tightly-packed list row. Same data, same callbacks — only
-// sizing, radii, and color values changed.
+// rather than a tightly-packed list row. UI-ENHANCEMENT PASS 2 adds a
+// slim status-colored accent rail down the left edge (matching the
+// Orders / Order Details screens' card treatment) — maroon while the
+// order is still new/unaccepted, brand gold once it's been accepted.
+// Same data, same callbacks — only sizing, radii, and color values
+// changed.
 class _OrderCard extends StatelessWidget {
   final Order order;
   final OrdersProvider provider;
@@ -938,6 +1290,7 @@ class _OrderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isNew = order.status == OrderStatus.placed;
+    final railColor = isNew ? _Palette.milanoRed : _Palette.success;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 22),
@@ -966,449 +1319,492 @@ class _OrderCard extends StatelessWidget {
             : _Palette.softShadow,
       ),
       clipBehavior: Clip.antiAlias,
-      child: Column(
+      child: Stack(
         children: [
-          // Status Header
-          Container(
-            decoration: BoxDecoration(
-              gradient: isNew
-                  ? LinearGradient(
-                      colors: [
-                        _Palette.milanoRedLight,
-                        _Palette.milanoRedDeep,
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    )
-                  : null,
-              color: isNew ? null : _Palette.successBg,
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
-            child: Row(
-              children: [
-                if (isNew) ...[
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.white.withValues(alpha: 0.6),
-                          blurRadius: 6,
-                          spreadRadius: 1,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'NEW ORDER',
-                          style: AppTheme.sans(
-                            size: 16,
-                            weight: FontWeight.w900,
-                            color: Colors.white,
-                          ).copyWith(letterSpacing: 0.4),
-                        ),
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            Text(
-                              order.time,
-                              style: AppTheme.sans(
-                                size: 12,
-                                color: Colors.white.withValues(alpha: 0.72),
-                              ),
-                            ),
-                            Text(
-                              ' • ',
-                              style: AppTheme.sans(
-                                size: 12,
-                                color: Colors.white.withValues(alpha: 0.72),
-                              ),
-                            ),
-                            LiveTimeAgo(
-                              dt: order.createdAt,
-                              style: AppTheme.sans(
-                                size: 12,
-                                color: Colors.white.withValues(alpha: 0.72),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 7,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: _Palette.gold.withValues(alpha: 0.65),
-                        width: 1,
-                      ),
-                    ),
-                    child: Text(
-                      order.orderNumber,
-                      style: AppTheme.sans(
-                        size: 12,
-                        weight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ] else ...[
-                  Container(
-                    width: 34,
-                    height: 34,
-                    decoration: const BoxDecoration(
-                      color: _Palette.success,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.check,
-                      color: Colors.white,
-                      size: 19,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'ACCEPTED',
-                          style: AppTheme.sans(
-                            size: 15,
-                            weight: FontWeight.w900,
-                            color: _Palette.successDeep,
-                          ).copyWith(letterSpacing: 0.3),
-                        ),
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            Text(
-                              order.time,
-                              style: AppTheme.sans(
-                                size: 12,
-                                color: _Palette.successDeep.withValues(
-                                  alpha: 0.7,
-                                ),
-                              ),
-                            ),
-                            Text(
-                              ' • ',
-                              style: AppTheme.sans(
-                                size: 12,
-                                color: _Palette.successDeep.withValues(
-                                  alpha: 0.7,
-                                ),
-                              ),
-                            ),
-                            Text(
-                              order.orderNumber,
-                              style: AppTheme.sans(
-                                size: 12,
-                                color: _Palette.successDeep.withValues(
-                                  alpha: 0.7,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ],
+          // Slim status-colored accent rail down the left edge — an
+          // instant color cue for the card's state, purely decorative.
+          // Matches the Orders / Order Details screens' accent rail.
+          Positioned(
+            top: 0,
+            bottom: 0,
+            left: 0,
+            child: Container(
+              width: 5,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    railColor.withValues(alpha: 0.85),
+                    railColor.withValues(alpha: 0.35),
+                  ],
+                ),
+              ),
             ),
           ),
-
-          // Content
-          Padding(
-            padding: const EdgeInsets.fromLTRB(22, 22, 22, 22),
-            child: Column(
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          Column(
+            children: [
+              // Status Header
+              Container(
+                decoration: BoxDecoration(
+                  gradient: isNew
+                      ? LinearGradient(
+                          colors: [
+                            _Palette.milanoRedLight,
+                            _Palette.milanoRedDeep,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : null,
+                  color: isNew ? null : _Palette.successBg,
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 16,
+                ),
+                child: Row(
                   children: [
-                    Container(
-                      width: 62,
-                      height: 62,
-                      decoration: BoxDecoration(
-                        color: _Palette.canvas,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: _Palette.milanoRedDeep.withValues(
-                            alpha: 0.10,
+                    if (isNew) ...[
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.white.withValues(alpha: 0.6),
+                              blurRadius: 6,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'NEW ORDER',
+                              style: AppTheme.sans(
+                                size: 16,
+                                weight: FontWeight.w900,
+                                color: Colors.white,
+                              ).copyWith(letterSpacing: 0.4),
+                            ),
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                Text(
+                                  order.time,
+                                  style: AppTheme.sans(
+                                    size: 12,
+                                    color: Colors.white.withValues(
+                                      alpha: 0.72,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  ' • ',
+                                  style: AppTheme.sans(
+                                    size: 12,
+                                    color: Colors.white.withValues(
+                                      alpha: 0.72,
+                                    ),
+                                  ),
+                                ),
+                                LiveTimeAgo(
+                                  dt: order.createdAt,
+                                  style: AppTheme.sans(
+                                    size: 12,
+                                    color: Colors.white.withValues(
+                                      alpha: 0.72,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _Palette.gold.withValues(alpha: 0.65),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          order.orderNumber,
+                          style: AppTheme.sans(
+                            size: 12,
+                            weight: FontWeight.w700,
+                            color: Colors.white,
                           ),
                         ),
                       ),
-                      child: Icon(
-                        Icons.restaurant,
-                        color: _Palette.milanoRedDeep,
-                        size: 30,
+                    ] else ...[
+                      Container(
+                        width: 34,
+                        height: 34,
+                        decoration: const BoxDecoration(
+                          color: _Palette.success,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.check,
+                          color: Colors.white,
+                          size: 19,
+                        ),
                       ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'ACCEPTED',
+                              style: AppTheme.sans(
+                                size: 15,
+                                weight: FontWeight.w900,
+                                color: _Palette.successDeep,
+                              ).copyWith(letterSpacing: 0.3),
+                            ),
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                Text(
+                                  order.time,
+                                  style: AppTheme.sans(
+                                    size: 12,
+                                    color: _Palette.successDeep.withValues(
+                                      alpha: 0.7,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  ' • ',
+                                  style: AppTheme.sans(
+                                    size: 12,
+                                    color: _Palette.successDeep.withValues(
+                                      alpha: 0.7,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  order.orderNumber,
+                                  style: AppTheme.sans(
+                                    size: 12,
+                                    color: _Palette.successDeep.withValues(
+                                      alpha: 0.7,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+
+              // Content
+              Padding(
+                padding: const EdgeInsets.fromLTRB(22, 22, 22, 22),
+                child: Column(
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 62,
+                          height: 62,
+                          decoration: BoxDecoration(
+                            color: _Palette.canvas,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: _Palette.milanoRedDeep.withValues(
+                                alpha: 0.10,
+                              ),
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.restaurant,
+                            color: _Palette.milanoRedDeep,
+                            size: 30,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                order.table,
+                                style: AppTheme.serif(
+                                  size: 20,
+                                  weight: FontWeight.w900,
+                                  color: _Palette.textDark,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                '${order.items} items',
+                                style: AppTheme.sans(
+                                  size: 13,
+                                  color: _Palette.textMuted,
+                                  weight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          CurrencyUtils.format(order.total),
+                          style: AppTheme.serif(
+                            size: 25,
+                            weight: FontWeight.w900,
+                            color: _Palette.milanoRedDeep,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
+                    if (order.customerName != null) ...[
+                      const SizedBox(height: 14),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(13),
+                        decoration: BoxDecoration(
+                          color: _Palette.canvas,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: _Palette.milanoRedDeep.withValues(
+                              alpha: 0.08,
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.person_outline,
+                              color: _Palette.milanoRedDeep,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'CUSTOMER',
+                                  style: AppTheme.sans(
+                                    size: 10,
+                                    color: _Palette.textMuted,
+                                    weight: FontWeight.w700,
+                                  ).copyWith(letterSpacing: 0.4),
+                                ),
+                                Text(
+                                  order.customerName!,
+                                  style: AppTheme.sans(
+                                    size: 14,
+                                    weight: FontWeight.w600,
+                                    color: _Palette.textDark,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 14),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _Palette.canvas,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: _Palette.milanoRedDeep.withValues(
+                            alpha: 0.08,
+                          ),
+                        ),
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            order.table,
-                            style: AppTheme.serif(
-                              size: 20,
-                              weight: FontWeight.w900,
-                              color: _Palette.textDark,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            '${order.items} items',
+                            'ORDER ITEMS',
                             style: AppTheme.sans(
-                              size: 13,
+                              size: 10,
+                              weight: FontWeight.w700,
                               color: _Palette.textMuted,
-                              weight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      CurrencyUtils.format(order.total),
-                      style: AppTheme.serif(
-                        size: 25,
-                        weight: FontWeight.w900,
-                        color: _Palette.milanoRedDeep,
-                      ),
-                    ),
-                  ],
-                ),
-                if (order.customerName != null) ...[
-                  const SizedBox(height: 14),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(13),
-                    decoration: BoxDecoration(
-                      color: _Palette.canvas,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.person_outline,
-                          color: _Palette.milanoRedDeep,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 10),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'CUSTOMER',
-                              style: AppTheme.sans(
-                                size: 10,
-                                color: _Palette.textMuted,
-                                weight: FontWeight.w700,
-                              ).copyWith(letterSpacing: 0.4),
-                            ),
-                            Text(
-                              order.customerName!,
-                              style: AppTheme.sans(
-                                size: 14,
-                                weight: FontWeight.w600,
-                                color: _Palette.textDark,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 14),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: _Palette.canvas,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'ORDER ITEMS',
-                        style: AppTheme.sans(
-                          size: 10,
-                          weight: FontWeight.w700,
-                          color: _Palette.textMuted,
-                        ).copyWith(letterSpacing: 0.4),
-                      ),
-                      const SizedBox(height: 10),
-                      ...order.itemsPreview.take(3).map(
-                            (item) => Padding(
-                              padding: const EdgeInsets.only(bottom: 6),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 6,
-                                    height: 6,
-                                    decoration: const BoxDecoration(
-                                      color: _Palette.milanoRed,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      item,
-                                      style: AppTheme.sans(
-                                        size: 13,
-                                        color: _Palette.textDark.withValues(
-                                          alpha: 0.85,
-                                        ),
-                                        weight: FontWeight.w500,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                      if (order.itemsPreview.length > 3)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 16, top: 2),
-                          child: Text(
-                            '+${order.itemsPreview.length - 3} more items',
-                            style: AppTheme.sans(
-                              size: 12,
-                              color: _Palette.textMuted,
-                              weight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 18),
-
-                // Action Buttons
-                if (isNew)
-                  GestureDetector(
-                    onTap: () {
-                      final token = context.read<StaffAuthProvider>().token;
-                      provider.updateOrderStatus(
-                        order.id,
-                        OrderStatus.confirmed,
-                        token!,
-                      );
-                      context.push('/staff/order-details/${order.id}');
-                    },
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 17),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [_Palette.gold, _Palette.goldLight],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: _Palette.lemonChiffonDeep.withValues(
-                            alpha: 0.6,
-                          ),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: _Palette.gold.withValues(alpha: 0.38),
-                            blurRadius: 14,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.check_circle_outline,
-                            color: Colors.white,
-                            size: 22,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'ACCEPT ORDER',
-                            style: AppTheme.sans(
-                              size: 15,
-                              weight: FontWeight.w900,
-                              color: Colors.white,
                             ).copyWith(letterSpacing: 0.4),
                           ),
+                          const SizedBox(height: 10),
+                          ...order.itemsPreview.take(3).map(
+                                (item) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 6),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 6,
+                                        height: 6,
+                                        decoration: const BoxDecoration(
+                                          color: _Palette.milanoRed,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          item,
+                                          style: AppTheme.sans(
+                                            size: 13,
+                                            color: _Palette.textDark
+                                                .withValues(alpha: 0.85),
+                                            weight: FontWeight.w500,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                          if (order.itemsPreview.length > 3)
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                left: 16,
+                                top: 2,
+                              ),
+                              child: Text(
+                                '+${order.itemsPreview.length - 3} more items',
+                                style: AppTheme.sans(
+                                  size: 12,
+                                  color: _Palette.textMuted,
+                                  weight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ),
-                  )
-                else
-                  GestureDetector(
-                    onTap: () =>
-                        context.push('/staff/order-details/${order.id}'),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      decoration: BoxDecoration(
-                        color: _Palette.canvas,
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(
-                          color: _Palette.milanoRedDeep.withValues(
-                            alpha: 0.10,
+                    const SizedBox(height: 18),
+
+                    // Action Buttons
+                    if (isNew)
+                      GestureDetector(
+                        onTap: () {
+                          final token =
+                              context.read<StaffAuthProvider>().token;
+                          provider.updateOrderStatus(
+                            order.id,
+                            OrderStatus.confirmed,
+                            token!,
+                          );
+                          context.push('/staff/order-details/${order.id}');
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 17),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [_Palette.gold, _Palette.goldLight],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: _Palette.lemonChiffonDeep.withValues(
+                                alpha: 0.6,
+                              ),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: _Palette.gold.withValues(alpha: 0.38),
+                                blurRadius: 14,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.check_circle_outline,
+                                color: Colors.white,
+                                size: 22,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'ACCEPT ORDER',
+                                style: AppTheme.sans(
+                                  size: 15,
+                                  weight: FontWeight.w900,
+                                  color: Colors.white,
+                                ).copyWith(letterSpacing: 0.4),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      GestureDetector(
+                        onTap: () =>
+                            context.push('/staff/order-details/${order.id}'),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                          decoration: BoxDecoration(
+                            color: _Palette.canvas,
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(
+                              color: _Palette.milanoRedDeep.withValues(
+                                alpha: 0.10,
+                              ),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'View Details',
+                                style: AppTheme.sans(
+                                  size: 14,
+                                  weight: FontWeight.w700,
+                                  color: _Palette.textDark.withValues(
+                                    alpha: 0.8,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Icon(
+                                Icons.arrow_forward,
+                                size: 16,
+                                color: _Palette.milanoRedDeep,
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'View Details',
-                            style: AppTheme.sans(
-                              size: 14,
-                              weight: FontWeight.w700,
-                              color: _Palette.textDark.withValues(alpha: 0.8),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Icon(
-                            Icons.arrow_forward,
-                            size: 16,
-                            color: _Palette.milanoRedDeep,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),

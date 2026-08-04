@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../contexts/orders_provider.dart';
@@ -15,6 +16,18 @@ import '../widgets/common_widgets.dart';
 /// layer. Nothing here touches AppColors, AppTheme, or any other file —
 /// pure UI enhancement, no logic changed anywhere in this file.
 ///
+/// UI-ENHANCEMENT PASS 2: brings this screen's header and section cards up
+/// to the same distinctive "command bar" identity used on the Create
+/// Order / Orders screens — a four-stop diagonal gradient header, a large
+/// faint watermark emblem, a glass highlight line along the top edge, and
+/// a new live quick-stats readout strip (Items / Amount Due / Method)
+/// built entirely from values already computed in build(). The full-
+/// screen backdrop gained an extra diagonal sheen for more depth, and
+/// each section card picked up a slim color-coded accent rail down the
+/// left edge, matching the Create Order / Orders screens' card treatment.
+/// No provider, controller, route, or payment-processing logic was
+/// touched anywhere in this pass — only presentation changed.
+///
 /// NOTE: this is a private class redeclared identically to the ones in
 /// the other staff screens (private classes can't be shared across files
 /// without a new shared import, which would go beyond a pure UI-only
@@ -24,6 +37,7 @@ class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
   static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
   static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
+  static const Color milanoRedDarkest = Color(0xFF320A0A); // Fourth gradient stop
   static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow (Accent)
   static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
   static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
@@ -68,6 +82,22 @@ class _Palette {
           color: Colors.black.withValues(alpha: 0.10),
           blurRadius: 6,
           offset: const Offset(0, 2),
+        ),
+      ];
+
+  /// Soft inner "glass" shadow used on the header's quick-stats readout
+  /// strip — pure decoration, gives the capsule a faint pressed-glass
+  /// depth. Matches the Create Order / Orders screens' statCapsuleShadow.
+  static List<BoxShadow> get statCapsuleShadow => [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.16),
+          blurRadius: 14,
+          offset: const Offset(0, 6),
+        ),
+        BoxShadow(
+          color: lemonChiffon.withValues(alpha: 0.06),
+          blurRadius: 8,
+          offset: const Offset(0, -2),
         ),
       ];
 }
@@ -140,6 +170,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
 
     final finalTotal = order.total.round();
+
+    // Purely display values for the header's quick-stats strip — derived
+    // from data already computed/available here. No new data source, no
+    // logic change.
+    final itemsCount = order.itemsDetails.length;
+    final selectedMethodLabel = _selectedMethod == null
+        ? 'Not Selected'
+        : _methods
+            .firstWhere((m) => m['id'] == _selectedMethod)['label'] as String;
 
     return Scaffold(
       backgroundColor: _Palette.canvas,
@@ -221,20 +260,67 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       ),
                     ),
                   ),
+                  // Extra low, wide glow further down the page — gives the
+                  // long scroll area a second soft focal point instead of
+                  // all the ambient light sitting only near the header.
+                  Positioned(
+                    top: 600,
+                    left: -70,
+                    child: Container(
+                      width: 250,
+                      height: 250,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            _Palette.milanoRedLight.withValues(alpha: 0.05),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
+
+          // Faint diagonal sheen sweeping across the whole page — a subtle
+          // extra layer of depth so the cream backdrop doesn't read as
+          // flat behind the header, echoing the glass-highlight language
+          // used in the header itself.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withValues(alpha: 0.30),
+                      Colors.transparent,
+                      Colors.transparent,
+                    ],
+                    stops: const [0.0, 0.35, 1.0],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
           Column(
             children: [
               // ── Header — same Dark Maroon gradient + gold accents used
-              // throughout every other staff screen, with the icon-only
-              // "‹" back control matching the Order Details screen. ─────
+              // throughout every other staff screen, now restyled into a
+              // richer "command bar" with a live quick-stats readout. ────
               _ScreenHeader(
                 title: 'Process Payment',
                 subtitle: order.table,
                 dateLabel: _todayLabel(),
                 onBack: () => context.pop(),
+                itemsCount: itemsCount,
+                amountDue: finalTotal,
+                methodLabel: selectedMethodLabel,
               ),
 
               // BODY
@@ -247,6 +333,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       _SectionCard(
                         icon: Icons.receipt_long_rounded,
                         title: 'Order Details',
+                        railColor: _Palette.milanoRed,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -288,6 +375,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       _SectionCard(
                         icon: Icons.restaurant_menu_rounded,
                         title: 'Items',
+                        railColor: _Palette.gold,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -792,24 +880,28 @@ class _TitleDivider extends StatelessWidget {
 // ─── Section Card — same white, softly bordered, softly shadowed card
 // language used by the Order Details screen, plus the same thin gold
 // accent bar used as a section marker, so every card on this screen reads
-// as part of the same Theme 1 brand. Purely presentational — wraps the
-// exact same child content as before. ────────────────────────────────────
+// as part of the same Theme 1 brand. UI-ENHANCEMENT PASS 2: each card now
+// carries a slim color-coded accent rail down the left edge (matching the
+// Create Order / Orders screens' card treatment), and the icon chip
+// picked up a soft colored glow. Purely presentational — wraps the exact
+// same child content as before.
 class _SectionCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final Widget child;
+  final Color railColor;
 
   const _SectionCard({
     required this.icon,
     required this.title,
     required this.child,
+    this.railColor = _Palette.milanoRed,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -818,74 +910,120 @@ class _SectionCard extends StatelessWidget {
         ),
         boxShadow: _Palette.softShadow,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
         children: [
-          Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      _Palette.milanoRed.withValues(alpha: 0.10),
-                      _Palette.milanoRed.withValues(alpha: 0.04),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(11),
-                  border: Border.all(
-                    color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
-                  ),
-                ),
-                child: Icon(icon, color: _Palette.milanoRedDeep, size: 17),
-              ),
-              const SizedBox(width: 11),
-              Text(
-                title,
-                style: AppTheme.serif(
-                  size: 18,
-                  weight: FontWeight.w800,
-                  color: _Palette.textDark,
+          Positioned(
+            top: 0,
+            bottom: 0,
+            left: 0,
+            child: Container(
+              width: 5,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    railColor.withValues(alpha: 0.85),
+                    railColor.withValues(alpha: 0.35),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
-          const SizedBox(height: 6),
-          const Padding(
-            padding: EdgeInsets.only(left: 45),
-            child: _TitleDivider(),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            _Palette.milanoRed.withValues(alpha: 0.10),
+                            _Palette.milanoRed.withValues(alpha: 0.04),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(11),
+                        border: Border.all(
+                          color: _Palette.milanoRedDeep.withValues(
+                            alpha: 0.10,
+                          ),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _Palette.milanoRedDeep.withValues(
+                              alpha: 0.10,
+                            ),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Icon(icon, color: _Palette.milanoRedDeep, size: 17),
+                    ),
+                    const SizedBox(width: 11),
+                    Text(
+                      title,
+                      style: AppTheme.serif(
+                        size: 18,
+                        weight: FontWeight.w800,
+                        color: _Palette.textDark,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                const Padding(
+                  padding: EdgeInsets.only(left: 45),
+                  child: _TitleDivider(),
+                ),
+                const SizedBox(height: 16),
+                child,
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
-          child,
         ],
       ),
     );
   }
 }
 
-// ─── Screen header — same Dark Maroon gradient treatment as the Order
-// Details / Orders / Menu Management screens: bigger rounded bottom
-// corners, a richer 3-layer shadow stack, layered ribbon glows, a fine
-// dotted texture accent, a floating date pill, and a brand icon chip
-// matching every other staff screen's header. The back control is now a
-// compact, icon-only "‹" chip — no label, no arrow glyph — matching the
-// Order Details screen's header control exactly. The onBack callback and
-// all content are identical to before — this is a purely presentational
-// replacement for the previous header. ───────────────────────────────────
+// ─── Screen header — restyled into its own distinctive "command bar"
+// identity: a richer four-stop diagonal gradient, a large faint watermark
+// emblem behind the title, a fine glass highlight line along the top
+// edge, layered ribbon glows, a dotted texture accent, a floating date
+// pill, and a brand icon chip matching every other staff screen's header.
+// UI-ENHANCEMENT PASS 2 adds a live quick-stats readout strip (Items /
+// Amount Due / Method) built from values already computed in build() — no
+// new data source, purely a display of values already available at the
+// call site. The back control remains the same compact, icon-only "‹"
+// chip matching the Order Details screen's header control exactly. The
+// onBack callback and all content are identical to before — this is a
+// purely presentational change. ─────────────────────────────────────────
 class _ScreenHeader extends StatelessWidget {
   final String title;
   final String subtitle;
   final String dateLabel;
   final VoidCallback onBack;
+  final int itemsCount;
+  final int amountDue;
+  final String methodLabel;
 
   const _ScreenHeader({
     required this.title,
     required this.subtitle,
     required this.dateLabel,
     required this.onBack,
+    required this.itemsCount,
+    required this.amountDue,
+    required this.methodLabel,
   });
 
   @override
@@ -896,6 +1034,9 @@ class _ScreenHeader extends StatelessWidget {
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
+          // Richer four-stop diagonal maroon gradient — deeper and more
+          // dimensional than a flat three-stop wash, matching the Create
+          // Order / Orders screens' "faceted" surface language.
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -903,7 +1044,9 @@ class _ScreenHeader extends StatelessWidget {
               _Palette.milanoRedLight,
               _Palette.milanoRed,
               _Palette.milanoRedDeep,
+              _Palette.milanoRedDarkest,
             ],
+            stops: [0.0, 0.38, 0.72, 1.0],
           ),
           borderRadius: BorderRadius.only(
             bottomLeft: Radius.circular(isMobile ? 28 : 38),
@@ -999,6 +1142,25 @@ class _ScreenHeader extends StatelessWidget {
                 ),
               ),
             ),
+
+            // ── Large faint watermark emblem — a unique signature touch,
+            // sits low-opacity and large behind the copy, never competing
+            // with the title or the stats strip.
+            Positioned(
+              right: isMobile ? -30 : -10,
+              bottom: isMobile ? -22 : -16,
+              child: IgnorePointer(
+                child: Opacity(
+                  opacity: 0.07,
+                  child: Icon(
+                    Icons.point_of_sale_rounded,
+                    size: isMobile ? 140 : 190,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+
             // Fine dotted texture accent, matching the refined decorative
             // language used on the dashboard / menu-management headers.
             Positioned(
@@ -1025,6 +1187,28 @@ class _ScreenHeader extends StatelessWidget {
                 ),
               ),
             ),
+
+            // Fine glass highlight line along the very top edge, giving
+            // the full-width panel a polished, "premium glass" finish —
+            // matches the Dashboard/Orders/Tables headers' top edge.
+            Positioned(
+              top: 0,
+              left: 24,
+              right: 24,
+              child: Container(
+                height: 1,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.transparent,
+                      Colors.white.withValues(alpha: 0.35),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
             SafeArea(
               bottom: false,
               child: Padding(
@@ -1060,13 +1244,27 @@ class _ScreenHeader extends StatelessWidget {
                                 width: 1,
                               ),
                             ),
-                            child: Text(
-                              dateLabel,
-                              style: AppTheme.sans(
-                                size: 12,
-                                weight: FontWeight.w600,
-                                color: Colors.white.withValues(alpha: 0.75),
-                              ).copyWith(letterSpacing: 0.3),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.calendar_today_rounded,
+                                  size: 12,
+                                  color: _Palette.lemonChiffon.withValues(
+                                    alpha: 0.85,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  dateLabel,
+                                  style: AppTheme.sans(
+                                    size: 12,
+                                    weight: FontWeight.w600,
+                                    color:
+                                        Colors.white.withValues(alpha: 0.75),
+                                  ).copyWith(letterSpacing: 0.3),
+                                ),
+                              ],
                             ),
                           ),
                       ],
@@ -1179,12 +1377,151 @@ class _ScreenHeader extends StatelessWidget {
                         ),
                       ),
                     ],
+
+                    const SizedBox(height: 16),
+
+                    // ── Live quick-stats readout strip — Items / Amount
+                    // Due / Method, built straight from values already
+                    // computed in build(). Purely a display addition; no
+                    // new data source and no logic change.
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.22),
+                            Colors.black.withValues(alpha: 0.14),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.10),
+                        ),
+                        boxShadow: _Palette.statCapsuleShadow,
+                      ),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _HeaderStatPill(
+                              icon: Icons.shopping_basket_rounded,
+                              value: '$itemsCount',
+                              label: 'Items',
+                              accent: const Color(0xFFFBBF24),
+                            ),
+                            const _HeaderStatDivider(),
+                            _HeaderStatPill(
+                              icon: Icons.payments_rounded,
+                              value: '₹$amountDue',
+                              label: 'Amount Due',
+                              accent: const Color(0xFF34D399),
+                            ),
+                            const _HeaderStatDivider(),
+                            _HeaderStatPill(
+                              icon: Icons.credit_card_rounded,
+                              value: methodLabel,
+                              label: 'Method',
+                              accent: Colors.white70,
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                        .animate()
+                        .fade(duration: 550.ms, delay: 200.ms)
+                        .slideY(begin: 0.2, duration: 550.ms, delay: 200.ms),
                   ],
                 ),
               ),
             ),
           ],
         ),
+      ),
+    ).animate().fade(duration: 450.ms).slideY(begin: -0.15, duration: 450.ms);
+  }
+}
+
+/// Slim vertical divider used between stat pills in the header's readout
+/// strip — purely decorative spacing element, no logic.
+class _HeaderStatDivider extends StatelessWidget {
+  const _HeaderStatDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 28,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      color: Colors.white.withValues(alpha: 0.10),
+    );
+  }
+}
+
+/// A single stat readout module (icon badge + value + label) used inside
+/// the header's live stats strip. Purely presentational — takes whatever
+/// value/label/accent it's given.
+class _HeaderStatPill extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color accent;
+
+  const _HeaderStatPill({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      constraints: const BoxConstraints(maxWidth: 130),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.10),
+            ),
+            child: Icon(icon, size: 13, color: accent),
+          ),
+          const SizedBox(width: 9),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  value,
+                  style: AppTheme.sans(
+                    size: 14,
+                    weight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  label.toUpperCase(),
+                  style: AppTheme.sans(
+                    size: 8.5,
+                    weight: FontWeight.w700,
+                    color: Colors.white.withValues(alpha: 0.6),
+                  ).copyWith(letterSpacing: 0.4),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

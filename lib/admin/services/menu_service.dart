@@ -106,4 +106,20 @@ class MenuService {
       requiresAuth: true,
     );
   }
+
+  /// Deletes a single menu item — new method, added to support the delete
+  /// button now on each item card in MenuScreen. Mirrors `deleteCategory`
+  /// exactly: same `ApiService.delete` call, same `requiresAuth: true`,
+  /// just targeting the item-by-id endpoint (the same
+  /// `ApiEndpoints.menuItemById(itemId)` helper already used by
+  /// `updateItem` above) instead of the category endpoint.
+  ///
+  /// Expected route: DELETE /api/admin/menu/items/:id
+  /// Nothing about any existing method above was changed to add this.
+  static Future<void> deleteItem(String itemId) async {
+    await ApiService.delete(
+      ApiEndpoints.menuItemById(itemId),
+      requiresAuth: true,
+    );
+  }
 }

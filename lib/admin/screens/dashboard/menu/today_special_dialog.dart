@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:restaurant_unified_app/core/constants.dart';
 import 'package:restaurant_unified_app/admin/core/models/restaurant_model.dart';
 import 'package:restaurant_unified_app/admin/services/menu_service.dart';
 
@@ -9,16 +8,45 @@ import 'package:restaurant_unified_app/admin/services/menu_service.dart';
 /// Purely a UI palette used inside this file. No business logic depends on
 /// these — they only drive colors/gradients/shadows for a premium,
 /// restaurant-friendly look.
+///
+/// These values are intentionally identical to the `_Palette` class used in
+/// MenuScreen (menu_screen.dart) so this dialog reads as part of the exact
+/// same brand instead of a separately-themed surface:
+///   maroonLight  == MenuScreen's _Palette.milanoRedLight
+///   maroon       == MenuScreen's _Palette.milanoRed
+///   maroonDeep   == MenuScreen's _Palette.milanoRedDeep
+///   cream        == MenuScreen's _Palette.canvas
+///   creamLighter == MenuScreen's _Palette.cardWhite
+///   gold         == MenuScreen's _Palette.lemonChiffon
+///   goldDark     == MenuScreen's _Palette.lemonChiffonDeep
+///   textDark     == MenuScreen's _Palette.textDark
+///   textMuted    == MenuScreen's _Palette.textMuted
+///   success      == MenuScreen's _Palette.success
+///   danger       == MenuScreen's _Palette.danger
+///
+/// UI-ENHANCEMENT PASS 2: the header was pushed further into its own
+/// distinctive "command bar" identity — a richer four-stop diagonal
+/// gradient, a large faint watermark emblem behind the title, a fine
+/// glass highlight line along the top edge, and a dotted texture accent
+/// — matching the Admin Orders / Dashboard / staff-side screens' Pass-2
+/// treatment. No selection logic, save/API calls, search filtering, or
+/// item-payload logic was touched anywhere in this pass — only the
+/// header's presentation changed.
 /// ─────────────────────────────────────────────────────────────────────────
 class _SpecialTheme {
-  static const Color maroon = Color(0xFF8B1D1D); // Primary
-  static const Color maroonDark = Color(0xFF5E1212); // Deeper shade for depth
-  static const Color maroonDeeper = Color(0xFF3E0B0B); // Gradient end
-  static const Color cream = Color(0xFFFDF3E7); // Light / Soft Cream
-  static const Color creamLighter = Color(0xFFFFFBF5); // Card background
-  static const Color gold = Color(0xFFF4C430); // Gold Glow
-  static const Color goldDark = Color(0xFFC9971F); // Gold shadow/border
-  static const Color textOnMaroon = Color(0xFFFFF8ED);
+  static const Color maroonLight = Color(0xFFA83030); // Lighter maroon
+  static const Color maroon = Color(0xFF8B1D1D); // Dark Maroon (Primary)
+  static const Color maroonDeep = Color(0xFF4E0F0F); // Deepest maroon
+  static const Color maroonDarkest = Color(0xFF320A0A); // Fourth gradient stop
+  static const Color cream = Color(0xFFFFF8F0); // Soft Cream background
+  static const Color creamLighter = Colors.white; // Card white
+  static const Color gold = Color(0xFFF4C430); // Gold Glow (Accent)
+  static const Color goldDark = Color(0xFFD9A62A); // Deeper gold
+  static const Color textOnMaroon = Colors.white;
+  static const Color textDark = Color(0xFF3A1608);
+  static const Color textMuted = Color(0xFF8A6F5E);
+  static const Color success = Color(0xFF2E9E5B);
+  static const Color danger = Color(0xFFC62828);
 }
 
 /// Dialog that lets the admin pick any existing menu items and
@@ -151,7 +179,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text("Today's Special updated!"),
-            backgroundColor: AppColors.success,
+            backgroundColor: _SpecialTheme.success,
             behavior: SnackBarBehavior.floating,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -165,7 +193,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
             content: Text(
               'Failed: ${e.toString().replaceAll('Exception: ', '')}',
             ),
-            backgroundColor: AppColors.danger,
+            backgroundColor: _SpecialTheme.danger,
             behavior: SnackBarBehavior.floating,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -177,121 +205,237 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
     }
   }
 
-  // ── UI: "Navbar" style header — gradient maroon with a glowing gold rail ──
+  // ── UI: "Command bar" style header — UI-ENHANCEMENT PASS 2 pushes this
+  // further into the same distinctive identity used on the Admin Orders /
+  // Dashboard / staff-side screens' Pass-2 headers: a richer four-stop
+  // diagonal gradient (maroonLight → maroon → maroonDeep → maroonDarkest),
+  // a large faint watermark emblem sitting low-opacity behind the title, a
+  // fine glass highlight line along the very top edge, and a dotted
+  // texture accent. The gold glow rail underneath, the star icon chip, and
+  // the close button are all unchanged — same onPressed/Navigator.pop
+  // behavior as before. Purely presentational; no logic touched. ────────
   Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            _SpecialTheme.maroon,
-            _SpecialTheme.maroonDark,
-            _SpecialTheme.maroonDeeper,
+    return ClipRRect(
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(22),
+        topRight: Radius.circular(22),
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 20),
+        decoration: BoxDecoration(
+          // Richer four-stop diagonal maroon gradient — deeper and more
+          // dimensional than the previous flat three-stop wash, matching
+          // the Admin Orders screen's Pass-2 "faceted" surface language.
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              _SpecialTheme.maroonLight,
+              _SpecialTheme.maroon,
+              _SpecialTheme.maroonDeep,
+              _SpecialTheme.maroonDarkest,
+            ],
+            stops: [0.0, 0.38, 0.72, 1.0],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: _SpecialTheme.maroonDeep.withValues(alpha: 0.45),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+            BoxShadow(
+              color: _SpecialTheme.gold.withValues(alpha: 0.10),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+            ),
           ],
         ),
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(22),
-          topRight: Radius.circular(22),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: _SpecialTheme.maroonDeeper.withOpacity(0.45),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _SpecialTheme.gold.withOpacity(0.16),
-                  border: Border.all(
-                    color: _SpecialTheme.gold.withOpacity(0.55),
-                    width: 1.2,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // ── Large faint watermark emblem — a unique signature touch
+            // this header didn't previously have, sitting low-opacity and
+            // large behind the copy, never competing with the title or
+            // controls. Matches the Admin Orders / Dashboard screens'
+            // Pass-2 watermark treatment.
+            Positioned(
+              right: -14,
+              bottom: -18,
+              child: IgnorePointer(
+                child: Opacity(
+                  opacity: 0.08,
+                  child: Icon(
+                    Icons.star_rounded,
+                    size: 96,
+                    color: Colors.white,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _SpecialTheme.gold.withOpacity(0.35),
-                      blurRadius: 14,
-                      spreadRadius: 1,
-                    ),
-                  ],
                 ),
-                child: const Text('⭐', style: TextStyle(fontSize: 20)),
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            ),
+
+            // Subtle decorative diagonal ribbon accent — purely cosmetic,
+            // matches the header language used elsewhere in the admin app.
+            Positioned(
+              top: -30,
+              right: -20,
+              child: Transform.rotate(
+                angle: -0.5,
+                child: Container(
+                  width: 140,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        _SpecialTheme.gold.withValues(alpha: 0.14),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Fine dotted texture accent, matching the refined decorative
+            // language used on the Admin Orders / Dashboard headers.
+            Positioned(
+              top: 4,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      "Today's Special",
-                      style: GoogleFonts.playfairDisplay(
-                        color: _SpecialTheme.textOnMaroon,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.2,
+                  children: List.generate(
+                    5,
+                    (i) => Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      width: 4,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _SpecialTheme.gold.withValues(
+                          alpha: i == 2 ? 0.85 : 0.3,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Curate the featured menu highlights',
-                      style: GoogleFonts.inter(
-                        color: _SpecialTheme.gold.withOpacity(0.9),
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 0.15,
+                  ),
+                ),
+              ),
+            ),
+
+            // Fine glass highlight line along the very top edge, giving
+            // the panel a polished, "premium glass" finish — matches the
+            // Admin Orders / Dashboard headers' top edge treatment.
+            Positioned(
+              top: 0,
+              left: 16,
+              right: 16,
+              child: Container(
+                height: 1,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.transparent,
+                      Colors.white.withValues(alpha: 0.35),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _SpecialTheme.gold.withValues(alpha: 0.16),
+                        border: Border.all(
+                          color: _SpecialTheme.gold.withValues(alpha: 0.55),
+                          width: 1.2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _SpecialTheme.gold.withValues(alpha: 0.35),
+                            blurRadius: 14,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                      child: const Text('⭐', style: TextStyle(fontSize: 20)),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "Today's Special",
+                            style: GoogleFonts.playfairDisplay(
+                              color: _SpecialTheme.textOnMaroon,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Curate the featured menu highlights',
+                            style: GoogleFonts.inter(
+                              color: _SpecialTheme.gold.withValues(alpha: 0.9),
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.15,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Material(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      shape: const CircleBorder(),
+                      child: IconButton(
+                        icon: const Icon(Icons.close_rounded,
+                            color: _SpecialTheme.textOnMaroon),
+                        splashRadius: 22,
+                        onPressed: _isSubmitting
+                            ? null
+                            : () => Navigator.pop(context),
                       ),
                     ),
                   ],
                 ),
-              ),
-              Material(
-                color: Colors.white.withOpacity(0.08),
-                shape: const CircleBorder(),
-                child: IconButton(
-                  icon: const Icon(Icons.close_rounded,
-                      color: _SpecialTheme.textOnMaroon),
-                  splashRadius: 22,
-                  onPressed:
-                      _isSubmitting ? null : () => Navigator.pop(context),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Gold glow rail — the "navbar" accent line
-          Container(
-            height: 3,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(4),
-              gradient: LinearGradient(
-                colors: [
-                  _SpecialTheme.gold.withOpacity(0.0),
-                  _SpecialTheme.gold,
-                  _SpecialTheme.gold.withOpacity(0.0),
-                ],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: _SpecialTheme.gold.withOpacity(0.6),
-                  blurRadius: 8,
+                const SizedBox(height: 16),
+                // Gold glow rail — the "navbar" accent line
+                Container(
+                  height: 3,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(4),
+                    gradient: LinearGradient(
+                      colors: [
+                        _SpecialTheme.gold.withValues(alpha: 0.0),
+                        _SpecialTheme.gold,
+                        _SpecialTheme.gold.withValues(alpha: 0.0),
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _SpecialTheme.gold.withValues(alpha: 0.6),
+                        blurRadius: 8,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -301,16 +445,16 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
       margin: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: _SpecialTheme.gold.withOpacity(0.12),
+        color: _SpecialTheme.gold.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _SpecialTheme.gold.withOpacity(0.35)),
+        border: Border.all(color: _SpecialTheme.gold.withValues(alpha: 0.35)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(5),
             decoration: BoxDecoration(
-              color: _SpecialTheme.gold.withOpacity(0.2),
+              color: _SpecialTheme.gold.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.info_outline_rounded,
@@ -322,7 +466,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
               "Select items to feature as Today's Special. Unselected items are removed.",
               style: GoogleFonts.inter(
                 fontSize: 12.5,
-                color: _SpecialTheme.maroonDark,
+                color: _SpecialTheme.maroonDeep,
                 fontWeight: FontWeight.w500,
                 height: 1.3,
               ),
@@ -342,7 +486,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: _SpecialTheme.maroon.withOpacity(0.06),
+              color: _SpecialTheme.maroon.withValues(alpha: 0.06),
               blurRadius: 10,
               offset: const Offset(0, 3),
             ),
@@ -351,7 +495,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
         child: TextField(
           onChanged: (v) => setState(() => _searchQuery = v),
           style: GoogleFonts.inter(
-              fontSize: 14, color: _SpecialTheme.maroonDeeper),
+              fontSize: 14, color: _SpecialTheme.maroonDeep),
           decoration: InputDecoration(
             hintText: 'Search items...',
             hintStyle:
@@ -366,8 +510,8 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  BorderSide(color: _SpecialTheme.maroon.withOpacity(0.12)),
+              borderSide: BorderSide(
+                  color: _SpecialTheme.maroon.withValues(alpha: 0.12)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -392,12 +536,13 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.restaurant_menu_rounded,
-                  size: 40, color: _SpecialTheme.maroon.withOpacity(0.3)),
+                  size: 40,
+                  color: _SpecialTheme.maroon.withValues(alpha: 0.3)),
               const SizedBox(height: 10),
               Text(
                 'No menu items available yet. Add items to your menu first.',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(color: AppColors.textMuted),
+                style: GoogleFonts.inter(color: _SpecialTheme.textMuted),
               ),
             ],
           ),
@@ -413,11 +558,12 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.search_off_rounded,
-                size: 36, color: _SpecialTheme.maroon.withOpacity(0.3)),
+                size: 36,
+                color: _SpecialTheme.maroon.withValues(alpha: 0.3)),
             const SizedBox(height: 8),
             Text(
               'No items found',
-              style: GoogleFonts.inter(color: AppColors.textMuted),
+              style: GoogleFonts.inter(color: _SpecialTheme.textMuted),
             ),
           ],
         ),
@@ -425,7 +571,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
     }
 
     return Container(
-      color: _SpecialTheme.cream.withOpacity(0.35),
+      color: _SpecialTheme.cream.withValues(alpha: 0.35),
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
         itemCount: filtered.length,
@@ -441,26 +587,26 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
             duration: const Duration(milliseconds: 180),
             decoration: BoxDecoration(
               color: isSelected
-                  ? _SpecialTheme.maroon.withOpacity(0.06)
+                  ? _SpecialTheme.maroon.withValues(alpha: 0.06)
                   : _SpecialTheme.creamLighter,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: isSelected
                     ? _SpecialTheme.gold
-                    : Colors.black.withOpacity(0.06),
+                    : Colors.black.withValues(alpha: 0.06),
                 width: isSelected ? 1.5 : 1,
               ),
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: _SpecialTheme.gold.withOpacity(0.25),
+                        color: _SpecialTheme.gold.withValues(alpha: 0.25),
                         blurRadius: 10,
                         offset: const Offset(0, 3),
                       ),
                     ]
                   : [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.03),
+                        color: Colors.black.withValues(alpha: 0.03),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
@@ -485,8 +631,8 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                   fontWeight: FontWeight.w600,
                   fontSize: 14.5,
                   color: isSelected
-                      ? _SpecialTheme.maroonDeeper
-                      : AppColors.textDark,
+                      ? _SpecialTheme.maroonDeep
+                      : _SpecialTheme.textDark,
                 ),
               ),
               subtitle: Padding(
@@ -495,7 +641,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: _SpecialTheme.gold.withOpacity(0.18),
+                    color: _SpecialTheme.gold.withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -516,7 +662,8 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                         width: 48,
                         height: 48,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
+                        errorBuilder: (context, error, stackTrace) =>
+                            Container(
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
@@ -525,7 +672,8 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                           ),
                           child: Icon(Icons.broken_image_rounded,
                               size: 20,
-                              color: _SpecialTheme.maroon.withOpacity(0.4)),
+                              color:
+                                  _SpecialTheme.maroon.withValues(alpha: 0.4)),
                         ),
                       ),
                     )
@@ -536,11 +684,12 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                         color: _SpecialTheme.cream,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                            color: _SpecialTheme.maroon.withOpacity(0.12)),
+                            color:
+                                _SpecialTheme.maroon.withValues(alpha: 0.12)),
                       ),
                       child: Icon(Icons.fastfood_rounded,
                           size: 20,
-                          color: _SpecialTheme.maroon.withOpacity(0.55)),
+                          color: _SpecialTheme.maroon.withValues(alpha: 0.55)),
                     ),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
@@ -557,7 +706,8 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
       padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
       decoration: BoxDecoration(
         border: Border(
-            top: BorderSide(color: _SpecialTheme.maroon.withOpacity(0.1))),
+            top: BorderSide(
+                color: _SpecialTheme.maroon.withValues(alpha: 0.1))),
         color: _SpecialTheme.creamLighter,
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(22),
@@ -565,7 +715,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, -3),
           ),
@@ -579,9 +729,10 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
             decoration: BoxDecoration(
-              color: _SpecialTheme.maroon.withOpacity(0.08),
+              color: _SpecialTheme.maroon.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: _SpecialTheme.maroon.withOpacity(0.2)),
+              border: Border.all(
+                  color: _SpecialTheme.maroon.withValues(alpha: 0.2)),
             ),
             child: Text(
               '${_specialItemIds.length} item(s) selected',
@@ -601,7 +752,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                   if (!_isSubmitting) Navigator.pop(context);
                 },
                 style: TextButton.styleFrom(
-                  foregroundColor: _SpecialTheme.maroonDark,
+                  foregroundColor: _SpecialTheme.maroonDeep,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                 ),
@@ -612,19 +763,20 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   gradient: const LinearGradient(
-                    colors: [_SpecialTheme.maroon, _SpecialTheme.maroonDeeper],
+                    colors: [_SpecialTheme.maroon, _SpecialTheme.maroonDeep],
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: _SpecialTheme.gold.withOpacity(0.35),
+                      color: _SpecialTheme.gold.withValues(alpha: 0.35),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
                   ],
                 ),
                 child: ElevatedButton.icon(
-                  onPressed:
-                      (_isSubmitting || widget.allItems.isEmpty) ? null : _save,
+                  onPressed: (_isSubmitting || widget.allItems.isEmpty)
+                      ? null
+                      : _save,
                   icon: _isSubmitting
                       ? const SizedBox(
                           width: 14,
@@ -651,7 +803,8 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                       side: BorderSide(
-                          color: _SpecialTheme.gold.withOpacity(0.5), width: 1),
+                          color: _SpecialTheme.gold.withValues(alpha: 0.5),
+                          width: 1),
                     ),
                   ),
                 ),
@@ -668,7 +821,8 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
     final size = MediaQuery.of(context).size;
 
     // Near-fullscreen, more immersive dialog footprint.
-    final dialogWidth = size.width < 700 ? size.width * 0.96 : size.width * 0.6;
+    final dialogWidth =
+        size.width < 700 ? size.width * 0.96 : size.width * 0.6;
     final dialogHeight = size.height * 0.9;
 
     return Dialog(
@@ -684,10 +838,10 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
           color: _SpecialTheme.cream,
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
-              color: _SpecialTheme.gold.withOpacity(0.25), width: 1.2),
+              color: _SpecialTheme.gold.withValues(alpha: 0.25), width: 1.2),
           boxShadow: [
             BoxShadow(
-              color: _SpecialTheme.maroonDeeper.withOpacity(0.35),
+              color: _SpecialTheme.maroonDeep.withValues(alpha: 0.35),
               blurRadius: 30,
               offset: const Offset(0, 12),
             ),

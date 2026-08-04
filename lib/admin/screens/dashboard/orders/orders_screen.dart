@@ -18,6 +18,16 @@ import 'package:restaurant_unified_app/admin/services/orders_service.dart';
 /// Kept local to this file so it layers on top of the app's existing
 /// AppColors without requiring changes anywhere else. Only visual tokens
 /// live here — no business logic is affected.
+///
+/// UI-ENHANCEMENT PASS 2: the header was pushed further into its own
+/// distinctive "command bar" identity (a richer four-stop diagonal
+/// gradient, a large faint watermark emblem, and a fine glass highlight
+/// line along the top edge) matching the Admin Dashboard / staff-side
+/// screens' Pass-2 treatment, and the full-screen backdrop gained an
+/// extra diagonal sheen for more depth. The stat cards picked up a slim
+/// color-coded top cap so each figure has its own subtle identity at a
+/// glance. No provider, filtering, sorting, status-update, or PDF/print
+/// logic was touched anywhere in this pass — only presentation changed.
 /// -----------------------------------------------------------------------
 class _OrdersTheme {
   // Primary brand — Dark Maroon (#8B1D1D) per Theme 1. Field names kept
@@ -27,6 +37,7 @@ class _OrdersTheme {
   static const Color milanoRed = Color(0xFF8B1D1D); // Primary maroon
   static const Color milanoRedDark = Color(0xFF5E1212); // Deeper maroon
   static const Color milanoRedLight = Color(0xFFA5271F); // Lighter maroon
+  static const Color milanoRedDarkest = Color(0xFF3A0B0B); // Fourth gradient stop
 
   // Gold Glow accents (Theme 1: #F4C430) replacing the old lemon-chiffon
   // tones, plus soft cream companions for badges/backgrounds.
@@ -262,6 +273,30 @@ class _OrdersScreenState extends State<OrdersScreen> {
                             ),
                           ),
                         ),
+                        // Extra low, wide glow further down the page —
+                        // gives the long orders list a second soft focal
+                        // point instead of all the ambient light sitting
+                        // only near the header. Matches the Admin
+                        // Dashboard / staff-side screens' Pass-2 backdrop.
+                        Positioned(
+                          top: 640,
+                          right: -110,
+                          child: Container(
+                            width: 230,
+                            height: 230,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  _OrdersTheme.milanoRedLight.withValues(
+                                    alpha: 0.06,
+                                  ),
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                         Opacity(
                           opacity: 0.04,
                           child: Image.network(
@@ -272,6 +307,29 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                ),
+
+                // Faint diagonal sheen sweeping across the body — a subtle
+                // extra layer of depth so the cream backdrop doesn't read
+                // as flat behind the header, echoing the glass-highlight
+                // language used in the header itself.
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.28),
+                            Colors.transparent,
+                            Colors.transparent,
+                          ],
+                          stops: const [0.0, 0.35, 1.0],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -335,14 +393,20 @@ class _OrdersScreenState extends State<OrdersScreen> {
           32,
         ),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
+          // Richer four-stop diagonal maroon gradient — deeper and more
+          // dimensional than a flat three-stop wash, matching the Admin
+          // Dashboard / staff-side screens' Pass-2 "faceted" surface
+          // language.
+          gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
               _OrdersTheme.milanoRedLight,
               _OrdersTheme.milanoRed,
               _OrdersTheme.milanoRedDark,
+              _OrdersTheme.milanoRedDarkest,
             ],
+            stops: [0.0, 0.38, 0.72, 1.0],
           ),
           // Softly rounded bottom corners give the header a modern,
           // "floating navbar" feel that matches the Menu and Dashboard
@@ -372,229 +436,278 @@ class _OrdersScreenState extends State<OrdersScreen> {
             ),
           ],
         ),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            // Subtle decorative diagonal ribbon accents (purely cosmetic,
-            // matches the Menu/Dashboard headers for a consistent brand)
-            Positioned(
-              top: -60,
-              right: -40,
-              child: Transform.rotate(
-                angle: -0.5,
-                child: Container(
-                  width: 240,
-                  height: 90,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        _OrdersTheme.gold.withValues(alpha: 0.14),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: -50,
-              left: -60,
-              child: Transform.rotate(
-                angle: 0.4,
-                child: Container(
-                  width: 220,
-                  height: 70,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.white.withValues(alpha: 0.06),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            // Fine dotted texture accent, matching the app's refined
-            // decorative language used on the Menu/Dashboard headers.
-            Positioned(
-              top: 8,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: List.generate(
-                    5,
-                    (i) => Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
-                      width: 4,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _OrdersTheme.gold.withValues(
-                          alpha: i == 2 ? 0.85 : 0.3,
-                        ),
+        child: ClipRect(
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Subtle decorative diagonal ribbon accents (purely cosmetic,
+              // matches the Menu/Dashboard headers for a consistent brand)
+              Positioned(
+                top: -60,
+                right: -40,
+                child: Transform.rotate(
+                  angle: -0.5,
+                  child: Container(
+                    width: 240,
+                    height: 90,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          _OrdersTheme.gold.withValues(alpha: 0.14),
+                          Colors.transparent,
+                        ],
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-            isMobile
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Material(
-                        color: Colors.white.withValues(alpha: 0.10),
-                        shape: const CircleBorder(),
-                        child: InkWell(
-                          onTap: () => context.go('/admin/dashboard'),
-                          customBorder: const CircleBorder(),
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: _OrdersTheme.goldSoft
-                                    .withValues(alpha: 0.6),
-                                width: 1.2,
-                              ),
-                            ),
-                            child: const Icon(
-                              Icons.chevron_left_rounded,
-                              color: Colors.white,
-                              size: 26,
-                            ),
+              Positioned(
+                bottom: -50,
+                left: -60,
+                child: Transform.rotate(
+                  angle: 0.4,
+                  child: Container(
+                    width: 220,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.white.withValues(alpha: 0.06),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // ── Large faint watermark emblem — a unique signature
+              // touch this header didn't previously have, sitting
+              // low-opacity and large behind the copy, never competing
+              // with the title or controls. Matches the Admin Dashboard
+              // hero's Pass-2 watermark treatment.
+              Positioned(
+                right: isMobile ? -20 : -10,
+                bottom: isMobile ? -18 : -14,
+                child: IgnorePointer(
+                  child: Opacity(
+                    opacity: 0.06,
+                    child: Icon(
+                      Icons.receipt_long_rounded,
+                      size: isMobile ? 120 : 170,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+
+              // Fine dotted texture accent, matching the app's refined
+              // decorative language used on the Menu/Dashboard headers.
+              Positioned(
+                top: 8,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(
+                      5,
+                      (i) => Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        width: 4,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _OrdersTheme.gold.withValues(
+                            alpha: i == 2 ? 0.85 : 0.3,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      Text(
-                        'Orders',
-                        style: GoogleFonts.playfairDisplay(
-                          color: Colors.white,
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+
+              // Fine glass highlight line along the very top edge, giving
+              // the full-width panel a polished, "premium glass" finish —
+              // matches the Admin Dashboard / staff-side headers' top
+              // edge treatment.
+              Positioned(
+                top: 0,
+                left: 24,
+                right: 24,
+                child: Container(
+                  height: 1,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.transparent,
+                        Colors.white.withValues(alpha: 0.35),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              isMobile
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Material(
+                          color: Colors.white.withValues(alpha: 0.10),
+                          shape: const CircleBorder(),
+                          child: InkWell(
+                            onTap: () => context.go('/admin/dashboard'),
+                            customBorder: const CircleBorder(),
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: _OrdersTheme.goldSoft
+                                      .withValues(alpha: 0.6),
+                                  width: 1.2,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.chevron_left_rounded,
+                                color: Colors.white,
+                                size: 26,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Track customer orders',
-                        style: GoogleFonts.inter(
-                          color: _OrdersTheme.goldSoft,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                        const SizedBox(height: 20),
+                        Text(
+                          'Orders',
+                          style: GoogleFonts.playfairDisplay(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 14),
-                      Container(
-                        height: 3,
-                        width: 64,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(4),
-                          gradient: LinearGradient(
-                            colors: [
-                              _OrdersTheme.gold,
-                              _OrdersTheme.gold.withValues(alpha: 0.0),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Track customer orders',
+                          style: GoogleFonts.inter(
+                            color: _OrdersTheme.goldSoft,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Container(
+                          height: 3,
+                          width: 64,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(4),
+                            gradient: LinearGradient(
+                              colors: [
+                                _OrdersTheme.gold,
+                                _OrdersTheme.gold.withValues(alpha: 0.0),
+                              ],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color:
+                                    _OrdersTheme.gold.withValues(alpha: 0.6),
+                                blurRadius: 8,
+                              ),
                             ],
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: _OrdersTheme.gold.withValues(alpha: 0.6),
-                              blurRadius: 8,
-                            ),
-                          ],
                         ),
-                      ),
-                    ],
-                  )
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Material(
-                        color: Colors.white.withValues(alpha: 0.10),
-                        shape: const CircleBorder(),
-                        child: InkWell(
-                          onTap: () => context.go('/admin/dashboard'),
-                          customBorder: const CircleBorder(),
-                          child: Container(
-                            width: 44,
-                            height: 44,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: _OrdersTheme.goldSoft
-                                    .withValues(alpha: 0.6),
-                                width: 1.2,
+                      ],
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Material(
+                          color: Colors.white.withValues(alpha: 0.10),
+                          shape: const CircleBorder(),
+                          child: InkWell(
+                            onTap: () => context.go('/admin/dashboard'),
+                            customBorder: const CircleBorder(),
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: _OrdersTheme.goldSoft
+                                      .withValues(alpha: 0.6),
+                                  width: 1.2,
+                                ),
                               ),
-                            ),
-                            child: const Icon(
-                              Icons.chevron_left_rounded,
-                              color: Colors.white,
-                              size: 28,
+                              child: const Icon(
+                                Icons.chevron_left_rounded,
+                                color: Colors.white,
+                                size: 28,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      Expanded(
-                        child: Center(
-                          child: Column(
-                            children: [
-                              Text(
-                                'Orders Management',
-                                style: GoogleFonts.playfairDisplay(
-                                  color: Colors.white,
-                                  fontSize: 36,
-                                  fontWeight: FontWeight.bold,
+                        Expanded(
+                          child: Center(
+                            child: Column(
+                              children: [
+                                Text(
+                                  'Orders Management',
+                                  style: GoogleFonts.playfairDisplay(
+                                    color: Colors.white,
+                                    fontSize: 36,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'View and track customer orders',
-                                style: GoogleFonts.inter(
-                                  color: _OrdersTheme.goldSoft,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
+                                const SizedBox(height: 4),
+                                Text(
+                                  'View and track customer orders',
+                                  style: GoogleFonts.inter(
+                                    color: _OrdersTheme.goldSoft,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 14),
-                              Container(
-                                height: 3,
-                                width: 84,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(4),
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      _OrdersTheme.gold.withValues(alpha: 0.0),
-                                      _OrdersTheme.gold,
-                                      _OrdersTheme.gold.withValues(alpha: 0.0),
+                                const SizedBox(height: 14),
+                                Container(
+                                  height: 3,
+                                  width: 84,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(4),
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        _OrdersTheme.gold
+                                            .withValues(alpha: 0.0),
+                                        _OrdersTheme.gold,
+                                        _OrdersTheme.gold
+                                            .withValues(alpha: 0.0),
+                                      ],
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: _OrdersTheme.gold
+                                            .withValues(alpha: 0.6),
+                                        blurRadius: 8,
+                                      ),
                                     ],
                                   ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: _OrdersTheme.gold
-                                          .withValues(alpha: 0.6),
-                                      blurRadius: 8,
-                                    ),
-                                  ],
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 48),
-                    ],
-                  ),
-          ],
+                        const SizedBox(width: 48),
+                      ],
+                    ),
+            ],
+          ),
         ),
       ),
-    );
+    ).animate().fade(duration: 450.ms).slideY(begin: -0.1, duration: 450.ms);
   }
 
   Widget _buildStatsGrid(bool isMobile) {
@@ -677,16 +790,14 @@ class _OrdersScreenState extends State<OrdersScreen> {
   }
 
   Widget _statCard(String title, String value, Color color, bool isMobile) {
+    // UI-ENHANCEMENT PASS 2: added a slim color-coded top cap, matching
+    // the Billing screen's stat boxes, so each figure has its own subtle
+    // identity at a glance. Same title/value/color inputs as before.
     return Container(
       width: isMobile ? 130 : null,
-      padding: EdgeInsets.all(isMobile ? 16 : 24),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: color.withValues(alpha: 0.18),
-          width: 1,
-        ),
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.10),
@@ -696,42 +807,59 @@ class _OrdersScreenState extends State<OrdersScreen> {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.inter(
-                  color: AppColors.textMuted,
-                  fontSize: isMobile ? 12 : 14,
-                  fontWeight: FontWeight.w500,
-                ),
+          Container(height: 3, color: color.withValues(alpha: 0.65)),
+          Container(
+            padding: EdgeInsets.all(isMobile ? 16 : 24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(
+                color: color.withValues(alpha: 0.18),
+                width: 1,
               ),
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withValues(alpha: 0.5),
-                      blurRadius: 6,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.inter(
+                        color: AppColors.textMuted,
+                        fontSize: isMobile ? 12 : 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: color.withValues(alpha: 0.5),
+                            blurRadius: 6,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: GoogleFonts.inter(
-              color: color,
-              fontSize: isMobile ? 22 : 28,
-              fontWeight: FontWeight.bold,
+                const SizedBox(height: 8),
+                Text(
+                  value,
+                  style: GoogleFonts.inter(
+                    color: color,
+                    fontSize: isMobile ? 22 : 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

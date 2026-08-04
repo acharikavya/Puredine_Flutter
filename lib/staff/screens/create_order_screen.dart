@@ -19,17 +19,33 @@ import '../widgets/common_widgets.dart';
 /// so every usage below the class still lines up — only the color VALUES
 /// have changed to the new Dark Maroon × Soft Cream × Gold Glow theme.
 ///
+/// UI-ENHANCEMENT PASS 2: brings this screen's header, section cards, and
+/// summary panel up to the same distinctive "command bar" identity used
+/// on the New Orders / Orders / Order Details screens — a four-stop
+/// diagonal gradient header, a large faint watermark emblem, a glass
+/// highlight line along the top edge, and a new live quick-stats readout
+/// strip (Items Selected / Estimated Total / Tables Free) built entirely
+/// from values already computed in build(). The full-screen backdrop
+/// gained an extra ambient glow + a diagonal sheen for more depth, and
+/// each section card picked up a slim color-coded accent rail down the
+/// left edge, matching the New Orders / Orders screens' card treatment.
+/// No provider, controller, route, submit, or pricing logic was touched
+/// anywhere in this pass — only presentation changed.
+///
 /// NOTE: This is a private class, so it can't be imported from
-/// dashboard_screen.dart — it must be redeclared identically in every
-/// screen that wants this look. That duplication (or the lack of it) is
-/// exactly why this screen previously fell back to AppColors.* and looked
-/// different from the Dashboard.
+/// dashboard_screen.dart / new_orders_screen.dart — it must be
+/// redeclared identically in every screen that wants this look. That
+/// duplication is intentional (private classes can't be shared across
+/// files without a new shared import, which would go beyond a pure
+/// UI-only change here).
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   // Dark Maroon primary (was Milano Red)
   static const Color milanoRed = Color(0xFF8B1D1D);
   static const Color milanoRedDeep = Color(0xFF5E1212);
   static const Color milanoRedLight = Color(0xFFA62828);
+  // Deepest maroon — fourth stop of the header's richer diagonal gradient.
+  static const Color milanoRedDarkest = Color(0xFF3A0B0B);
 
   // Soft Cream + Gold Glow accents (was Lemon Chiffon)
   static const Color lemonChiffon = Color(0xFFFFF8E7);
@@ -47,8 +63,8 @@ class _Palette {
   static const Color goldDeep = Color(0xFFD9A61E);
 
   /// Themed soft shadow for resting cards/panels — mirrors the shadow
-  /// language used on the Menu Management screen so both screens read
-  /// as one consistent brand.
+  /// language used on the Menu Management / New Orders screens so every
+  /// card on this page reads as one consistent brand.
   static List<BoxShadow> get softShadow => [
         BoxShadow(
           color: milanoRedDeep.withValues(alpha: 0.06),
@@ -59,6 +75,45 @@ class _Palette {
           color: Colors.black.withValues(alpha: 0.03),
           blurRadius: 4,
           offset: const Offset(0, 2),
+        ),
+      ];
+
+  /// Richer navbar/header shadow stack — the same three-layer shadow
+  /// language used on the New Orders / Orders / Order Details headers
+  /// (deep maroon drop shadow + soft ambient gold bloom + fine black
+  /// contact shadow).
+  static List<BoxShadow> get heroShadow => [
+        BoxShadow(
+          color: milanoRedDeep.withValues(alpha: 0.38),
+          blurRadius: 32,
+          offset: const Offset(0, 14),
+        ),
+        BoxShadow(
+          color: gold.withValues(alpha: 0.12),
+          blurRadius: 38,
+          offset: const Offset(0, 6),
+        ),
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.10),
+          blurRadius: 6,
+          offset: const Offset(0, 2),
+        ),
+      ];
+
+  /// Soft inner "glass" shadow used on the header's quick-stats readout
+  /// strip — pure decoration, gives the capsule a faint pressed-glass
+  /// depth. Matches the New Orders / Orders / Order Details screens'
+  /// statCapsuleShadow exactly.
+  static List<BoxShadow> get statCapsuleShadow => [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.16),
+          blurRadius: 14,
+          offset: const Offset(0, 6),
+        ),
+        BoxShadow(
+          color: gold.withValues(alpha: 0.06),
+          blurRadius: 8,
+          offset: const Offset(0, -2),
         ),
       ];
 }
@@ -199,6 +254,11 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
 
     final selectedCount = _qty.values.fold(0, (a, b) => a + b);
     final total = _calcTotal(menu.items);
+    // Purely a display value for the header's quick-stats strip — derived
+    // from the same `tables` list already used below. No new data source,
+    // no logic change.
+    final availableTablesCount =
+        tables.where((t) => t.status == TableStatus.available).length;
 
     return Scaffold(
       backgroundColor: _Palette.canvas,
@@ -207,9 +267,9 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
         children: [
           // ── Ambient background dressing ─────────────────────────────────
           // Purely decorative — soft cream/gold glows layered over the
-          // existing canvas wash, matching the Menu Management screen's
-          // "foggy" backdrop so the whole admin experience feels like one
-          // cohesive brand. No logic touched — visuals only.
+          // existing canvas wash, matching the Menu Management / New
+          // Orders screens' "foggy" backdrop so the whole admin experience
+          // feels like one cohesive brand. No logic touched — visuals only.
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -260,7 +320,53 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                       ),
                     ),
                   ),
+                  // Extra low, wide glow further down the page — gives a
+                  // long form/menu list a second soft focal point instead
+                  // of all the ambient light sitting only near the header.
+                  // Matches the New Orders / Orders screens' Pass-2
+                  // backdrop treatment.
+                  Positioned(
+                    top: 620,
+                    right: -110,
+                    child: Container(
+                      width: 240,
+                      height: 240,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            _Palette.goldDeep.withValues(alpha: 0.07),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
+              ),
+            ),
+          ),
+
+          // Faint diagonal sheen sweeping across the whole page — a subtle
+          // extra layer of depth so the cream backdrop doesn't read as
+          // flat behind the header, echoing the glass-highlight language
+          // used in the header itself. Matches the New Orders / Orders /
+          // Order Details screens exactly.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withValues(alpha: 0.30),
+                      Colors.transparent,
+                      Colors.transparent,
+                    ],
+                    stops: const [0.0, 0.35, 1.0],
+                  ),
+                ),
               ),
             ),
           ),
@@ -268,12 +374,17 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
           Column(
             children: [
               // ── Header — same Dark Maroon gradient theme as the Order
-              // Summary card below, so both read as one brand ──────────
+              // Summary card below, now restyled into a richer "command
+              // bar" with a live quick-stats readout, so both read as one
+              // brand ────────────────────────────────────────────────────
               _ScreenHeader(
                 title: 'Create Order',
                 subtitle: 'Manual order entry',
                 dateLabel: _todayLabel(),
                 onBack: () => context.pop(),
+                selectedCount: selectedCount,
+                total: total,
+                availableTablesCount: availableTablesCount,
               ),
 
               // ── Body ─────────────────────────────────────────────────
@@ -345,6 +456,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
         _buildSection(
           icon: Icons.table_restaurant,
           title: 'Table & Customer',
+          railColor: _Palette.milanoRed,
           child: _buildTableAndCustomer(tables),
         )
             .animate()
@@ -354,6 +466,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
         _buildSection(
           icon: Icons.restaurant_menu,
           title: 'Menu Items',
+          railColor: _Palette.goldDeep,
           child: _buildMenuSection(grouped, menu),
         )
             .animate()
@@ -363,10 +476,17 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
     );
   }
 
+  // UI-ENHANCEMENT PASS 2: each section card now carries a slim
+  // color-coded accent rail down the left edge (matching the New Orders /
+  // Orders screens' card treatment), giving "Table & Customer" and "Menu
+  // Items" an instant visual identity. Same content, same children —
+  // purely presentational, wrapped with Clip.antiAlias so the rail
+  // respects the card's rounded corners.
   Widget _buildSection({
     required IconData icon,
     required String title,
     required Widget child,
+    Color railColor = _Palette.milanoRed,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -377,43 +497,68 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
         ),
         boxShadow: _Palette.softShadow,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(icon, color: _Palette.milanoRedDeep, size: 18),
+          Positioned(
+            top: 0,
+            bottom: 0,
+            left: 0,
+            child: Container(
+              width: 5,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    railColor.withValues(alpha: 0.85),
+                    railColor.withValues(alpha: 0.35),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Text(
-                  title,
-                  style: AppTheme.sans(
-                    size: 16,
-                    weight: FontWeight.w800,
-                    color: _Palette.textDark,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            child: Divider(
-              height: 1,
-              color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-            child: child,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child:
+                          Icon(icon, color: _Palette.milanoRedDeep, size: 18),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      title,
+                      style: AppTheme.sans(
+                        size: 16,
+                        weight: FontWeight.w800,
+                        color: _Palette.textDark,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                child: Divider(
+                  height: 1,
+                  color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                child: child,
+              ),
+            ],
           ),
         ],
       ),
@@ -649,52 +794,122 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Summary header
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [_Palette.milanoRedLight, _Palette.milanoRedDeep],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+              // Summary header — UI-ENHANCEMENT PASS 2: richer four-stop
+              // diagonal gradient (matching the main header exactly), a
+              // fine glass highlight line along the top edge, and a large
+              // faint watermark emblem behind the copy, so this card reads
+              // as part of the same "command bar" brand language as the
+              // header above. Same content, same badge count — purely
+              // presentational.
+              ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
                 ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.receipt_rounded,
-                      color: Colors.white,
-                      size: 24,
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        _Palette.milanoRedLight,
+                        _Palette.milanoRed,
+                        _Palette.milanoRedDeep,
+                      ],
+                      stops: [0.0, 0.5, 1.0],
                     ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Order Summary',
-                      style: AppTheme.serif(
-                        size: 18,
-                        weight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        '$selectedCount',
-                        style: AppTheme.sans(
-                          size: 12,
-                          weight: FontWeight.w800,
-                          color: Colors.white,
+                  ),
+                  child: Stack(
+                    children: [
+                      // Large faint watermark emblem — echoes the main
+                      // header's signature touch at a smaller scale.
+                      Positioned(
+                        right: -16,
+                        bottom: -18,
+                        child: IgnorePointer(
+                          child: Opacity(
+                            opacity: 0.08,
+                            child: Icon(
+                              Icons.receipt_long_rounded,
+                              size: 88,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                      // Fine glass highlight line along the top edge.
+                      Positioned(
+                        top: 0,
+                        left: 4,
+                        right: 4,
+                        child: Container(
+                          height: 1,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.transparent,
+                                Colors.white.withValues(alpha: 0.35),
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.14),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: _Palette.gold.withValues(alpha: 0.6),
+                                width: 1,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.receipt_rounded,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Order Summary',
+                            style: AppTheme.serif(
+                              size: 18,
+                              weight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: _Palette.gold.withValues(alpha: 0.45),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              '$selectedCount',
+                              style: AppTheme.sans(
+                                size: 12,
+                                weight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
@@ -880,7 +1095,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
 
 /// Small decorative gradient divider placed beneath the header title —
 /// purely cosmetic, mirrors the accent used under section titles on the
-/// Menu Management screen for a consistent brand language.
+/// Menu Management / New Orders screens for a consistent brand language.
 class _TitleDivider extends StatelessWidget {
   final double width;
   const _TitleDivider({this.width = 54});
@@ -904,29 +1119,35 @@ class _TitleDivider extends StatelessWidget {
   }
 }
 
-// ─── Screen header — Dark Maroon gradient treatment that matches the Order
-// Summary card (color, gradient direction, and shadow language match) and
-// mirrors the Menu Management screen's navbar language: soft rounded
-// bottom corners, a gold-glow accent border, layered ribbon glows, a fine
-// dotted texture accent, and the current date shown on wide screens. The
-// back control is now a compact, icon-only "‹" chip — no label, no arrow
-// glyph — for a cleaner, more premium top bar. The leading icon carries a
-// thin gold outline (gold on dark maroon is a classic premium / heritage
-// restaurant pairing) so it reads as a polished brand mark rather than a
-// plain glass chip. Nothing here changes behaviour — purely a richer,
-// more unique visual treatment, and the header now draws behind the
-// status bar for a true full-screen, edge-to-edge look. ──────────────────
+// ─── Screen header — restyled into its own distinctive "command bar"
+// identity, matching the New Orders / Orders / Order Details screens'
+// Pass-2 treatment exactly: a richer four-stop diagonal gradient, a large
+// faint watermark emblem behind the title, a fine glass highlight line
+// along the top edge, layered ribbon glows, a dotted texture accent, and
+// a floating date pill. UI-ENHANCEMENT PASS 2 adds a live quick-stats
+// readout strip (Items Selected / Estimated Total / Tables Free) built
+// from values already computed in build() — no new data source, purely a
+// display of values already available at the call site. The back control
+// remains the same compact, icon-only "‹" chip (now with a hover state
+// to feel more alive), and no submit/navigation/pricing logic was
+// touched — this is a purely presentational change. ─────────────────────
 class _ScreenHeader extends StatelessWidget {
   final String title;
   final String subtitle;
   final String dateLabel;
   final VoidCallback onBack;
+  final int selectedCount;
+  final double total;
+  final int availableTablesCount;
 
   const _ScreenHeader({
     required this.title,
     required this.subtitle,
     required this.dateLabel,
     required this.onBack,
+    required this.selectedCount,
+    required this.total,
+    required this.availableTablesCount,
   });
 
   @override
@@ -937,43 +1158,39 @@ class _ScreenHeader extends StatelessWidget {
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
+          // Richer four-stop diagonal maroon gradient — deeper and more
+          // dimensional than a flat two-stop wash, matching the New
+          // Orders / Orders / Order Details screens' "faceted" surface
+          // language.
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [_Palette.milanoRedLight, _Palette.milanoRedDeep],
+            colors: [
+              _Palette.milanoRedLight,
+              _Palette.milanoRed,
+              _Palette.milanoRedDeep,
+              _Palette.milanoRedDarkest,
+            ],
+            stops: [0.0, 0.38, 0.72, 1.0],
           ),
           borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(isMobile ? 28 : 36),
-            bottomRight: Radius.circular(isMobile ? 28 : 36),
+            bottomLeft: Radius.circular(isMobile ? 28 : 38),
+            bottomRight: Radius.circular(isMobile ? 28 : 38),
           ),
           border: Border(
             bottom: BorderSide(
-              color: _Palette.gold.withValues(alpha: 0.85),
+              color: _Palette.gold.withValues(alpha: 0.9),
               width: 4,
             ),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: _Palette.milanoRedDeep.withValues(alpha: 0.38),
-              blurRadius: 30,
-              offset: const Offset(0, 14),
-            ),
-            BoxShadow(
-              color: _Palette.gold.withValues(alpha: 0.10),
-              blurRadius: 40,
-              offset: const Offset(0, 6),
-            ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.10),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          boxShadow: _Palette.heroShadow,
         ),
+        clipBehavior: Clip.antiAlias,
         child: Stack(
           children: [
             // Subtle decorative diagonal ribbon accents — purely cosmetic,
-            // matches the Menu Management header for a consistent brand feel.
+            // matches every other staff screen's header for a consistent
+            // brand feel.
             Positioned(
               top: -60,
               right: -40,
@@ -1013,7 +1230,7 @@ class _ScreenHeader extends StatelessWidget {
               ),
             ),
             // Soft radial glow behind the brand icon, echoing the
-            // Dashboard hero treatment — now a warm gold glow.
+            // Dashboard / New Orders hero treatment.
             Positioned(
               top: -50,
               left: -30,
@@ -1032,7 +1249,7 @@ class _ScreenHeader extends StatelessWidget {
               ),
             ),
             // Extra ambient glow, lower-right, for a fuller "full-screen"
-            // backdrop feel on wider headers — purely decorative.
+            // backdrop feel — purely decorative.
             Positioned(
               bottom: -70,
               right: -20,
@@ -1050,6 +1267,26 @@ class _ScreenHeader extends StatelessWidget {
                 ),
               ),
             ),
+
+            // ── Large faint watermark emblem — a unique signature touch,
+            // sits low-opacity and large behind the copy, never competing
+            // with the title or the stats strip. Matches the New Orders /
+            // Orders / Order Details screens' Pass-2 header exactly.
+            Positioned(
+              right: isMobile ? -30 : -10,
+              bottom: isMobile ? -22 : -16,
+              child: IgnorePointer(
+                child: Opacity(
+                  opacity: 0.07,
+                  child: Icon(
+                    Icons.restaurant_menu_rounded,
+                    size: isMobile ? 140 : 190,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+
             // Fine dotted texture accent, matching the refined decorative
             // language used on the dashboard / menu-management headers.
             Positioned(
@@ -1076,6 +1313,29 @@ class _ScreenHeader extends StatelessWidget {
                 ),
               ),
             ),
+
+            // Fine glass highlight line along the very top edge, giving
+            // the full-width panel a polished, "premium glass" finish —
+            // matches the Dashboard / New Orders / Order Details hero's
+            // top edge treatment.
+            Positioned(
+              top: 0,
+              left: 24,
+              right: 24,
+              child: Container(
+                height: 1,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.transparent,
+                      Colors.white.withValues(alpha: 0.35),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
             SafeArea(
               bottom: false,
               child: Padding(
@@ -1092,7 +1352,9 @@ class _ScreenHeader extends StatelessWidget {
                       children: [
                         // ── Icon-only back control — a single "‹" glyph,
                         // no arrow icon and no "Back" label, inside a
-                        // compact glass-gold chip for a cleaner top bar.
+                        // compact glass-gold chip that now brightens on
+                        // hover, matching the New Orders / Orders / Order
+                        // Details screens' header control. ─────────────
                         _BackChip(onTap: onBack),
                         const Spacer(),
                         if (!isMobile)
@@ -1109,13 +1371,27 @@ class _ScreenHeader extends StatelessWidget {
                                 width: 1,
                               ),
                             ),
-                            child: Text(
-                              dateLabel,
-                              style: AppTheme.sans(
-                                size: 12,
-                                weight: FontWeight.w600,
-                                color: Colors.white.withValues(alpha: 0.75),
-                              ).copyWith(letterSpacing: 0.3),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.calendar_today_rounded,
+                                  size: 12,
+                                  color: _Palette.gold.withValues(
+                                    alpha: 0.85,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  dateLabel,
+                                  style: AppTheme.sans(
+                                    size: 12,
+                                    weight: FontWeight.w600,
+                                    color:
+                                        Colors.white.withValues(alpha: 0.75),
+                                  ).copyWith(letterSpacing: 0.3),
+                                ),
+                              ],
                             ),
                           ),
                       ],
@@ -1158,8 +1434,8 @@ class _ScreenHeader extends StatelessWidget {
                               Text(
                                 title,
                                 style: AppTheme.serif(
-                                  size: isMobile ? 25 : 29,
-                                  weight: FontWeight.w800,
+                                  size: isMobile ? 22 : 26,
+                                  weight: FontWeight.w900,
                                   color: Colors.white,
                                 ).copyWith(height: 1.1),
                                 maxLines: 1,
@@ -1172,8 +1448,8 @@ class _ScreenHeader extends StatelessWidget {
                                 subtitle,
                                 style: AppTheme.sans(
                                   size: 12.5,
-                                  weight: FontWeight.w500,
-                                  color: Colors.white.withValues(alpha: 0.78),
+                                  weight: FontWeight.w600,
+                                  color: _Palette.gold,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -1181,31 +1457,103 @@ class _ScreenHeader extends StatelessWidget {
                             ],
                           ),
                         ),
-                        if (isMobile)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: _Palette.gold.withValues(alpha: 0.25),
-                                width: 1,
-                              ),
-                            ),
-                            child: Text(
-                              dateLabel,
-                              style: AppTheme.sans(
-                                size: 10.5,
-                                weight: FontWeight.w600,
-                                color: Colors.white.withValues(alpha: 0.7),
-                              ),
-                            ),
-                          ),
                       ],
                     ),
+                    if (isMobile) ...[
+                      const SizedBox(height: 14),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: _Palette.gold.withValues(alpha: 0.25),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.calendar_today_rounded,
+                                size: 10,
+                                color: _Palette.gold.withValues(alpha: 0.8),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                dateLabel,
+                                style: AppTheme.sans(
+                                  size: 10.5,
+                                  weight: FontWeight.w600,
+                                  color: Colors.white.withValues(alpha: 0.7),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 16),
+
+                    // ── Live quick-stats readout strip — Items Selected /
+                    // Estimated Total / Tables Free, built straight from
+                    // values already computed in build(). Purely a
+                    // display addition; no new data source and no logic
+                    // change.
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.22),
+                            Colors.black.withValues(alpha: 0.14),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.10),
+                        ),
+                        boxShadow: _Palette.statCapsuleShadow,
+                      ),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _HeaderStatPill(
+                              icon: Icons.shopping_basket_rounded,
+                              value: '$selectedCount',
+                              label: 'Items',
+                              accent: const Color(0xFFFBBF24),
+                            ),
+                            const _HeaderStatDivider(),
+                            _HeaderStatPill(
+                              icon: Icons.payments_rounded,
+                              value: '₹${total.toStringAsFixed(0)}',
+                              label: 'Est. Total',
+                              accent: const Color(0xFF34D399),
+                            ),
+                            const _HeaderStatDivider(),
+                            _HeaderStatPill(
+                              icon: Icons.table_bar_rounded,
+                              value: '$availableTablesCount',
+                              label: 'Tables Free',
+                              accent: Colors.white70,
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                        .animate()
+                        .fade(duration: 550.ms, delay: 200.ms)
+                        .slideY(begin: 0.2, duration: 550.ms, delay: 200.ms),
                   ],
                 ),
               ),
@@ -1217,10 +1565,97 @@ class _ScreenHeader extends StatelessWidget {
   }
 }
 
+/// Slim vertical divider used between stat pills in the header's readout
+/// strip — purely decorative spacing element, no logic. Matches the New
+/// Orders / Orders / Order Details screens' Pass-2 header strip exactly.
+class _HeaderStatDivider extends StatelessWidget {
+  const _HeaderStatDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 28,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      color: Colors.white.withValues(alpha: 0.10),
+    );
+  }
+}
+
+/// A single stat readout module (icon badge + value + label) used inside
+/// the header's live stats strip. Purely presentational — takes whatever
+/// value/label/accent it's given.
+class _HeaderStatPill extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color accent;
+
+  const _HeaderStatPill({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      constraints: const BoxConstraints(maxWidth: 130),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.10),
+            ),
+            child: Icon(icon, size: 13, color: accent),
+          ),
+          const SizedBox(width: 9),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  value,
+                  style: AppTheme.sans(
+                    size: 14,
+                    weight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  label.toUpperCase(),
+                  style: AppTheme.sans(
+                    size: 8.5,
+                    weight: FontWeight.w700,
+                    color: Colors.white.withValues(alpha: 0.6),
+                  ).copyWith(letterSpacing: 0.4),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ─── Back chip — icon-only "‹" control ────────────────────────────────────
-// Replaces the previous arrow_back_rounded icon + "Back" label combo with
-// a single, minimal "‹" glyph inside a rounded glass-gold chip. Purely a
-// visual swap — same onTap/onBack callback, no navigation logic touched.
+// Same minimal "‹" glyph inside a rounded glass-gold chip as before, now
+// with a hover state (in addition to the existing press state) so it
+// feels a touch more responsive on desktop/web, matching the New Orders
+// screen's back control. Purely a visual upgrade — same onTap/onBack
+// callback, no navigation logic touched.
 class _BackChip extends StatefulWidget {
   final VoidCallback onTap;
   const _BackChip({required this.onTap});
@@ -1231,44 +1666,55 @@ class _BackChip extends StatefulWidget {
 
 class _BackChipState extends State<_BackChip> {
   bool _pressed = false;
+  bool _isHovered = false;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: widget.onTap,
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      child: AnimatedScale(
-        scale: _pressed ? 0.92 : 1.0,
-        duration: 120.ms,
-        curve: Curves.easeOut,
-        child: Container(
-          width: 40,
-          height: 40,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white.withValues(alpha: 0.10),
-            border: Border.all(
-              color: _Palette.gold.withValues(alpha: 0.55),
-              width: 1.2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: _Palette.gold.withValues(alpha: 0.18),
-                blurRadius: 10,
-                spreadRadius: 0.5,
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTapCancel: () => setState(() => _pressed = false),
+        child: AnimatedScale(
+          scale: _pressed ? 0.92 : 1.0,
+          duration: 120.ms,
+          curve: Curves.easeOut,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _isHovered
+                  ? Colors.white.withValues(alpha: 0.20)
+                  : Colors.white.withValues(alpha: 0.10),
+              border: Border.all(
+                color: _isHovered
+                    ? _Palette.gold.withValues(alpha: 0.85)
+                    : _Palette.gold.withValues(alpha: 0.55),
+                width: 1.2,
               ),
-            ],
-          ),
-          child: Text(
-            '‹',
-            style: AppTheme.sans(
-              size: 24,
-              weight: FontWeight.w900,
-              color: Colors.white,
-            ).copyWith(height: 1.0),
+              boxShadow: [
+                BoxShadow(
+                  color: _Palette.gold.withValues(alpha: _isHovered ? 0.3 : 0.18),
+                  blurRadius: _isHovered ? 14 : 10,
+                  spreadRadius: _isHovered ? 1 : 0.5,
+                ),
+              ],
+            ),
+            child: Text(
+              '‹',
+              style: AppTheme.sans(
+                size: 24,
+                weight: FontWeight.w900,
+                color: Colors.white,
+              ).copyWith(height: 1.0),
+            ),
           ),
         ),
       ),

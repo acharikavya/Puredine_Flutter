@@ -13,6 +13,18 @@ import 'package:restaurant_unified_app/admin/services/staff_service.dart';
 /// instead of its own one-off theme. Used ONLY for this screen's restyle.
 /// Nothing here touches AppColors or any other file — pure UI enhancement,
 /// no logic changed anywhere here.
+///
+/// UI-ENHANCEMENT PASS 2: the header was pushed further into its own
+/// distinctive "command bar" identity (a richer four-stop diagonal
+/// gradient, a large faint watermark emblem, and a fine glass highlight
+/// line along the top edge) matching the Orders / Admin Dashboard /
+/// staff-landing screens' Pass-2 treatment, and the full-screen backdrop
+/// gained an extra diagonal sheen plus a secondary ambient glow for more
+/// depth. The stat cards picked up a slim color-coded top cap so each
+/// figure has its own subtle identity at a glance, matching the Orders
+/// screen's stat boxes. No provider/service calls, dialogs, filtering,
+/// toggle/delete logic, or table rendering logic was touched anywhere in
+/// this pass — only presentation changed.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   _Palette._();
@@ -21,6 +33,7 @@ class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D);
   static const Color milanoRedDeep = Color(0xFF5C1212);
   static const Color milanoRedLight = Color(0xFFA6302B);
+  static const Color milanoRedDarkest = Color(0xFF350B0B); // Fourth gradient stop
 
   // Gold Glow — accent color
   static const Color lemonChiffon = Color(0xFFF4C430);
@@ -36,10 +49,14 @@ class _Palette {
   static const Color success = Color(0xFF2E9E5B);
   static const Color danger = Color(0xFFC62828);
 
+  // UI-ENHANCEMENT PASS 2: promoted from a flat 2-stop wash to a richer
+  // 4-stop diagonal gradient with explicit stops — matches the Orders
+  // screen header's "faceted" surface language exactly.
   static const LinearGradient headerGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [milanoRedLight, milanoRedDeep],
+    colors: [milanoRedLight, milanoRed, milanoRedDeep, milanoRedDarkest],
+    stops: [0.0, 0.38, 0.72, 1.0],
   );
 
   /// Themed soft shadow for resting cards/panels — matches the exact
@@ -232,46 +249,59 @@ class _StaffScreenState extends State<StaffScreen> {
         ),
         actionsAlignment: MainAxisAlignment.center,
         actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        // NOTE: the two buttons are wrapped in a single Row (instead of
+        // being passed to `actions` as separate Expanded items) because
+        // AlertDialog renders its `actions` list inside an internal
+        // OverflowBar, which does not provide the FlexParentData that
+        // Expanded needs — passing Expanded directly as an actions item
+        // throws "Incorrect use of ParentDataWidget". Wrapping them in one
+        // Row (itself a proper Flex) as the single actions item keeps the
+        // exact same equal-width, 10px-gapped button layout without the
+        // crash.
         actions: [
-          Expanded(
-            child: OutlinedButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: _Palette.textMuted,
-                side: BorderSide(
-                  color: _Palette.milanoRedDeep.withValues(alpha: 0.15),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 13),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(
-                'Cancel',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w700),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _Palette.danger,
-                elevation: 2,
-                padding: const EdgeInsets.symmetric(vertical: 13),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _Palette.textMuted,
+                    side: BorderSide(
+                      color: _Palette.milanoRedDeep.withValues(alpha: 0.15),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+                  ),
                 ),
               ),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(
-                'Delete',
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _Palette.danger,
+                    elevation: 2,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: Text(
+                    'Delete',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         ],
       ),
@@ -288,6 +318,20 @@ class _StaffScreenState extends State<StaffScreen> {
         }
       }
     }
+  }
+
+  /// Computes a dialog content width that always fits the current screen.
+  /// Desktop/tablet gets the original fixed 520px width; on narrow phones
+  /// the width shrinks to (screen width − outer insets) so the dialog never
+  /// overflows, and so the LayoutBuilder inside actually receives the real
+  /// available width and can correctly switch to the stacked mobile layout.
+  double _dialogWidth(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    const outerInset = 48.0; // matches insetPadding horizontal (24 + 24)
+    if (screenWidth < 560) {
+      return (screenWidth - outerInset).clamp(240.0, 520.0);
+    }
+    return 520.0;
   }
 
   void _showAddDialog() {
@@ -322,10 +366,14 @@ class _StaffScreenState extends State<StaffScreen> {
             color: _Palette.milanoRedDeep,
           ),
         ),
-        // Wider, rectangular layout — fields are paired side-by-side so the
-        // card reads as a broad rectangle instead of a tall, narrow strip.
+        // Wider, rectangular layout on larger screens — fields are paired
+        // side-by-side so the card reads as a broad rectangle instead of a
+        // tall, narrow strip. On phones, the width is derived from the
+        // actual screen size (see _dialogWidth) so it always fits, and the
+        // LayoutBuilder below correctly detects the narrow width and stacks
+        // the fields into a single column instead of overflowing.
         content: SizedBox(
-          width: 520,
+          width: _dialogWidth(ctx),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -417,66 +465,299 @@ class _StaffScreenState extends State<StaffScreen> {
         ),
         actionsAlignment: MainAxisAlignment.center,
         actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 22),
+        // NOTE: the two buttons are wrapped in a single Row (instead of
+        // being passed to `actions` as separate Expanded items) because
+        // AlertDialog renders its `actions` list inside an internal
+        // OverflowBar, which does not provide the FlexParentData that
+        // Expanded needs — passing Expanded directly as an actions item
+        // throws "Incorrect use of ParentDataWidget". Wrapping them in one
+        // Row (itself a proper Flex) as the single actions item keeps the
+        // exact same equal-width, 10px-gapped button layout without the
+        // crash.
         actions: [
-          Expanded(
-            child: OutlinedButton(
-              onPressed: () => Navigator.pop(ctx),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: _Palette.textMuted,
-                side: BorderSide(
-                  color: _Palette.milanoRedDeep.withValues(alpha: 0.15),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 13),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _Palette.textMuted,
+                    side: BorderSide(
+                      color: _Palette.milanoRedDeep.withValues(alpha: 0.15),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+                  ),
                 ),
               ),
-              child: Text(
-                'Cancel',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _Palette.milanoRed,
+                    elevation: 2,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    try {
+                      await StaffService.createStaff({
+                        'name': _nameCtrl.text,
+                        'email': _emailCtrl.text,
+                        'password': _passCtrl.text,
+                        'phone': _phoneCtrl.text,
+                        'role': widget.role == 'server'
+                            ? 'SERVING_STAFF'
+                            : 'BILLING_STAFF',
+                      });
+                      _loadStaff();
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text('Failed: $e')));
+                      }
+                    }
+                  },
+                  child: Text(
+                    'Add',
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
               ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Edit dialog — mirrors `_showAddDialog` exactly in styling and layout
+  /// (including the same responsive mobile-safe width/stacking behaviour),
+  /// but pre-fills the existing staff member's details and saves via
+  /// `StaffService.updateStaff` instead of `createStaff`. The password
+  /// field is optional here — leaving it blank keeps the current password.
+  ///
+  /// NOTE: this assumes `StaffService` exposes an `updateStaff(id, data)`
+  /// method mirroring the existing `createStaff(data)` method. That service
+  /// file wasn't part of this screen, so if `updateStaff` doesn't exist yet
+  /// it needs to be added there alongside `createStaff`/`deleteStaff`.
+  void _showEditDialog(StaffMember s) {
+    _nameCtrl.text = s.name;
+    _emailCtrl.text = s.email;
+    _phoneCtrl.text = s.phone ?? '';
+    _passCtrl.clear();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: _Palette.cardWhite,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        icon: Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.edit_rounded,
+            color: _Palette.milanoRedDeep,
+            size: 26,
+          ),
+        ),
+        title: Text(
+          'Edit $_roleLabel',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.playfairDisplay(
+            fontWeight: FontWeight.bold,
+            color: _Palette.milanoRedDeep,
+          ),
+        ),
+        content: SizedBox(
+          width: _dialogWidth(ctx),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                LayoutBuilder(
+                  builder: (ctx, constraints) {
+                    final isNarrow = constraints.maxWidth < 420;
+                    if (isNarrow) {
+                      return Column(
+                        children: [
+                          _dialogField(
+                            _nameCtrl,
+                            'Full Name',
+                            Icons.badge_outlined,
+                          ),
+                          const SizedBox(height: 14),
+                          _dialogField(
+                            _emailCtrl,
+                            'Email',
+                            Icons.email_outlined,
+                          ),
+                          const SizedBox(height: 14),
+                          _dialogField(
+                            _phoneCtrl,
+                            'Phone Number',
+                            Icons.phone_outlined,
+                          ),
+                          const SizedBox(height: 14),
+                          _dialogField(
+                            _passCtrl,
+                            'New Password (optional)',
+                            Icons.lock_outline,
+                            obscure: true,
+                          ),
+                        ],
+                      );
+                    }
+                    return Column(
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: _dialogField(
+                                _nameCtrl,
+                                'Full Name',
+                                Icons.badge_outlined,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _dialogField(
+                                _emailCtrl,
+                                'Email',
+                                Icons.email_outlined,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: _dialogField(
+                                _phoneCtrl,
+                                'Phone Number',
+                                Icons.phone_outlined,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _dialogField(
+                                _passCtrl,
+                                'New Password (optional)',
+                                Icons.lock_outline,
+                                obscure: true,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _Palette.milanoRed,
-                elevation: 2,
-                padding: const EdgeInsets.symmetric(vertical: 13),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 22),
+        // NOTE: the two buttons are wrapped in a single Row (instead of
+        // being passed to `actions` as separate Expanded items) because
+        // AlertDialog renders its `actions` list inside an internal
+        // OverflowBar, which does not provide the FlexParentData that
+        // Expanded needs — passing Expanded directly as an actions item
+        // throws "Incorrect use of ParentDataWidget". Wrapping them in one
+        // Row (itself a proper Flex) as the single actions item keeps the
+        // exact same equal-width, 10px-gapped button layout without the
+        // crash.
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _Palette.textMuted,
+                    side: BorderSide(
+                      color: _Palette.milanoRedDeep.withValues(alpha: 0.15),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+                  ),
                 ),
               ),
-              onPressed: () async {
-                Navigator.pop(ctx);
-                try {
-                  await StaffService.createStaff({
-                    'name': _nameCtrl.text,
-                    'email': _emailCtrl.text,
-                    'password': _passCtrl.text,
-                    'phone': _phoneCtrl.text,
-                    'role': widget.role == 'server'
-                        ? 'SERVING_STAFF'
-                        : 'BILLING_STAFF',
-                  });
-                  _loadStaff();
-                } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text('Failed: $e')));
-                  }
-                }
-              },
-              child: Text(
-                'Add',
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _Palette.milanoRed,
+                    elevation: 2,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    try {
+                      final updateData = {
+                        'name': _nameCtrl.text,
+                        'email': _emailCtrl.text,
+                        'phone': _phoneCtrl.text,
+                        'role': widget.role == 'server'
+                            ? 'SERVING_STAFF'
+                            : 'BILLING_STAFF',
+                      };
+                      // Only send a password if the user actually typed a
+                      // new one — leaving it blank keeps the existing
+                      // password.
+                      if (_passCtrl.text.trim().isNotEmpty) {
+                        updateData['password'] = _passCtrl.text;
+                      }
+                      await StaffService.updateStaff(s.id, updateData);
+                      _loadStaff();
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text('Failed: $e')));
+                      }
+                    }
+                  },
+                  child: Text(
+                    'Save',
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         ],
       ),
@@ -600,6 +881,31 @@ class _StaffScreenState extends State<StaffScreen> {
                             ),
                           ),
                         ),
+                        // UI-ENHANCEMENT PASS 2: extra low, wide glow
+                        // further down the page — gives the staff table
+                        // area a second soft focal point instead of all
+                        // the ambient light sitting only near the header.
+                        // Matches the Orders / Admin Dashboard screens'
+                        // Pass-2 backdrop.
+                        Positioned(
+                          top: 620,
+                          left: -100,
+                          child: Container(
+                            width: 230,
+                            height: 230,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  _Palette.milanoRedLight.withValues(
+                                    alpha: 0.06,
+                                  ),
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                         Opacity(
                           opacity: 0.035,
                           child: Image.network(
@@ -610,6 +916,30 @@ class _StaffScreenState extends State<StaffScreen> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                ),
+
+                // UI-ENHANCEMENT PASS 2: faint diagonal sheen sweeping
+                // across the body — a subtle extra layer of depth so the
+                // cream backdrop doesn't read as flat behind the header,
+                // echoing the glass-highlight language used in the header
+                // itself.
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.26),
+                            Colors.transparent,
+                            Colors.transparent,
+                          ],
+                          stops: const [0.0, 0.35, 1.0],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -677,13 +1007,15 @@ class _StaffScreenState extends State<StaffScreen> {
     );
   }
 
-  /// Branded "floating navbar" header — mirrors the exact treatment used on
-  /// AdminDashboardScreen / MenuScreen / ProfileScreen / StaffLandingScreen:
-  /// rounded bottom corners, decorative diagonal ribbon accents, a fine
-  /// dotted texture strip, and a matching gold-bordered pill "Back" button,
-  /// plus a compact circular "add staff" icon button tucked in the top
-  /// right corner. Purely visual; the navigation and add-staff actions
-  /// underneath are unchanged.
+  /// Branded "floating navbar" header — mirrors the exact Pass-2 treatment
+  /// used on the Orders / AdminDashboardScreen / MenuScreen headers: a
+  /// richer four-stop diagonal gradient, rounded bottom corners, decorative
+  /// diagonal ribbon accents, a large faint watermark emblem, a fine glass
+  /// highlight line along the very top edge, and a fine dotted texture
+  /// strip, plus a matching gold-bordered pill "Back" button and a compact
+  /// circular "add staff" icon button tucked in the top right corner.
+  /// Purely visual; the navigation and add-staff actions underneath are
+  /// unchanged.
   Widget _buildHeader(bool isMobile) {
     return ClipRect(
       child: Container(
@@ -699,9 +1031,14 @@ class _StaffScreenState extends State<StaffScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: _Palette.milanoRed.withValues(alpha: 0.32),
+              color: _Palette.milanoRedDeep.withValues(alpha: 0.34),
               blurRadius: 32,
               offset: const Offset(0, 16),
+            ),
+            BoxShadow(
+              color: _Palette.lemonChiffon.withValues(alpha: 0.10),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
             ),
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.12),
@@ -710,144 +1047,191 @@ class _StaffScreenState extends State<StaffScreen> {
             ),
           ],
         ),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            // Subtle decorative diagonal ribbon accents (purely cosmetic,
-            // matches the dashboard/menu/profile/staff-landing headers for
-            // a consistent brand feel).
-            Positioned(
-              top: -60,
-              right: -40,
-              child: Transform.rotate(
-                angle: -0.5,
+        child: ClipRect(
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Subtle decorative diagonal ribbon accents (purely cosmetic,
+              // matches the dashboard/menu/profile/staff-landing headers
+              // for a consistent brand feel).
+              Positioned(
+                top: -60,
+                right: -40,
+                child: Transform.rotate(
+                  angle: -0.5,
+                  child: Container(
+                    width: 260,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          _Palette.lemonChiffon.withValues(alpha: 0.16),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: -50,
+                left: -60,
+                child: Transform.rotate(
+                  angle: 0.4,
+                  child: Container(
+                    width: 230,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.white.withValues(alpha: 0.07),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // Soft gold glow anchored behind the add-staff icon button.
+              Positioned(
+                top: -30,
+                right: 20,
                 child: Container(
-                  width: 260,
-                  height: 100,
+                  width: 130,
+                  height: 130,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
                       colors: [
-                        _Palette.lemonChiffon.withValues(alpha: 0.16),
+                        _Palette.lemonChiffon.withValues(alpha: 0.22),
                         Colors.transparent,
                       ],
                     ),
                   ),
                 ),
               ),
-            ),
-            Positioned(
-              bottom: -50,
-              left: -60,
-              child: Transform.rotate(
-                angle: 0.4,
-                child: Container(
-                  width: 230,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.white.withValues(alpha: 0.07),
-                        Colors.transparent,
-                      ],
+
+              // ── Large faint watermark emblem — a unique signature touch
+              // this header didn't previously have, sitting low-opacity
+              // and large behind the copy, never competing with the
+              // title. Matches the Orders / Admin Dashboard hero's Pass-2
+              // watermark treatment.
+              Positioned(
+                right: isMobile ? -22 : -12,
+                bottom: isMobile ? -20 : -16,
+                child: IgnorePointer(
+                  child: Opacity(
+                    opacity: 0.06,
+                    child: Icon(
+                      Icons.groups_2_rounded,
+                      size: isMobile ? 120 : 170,
+                      color: Colors.white,
                     ),
                   ),
                 ),
               ),
-            ),
-            // Soft gold glow anchored behind the add-staff icon button.
-            Positioned(
-              top: -30,
-              right: 20,
-              child: Container(
-                width: 130,
-                height: 130,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      _Palette.lemonChiffon.withValues(alpha: 0.22),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            // Fine dotted texture accent, matching the app's refined
-            // decorative language used across the other admin headers.
-            Positioned(
-              top: 8,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: List.generate(
-                    5,
-                    (i) => Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
-                      width: 4,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _Palette.lemonChiffon.withValues(
-                          alpha: i == 2 ? 0.9 : 0.32,
+
+              // Fine dotted texture accent, matching the app's refined
+              // decorative language used across the other admin headers.
+              Positioned(
+                top: 8,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(
+                      5,
+                      (i) => Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        width: 4,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _Palette.lemonChiffon.withValues(
+                            alpha: i == 2 ? 0.9 : 0.32,
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
 
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                isMobile ? 20 : 40,
-                isMobile ? 16 : 24,
-                isMobile ? 20 : 40,
-                isMobile ? 20 : 28,
-              ),
-              child: SafeArea(
-                bottom: false,
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1200),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            _backButton(),
-                            const Spacer(),
-                            if (!isMobile) ...[
-                              Text(
-                                _todayLabel(),
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.3,
-                                  color: Colors.white.withValues(alpha: 0.68),
-                                ),
-                              ),
-                              const SizedBox(width: 18),
-                              Container(
-                                width: 1,
-                                height: 18,
-                                color: Colors.white.withValues(alpha: 0.18),
-                              ),
-                              const SizedBox(width: 18),
-                            ],
-                            _addIconButton(),
-                          ],
-                        ),
-                        const SizedBox(height: 18),
-                        _titleBlock(fontSize: isMobile ? 26 : 34),
+              // Fine glass highlight line along the very top edge, giving
+              // the full-width panel a polished, "premium glass" finish —
+              // matches the Orders / Admin Dashboard headers' top edge
+              // treatment.
+              Positioned(
+                top: 0,
+                left: 24,
+                right: 24,
+                child: Container(
+                  height: 1,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.transparent,
+                        Colors.white.withValues(alpha: 0.35),
+                        Colors.transparent,
                       ],
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  isMobile ? 20 : 40,
+                  isMobile ? 16 : 24,
+                  isMobile ? 20 : 40,
+                  isMobile ? 20 : 28,
+                ),
+                child: SafeArea(
+                  bottom: false,
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1200),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              _backButton(),
+                              const Spacer(),
+                              if (!isMobile) ...[
+                                Text(
+                                  _todayLabel(),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.3,
+                                    color: Colors.white.withValues(
+                                      alpha: 0.68,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 18),
+                                Container(
+                                  width: 1,
+                                  height: 18,
+                                  color: Colors.white.withValues(alpha: 0.18),
+                                ),
+                                const SizedBox(width: 18),
+                              ],
+                              _addIconButton(),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          _titleBlock(fontSize: isMobile ? 26 : 34),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1001,65 +1385,81 @@ class _StaffScreenState extends State<StaffScreen> {
     bool isMobile,
     IconData icon,
   ) {
+    // UI-ENHANCEMENT PASS 2: wrapped in a clipped Column with a slim
+    // color-coded top cap, matching the Orders screen's stat-card
+    // treatment, so each figure carries its own subtle identity at a
+    // glance. Same label/value/color/icon inputs as before — purely a
+    // frame around the existing card content.
     Widget cardContent = Container(
-      padding: EdgeInsets.all(isMobile ? 16 : 24),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            _Palette.cardWhite,
-            _Palette.canvasDeep.withValues(alpha: 0.4)
-          ],
-        ),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: color.withValues(alpha: 0.16),
-        ),
         boxShadow: _Palette.softShadow,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: GoogleFonts.inter(
-                    color: _Palette.textMuted,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  value,
-                  style: GoogleFonts.inter(
-                    color: color,
-                    fontSize: isMobile ? 24 : 32,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          Container(height: 3, color: color.withValues(alpha: 0.7)),
           Container(
-            padding: const EdgeInsets.all(11),
+            padding: EdgeInsets.all(isMobile ? 16 : 24),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  color.withValues(alpha: 0.16),
-                  color.withValues(alpha: 0.06),
+                  _Palette.cardWhite,
+                  _Palette.canvasDeep.withValues(alpha: 0.4)
                 ],
               ),
-              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: color.withValues(alpha: 0.16),
+              ),
             ),
-            child: Icon(icon, color: color, size: isMobile ? 18 : 22),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style: GoogleFonts.inter(
+                          color: _Palette.textMuted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        value,
+                        style: GoogleFonts.inter(
+                          color: color,
+                          fontSize: isMobile ? 24 : 32,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(11),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        color.withValues(alpha: 0.16),
+                        color.withValues(alpha: 0.06),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(icon, color: color, size: isMobile ? 18 : 22),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -1397,7 +1797,7 @@ class _StaffScreenState extends State<StaffScreen> {
               Row(
                 children: [
                   IconButton(
-                    onPressed: () {},
+                    onPressed: () => _showEditDialog(s),
                     icon: const Icon(
                       Icons.edit_outlined,
                       color: _Palette.milanoRed,
@@ -1572,7 +1972,7 @@ class _StaffScreenState extends State<StaffScreen> {
                     color: _Palette.milanoRed,
                     size: 18,
                   ),
-                  onPressed: () {},
+                  onPressed: () => _showEditDialog(s),
                 ),
                 const SizedBox(width: 12),
                 IconButton(

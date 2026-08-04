@@ -15,11 +15,22 @@ import 'package:restaurant_unified_app/utils/session_manager.dart';
 /// Local "Theme 1 — Dark Maroon × Soft Cream × Gold Glow" palette used ONLY
 /// for this screen's restyle. Nothing here touches AppColors or any other
 /// file — pure UI enhancement, no logic changed anywhere in this file.
+///
+/// UI-ENHANCEMENT PASS 2: the header was pushed further into its own
+/// distinctive "command bar" identity — a richer four-stop diagonal
+/// gradient, a large faint watermark emblem behind the brand block, and a
+/// fine glass highlight line along the top edge — matching the staff-side
+/// Dashboard / Orders / Tables screens' Pass-2 treatment, so the admin
+/// console now reads as part of the exact same brand language. The
+/// full-screen backdrop gained an extra diagonal sheen for more depth.
+/// No provider, controller, route, notification, or session logic was
+/// touched anywhere in this pass — only presentation changed.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
   static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
   static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
+  static const Color milanoRedDarkest = Color(0xFF320A0A); // Fourth gradient stop
   static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow (Accent)
   static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
   static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
@@ -269,6 +280,28 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                             ),
                           ),
                         ),
+                        // Extra low, wide glow further down the page — gives
+                        // the long grid a second soft focal point instead of
+                        // all the ambient light sitting only near the top.
+                        Positioned(
+                          top: 620,
+                          left: -70,
+                          child: Container(
+                            width: 250,
+                            height: 250,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  _Palette.milanoRedLight.withValues(
+                                    alpha: 0.06,
+                                  ),
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                         Opacity(
                           opacity: 0.05,
                           child: Image.network(
@@ -279,6 +312,31 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                ),
+
+                // Faint diagonal sheen sweeping across the body — a subtle
+                // extra layer of depth so the cream backdrop doesn't read
+                // as flat behind the header, echoing the glass-highlight
+                // language used in the header itself. Matches the
+                // staff-side Dashboard / Orders / Tables screens' Pass-2
+                // backdrop treatment.
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.30),
+                            Colors.transparent,
+                            Colors.transparent,
+                          ],
+                          stops: const [0.0, 0.35, 1.0],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -345,15 +403,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                           ),
                           LayoutBuilder(
                             builder: (ctx, constraints) {
-                              int cols = 1;
-                              double aspect = 1.4;
-
+                              // Fixed 2-per-row layout — cards render as
+                              // tall, narrow "portrait rectangle" tiles:
+                              // two cards per line, then the next two
+                              // cards on the following line, regardless
+                              // of breakpoint. Only the aspect ratio (how
+                              // tall the rectangle is) adapts to width.
+                              const int cols = 2;
+                              double aspect;
                               if (constraints.maxWidth > 900) {
-                                cols = 4;
-                                aspect = 1.0;
+                                aspect = 0.92;
                               } else if (constraints.maxWidth > 600) {
-                                cols = 2;
-                                aspect = 1.1;
+                                aspect = 0.82;
+                              } else {
+                                aspect = 0.72;
                               }
 
                               return GridView.builder(
@@ -362,8 +425,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                 gridDelegate:
                                     SliverGridDelegateWithFixedCrossAxisCount(
                                   crossAxisCount: cols,
-                                  crossAxisSpacing: isMobile ? 16 : 24,
-                                  mainAxisSpacing: isMobile ? 16 : 24,
+                                  crossAxisSpacing: isMobile ? 14 : 22,
+                                  mainAxisSpacing: isMobile ? 14 : 22,
                                   childAspectRatio: aspect,
                                 ),
                                 itemCount: _dashboardOptions.length,
@@ -416,6 +479,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
+          // Richer four-stop diagonal maroon gradient — deeper and more
+          // dimensional than a flat three-stop wash, matching the
+          // staff-side Dashboard / Orders / Tables screens' Pass-2
+          // "faceted" surface language.
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -423,7 +490,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               _Palette.milanoRedLight,
               _Palette.milanoRed,
               _Palette.milanoRedDeep,
+              _Palette.milanoRedDarkest,
             ],
+            stops: [0.0, 0.38, 0.72, 1.0],
           ),
           // Softly rounded bottom corners give the header a modern,
           // "floating navbar" feel instead of a flat hard-edged band.
@@ -452,6 +521,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             ),
           ],
         ),
+        clipBehavior: Clip.antiAlias,
         child: Stack(
           children: [
             // Subtle decorative diagonal ribbon accents (purely cosmetic)
@@ -515,6 +585,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 ),
               ),
             ),
+
+            // ── Large faint watermark emblem — a unique signature touch
+            // this header didn't previously have, sitting low-opacity and
+            // large behind the brand block, never competing with the
+            // restaurant name or controls. Matches the staff-side
+            // Dashboard hero's Pass-2 watermark treatment.
+            Positioned(
+              right: isMobile ? -30 : -10,
+              bottom: isMobile ? -24 : -18,
+              child: IgnorePointer(
+                child: Opacity(
+                  opacity: 0.06,
+                  child: Icon(
+                    Icons.storefront_rounded,
+                    size: isMobile ? 140 : 200,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+
             // Fine dotted texture accent, matching the app's refined
             // decorative language used on the login screen's header.
             Positioned(
@@ -537,6 +628,28 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                         ),
                       ),
                     ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Fine glass highlight line along the very top edge, giving
+            // the full-width panel a polished, "premium glass" finish —
+            // matches the staff-side Dashboard/Orders/Tables headers' top
+            // edge treatment.
+            Positioned(
+              top: 0,
+              left: 24,
+              right: 24,
+              child: Container(
+                height: 1,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.transparent,
+                      Colors.white.withValues(alpha: 0.35),
+                      Colors.transparent,
+                    ],
                   ),
                 ),
               ),
@@ -688,7 +801,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           ],
         ),
       ),
-    );
+    ).animate().fade(duration: 450.ms).slideY(begin: -0.15, duration: 450.ms);
   }
 }
 
@@ -716,6 +829,15 @@ class _TitleDivider extends StatelessWidget {
   }
 }
 
+/// ─────────────────────────────────────────────────────────────────────────
+/// Portrait (tall × narrow) dashboard tile.
+/// Restyled for the new 2-per-row grid: icon badge sits at the top, title
+/// and description stack underneath it, and a small "Open" cue anchors the
+/// bottom — a vertical layout language that reads naturally in a tall
+/// rectangle. Hover/press states are richer: a gentle scale-up, deeper
+/// shadow, a glowing/rotating icon badge, an animated top accent bar, and
+/// a sliding "Open" pill that appears on hover.
+/// ─────────────────────────────────────────────────────────────────────────
 class _HoverableDashCard extends StatefulWidget {
   final _DashOption option;
   final int index;
@@ -735,183 +857,283 @@ class _HoverableDashCard extends StatefulWidget {
 
 class _HoverableDashCardState extends State<_HoverableDashCard> {
   bool _isHovered = false;
+  bool _isPressed = false;
 
   @override
   Widget build(BuildContext context) {
     final tag = '0${widget.index + 1}';
+    final double iconSize = widget.isMobile ? 58 : 76;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
+      onExit: (_) => setState(() {
+        _isHovered = false;
+        _isPressed = false;
+      }),
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
-        onTapDown: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
+        onTapDown: (d) {
+          setState(() => _isPressed = true);
+          widget.onTap(d);
+        },
+        onTapCancel: () => setState(() => _isPressed = false),
+        onTapUp: (_) => setState(() => _isPressed = false),
+        child: AnimatedScale(
+          duration: const Duration(milliseconds: 180),
           curve: Curves.easeOutCubic,
-          decoration: BoxDecoration(
-            color: _isHovered
-                ? _Palette.lemonChiffon.withValues(alpha: 0.30)
-                : _Palette.cardWhite,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: _isHovered ? _Palette.milanoRed : Colors.black12,
-              width: _isHovered ? 1.4 : 1,
-            ),
-            boxShadow: [
-              BoxShadow(
+          scale: _isPressed ? 0.97 : (_isHovered ? 1.02 : 1.0),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+            decoration: BoxDecoration(
+              gradient: _isHovered
+                  ? LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        _Palette.lemonChiffon.withValues(alpha: 0.24),
+                        _Palette.cardWhite,
+                      ],
+                    )
+                  : LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [_Palette.cardWhite, _Palette.cardWhite],
+                    ),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
                 color: _isHovered
-                    ? _Palette.milanoRed.withValues(alpha: 0.22)
-                    : Colors.black.withValues(alpha: 0.05),
-                blurRadius: _isHovered ? 32 : 16,
-                offset: Offset(0, _isHovered ? 16 : 6),
+                    ? _Palette.milanoRed.withValues(alpha: 0.55)
+                    : Colors.black12,
+                width: _isHovered ? 1.4 : 1,
               ),
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 2,
-                offset: const Offset(0, 1),
-              ),
-            ],
-          ),
-          child: Stack(
-            children: [
-              // Top accent strip — a slim gradient bar that reinforces the
-              // brand palette at the top edge of every card. Purely
-              // decorative, sits above the content.
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                  ),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    height: _isHovered ? 5 : 3,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          _Palette.milanoRed,
-                          _Palette.lemonChiffon,
-                        ],
-                      ),
-                    ),
-                  ),
+              boxShadow: [
+                BoxShadow(
+                  color: _isHovered
+                      ? _Palette.milanoRed.withValues(alpha: 0.26)
+                      : Colors.black.withValues(alpha: 0.05),
+                  blurRadius: _isHovered ? 32 : 16,
+                  offset: Offset(0, _isHovered ? 18 : 6),
                 ),
-              ),
-
-              // Index tag — subtle professional numbering
-              Positioned(
-                top: widget.isMobile ? 14 : 18,
-                left: widget.isMobile ? 14 : 18,
-                child: Text(
-                  tag,
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1,
-                    color: _isHovered
-                        ? _Palette.milanoRed.withValues(alpha: 0.55)
-                        : Colors.black.withValues(alpha: 0.16),
-                  ),
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 2,
+                  offset: const Offset(0, 1),
                 ),
-              ),
-
-              // Arrow indicator — nudges in on hover to hint interactivity
-              Positioned(
-                top: widget.isMobile ? 14 : 18,
-                right: widget.isMobile ? 14 : 18,
-                child: AnimatedSlide(
-                  duration: const Duration(milliseconds: 250),
-                  offset: _isHovered ? Offset.zero : const Offset(0.3, 0),
-                  child: AnimatedOpacity(
-                    duration: const Duration(milliseconds: 250),
-                    opacity: _isHovered ? 1 : 0,
-                    child: Icon(
-                      Icons.arrow_outward_rounded,
-                      size: 18,
-                      color: _Palette.milanoRed,
-                    ),
-                  ),
-                ),
-              ),
-
-              Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: widget.isMobile ? 16 : 24,
-                  vertical: widget.isMobile ? 26 : 34,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    AnimatedContainer(
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: Stack(
+                children: [
+                  // Top accent bar — a slim gradient strip reinforcing the
+                  // brand palette along the top edge of every tall tile.
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
-                      width: widget.isMobile ? 64 : 84,
-                      height: widget.isMobile ? 64 : 84,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _isHovered
-                            ? _Palette.milanoRed
-                            : _Palette.milanoRed.withValues(alpha: 0.07),
-                        border: Border.all(
-                          color: _isHovered
-                              ? _Palette.milanoRed.withValues(alpha: 0.35)
-                              : _Palette.milanoRed.withValues(alpha: 0.10),
-                          width: 6,
+                      height: _isHovered ? 5 : 3,
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            _Palette.milanoRed,
+                            _Palette.lemonChiffon,
+                          ],
                         ),
-                        boxShadow: _isHovered
-                            ? [
-                                BoxShadow(
-                                  color: _Palette.milanoRed
-                                      .withValues(alpha: 0.30),
-                                  blurRadius: 16,
-                                  spreadRadius: 1,
-                                ),
-                              ]
-                            : null,
-                      ),
-                      child: Icon(
-                        widget.option.icon,
-                        color: _isHovered
-                            ? _Palette.lemonChiffon
-                            : _Palette.milanoRed,
-                        size: widget.isMobile ? 30 : 36,
                       ),
                     ),
-                    const SizedBox(height: 22),
-                    AnimatedDefaultTextStyle(
+                  ),
+
+                  // Soft corner glow behind the icon — purely decorative,
+                  // adds depth without affecting layout.
+                  Positioned(
+                    top: -30,
+                    right: -30,
+                    child: AnimatedOpacity(
                       duration: const Duration(milliseconds: 300),
-                      style: GoogleFonts.playfairDisplay(
-                        fontSize: widget.isMobile ? 18 : 21,
-                        fontWeight: FontWeight.bold,
-                        color:
-                            _isHovered ? _Palette.milanoRed : _Palette.textDark,
-                        letterSpacing: 0.3,
-                        height: 1.2,
-                      ),
-                      child: Text(
-                        widget.option.title,
-                        textAlign: TextAlign.center,
+                      opacity: _isHovered ? 0.9 : 0.4,
+                      child: Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              _Palette.lemonChiffon.withValues(alpha: 0.35),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      widget.option.description,
-                      textAlign: TextAlign.center,
+                  ),
+
+                  // Index tag — subtle professional numbering
+                  Positioned(
+                    top: widget.isMobile ? 12 : 16,
+                    left: widget.isMobile ? 14 : 18,
+                    child: Text(
+                      tag,
                       style: GoogleFonts.inter(
-                        fontSize: widget.isMobile ? 12 : 13,
-                        color: _Palette.textMuted,
-                        height: 1.5,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1,
+                        color: _isHovered
+                            ? _Palette.milanoRed.withValues(alpha: 0.55)
+                            : Colors.black.withValues(alpha: 0.16),
                       ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ],
-                ),
+                  ),
+
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: widget.isMobile ? 14 : 20,
+                      vertical: widget.isMobile ? 18 : 24,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const SizedBox(height: 6),
+
+                        // Icon badge — the centerpiece at the top of the
+                        // tall card, with a subtle rotation + glow on hover.
+                        AnimatedRotation(
+                          duration: const Duration(milliseconds: 350),
+                          curve: Curves.easeOutBack,
+                          turns: _isHovered ? 0.028 : 0,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            width: iconSize,
+                            height: iconSize,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: _isHovered
+                                  ? _Palette.milanoRed
+                                  : _Palette.milanoRed.withValues(alpha: 0.08),
+                              border: Border.all(
+                                color: _isHovered
+                                    ? _Palette.lemonChiffon.withValues(
+                                        alpha: 0.6,
+                                      )
+                                    : _Palette.milanoRed.withValues(
+                                        alpha: 0.10,
+                                      ),
+                                width: 6,
+                              ),
+                              boxShadow: _isHovered
+                                  ? [
+                                      BoxShadow(
+                                        color: _Palette.milanoRed
+                                            .withValues(alpha: 0.34),
+                                        blurRadius: 20,
+                                        spreadRadius: 1,
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                            child: Icon(
+                              widget.option.icon,
+                              color: _isHovered
+                                  ? _Palette.lemonChiffon
+                                  : _Palette.milanoRed,
+                              size: widget.isMobile ? 26 : 32,
+                            ),
+                          ),
+                        ),
+
+                        // Title + description
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AnimatedDefaultTextStyle(
+                              duration: const Duration(milliseconds: 300),
+                              style: GoogleFonts.playfairDisplay(
+                                fontSize: widget.isMobile ? 15.5 : 19,
+                                fontWeight: FontWeight.bold,
+                                color: _isHovered
+                                    ? _Palette.milanoRed
+                                    : _Palette.textDark,
+                                letterSpacing: 0.2,
+                                height: 1.2,
+                              ),
+                              textAlign: TextAlign.center,
+                              child: Text(
+                                widget.option.title,
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              widget.option.description,
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.inter(
+                                fontSize: widget.isMobile ? 11.5 : 13,
+                                color: _Palette.textMuted,
+                                height: 1.45,
+                              ),
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+
+                        // "Open" cue — fades/slides in on hover, anchored
+                        // at the bottom of the tall tile to hint at
+                        // interactivity without cluttering the resting
+                        // state of the card.
+                        AnimatedSlide(
+                          duration: const Duration(milliseconds: 250),
+                          offset: _isHovered
+                              ? Offset.zero
+                              : const Offset(0, 0.4),
+                          child: AnimatedOpacity(
+                            duration: const Duration(milliseconds: 250),
+                            opacity: _isHovered ? 1 : 0,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _Palette.milanoRed.withValues(
+                                  alpha: 0.10,
+                                ),
+                                borderRadius: BorderRadius.circular(100),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'OPEN',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 1.2,
+                                      color: _Palette.milanoRed,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Icon(
+                                    Icons.arrow_outward_rounded,
+                                    size: 13,
+                                    color: _Palette.milanoRed,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         )
             .animate()

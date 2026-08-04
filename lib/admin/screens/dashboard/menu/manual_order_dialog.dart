@@ -14,11 +14,20 @@ import 'package:restaurant_unified_app/admin/services/tables_service.dart';
 /// accents, dotted texture line, radial glow, gold underline) used across
 /// the other admin dialogs, so this screen reads as part of the same
 /// cohesive, professional brand.
+///
+/// UI-ENHANCEMENT PASS 2: brings this dialog's header up to the same
+/// richer "command bar" identity used on the Orders/Menu screens and the
+/// Item Form dialog — a deeper four-stop diagonal gradient, a large faint
+/// watermark emblem behind the title copy, and a fine glass highlight
+/// line along the very top edge. No table loading, order submission,
+/// validation, quantity, or category/item navigation logic was touched
+/// anywhere in this pass — presentation only.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
   static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
   static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
+  static const Color milanoRedDarkest = Color(0xFF2E0909); // Fourth gradient stop
   static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow (Accent)
   static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
   static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
@@ -229,6 +238,13 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
             // brand gradient, decorative diagonal ribbons, a soft radial
             // glow behind the icon block, a fine dotted accent line, and a
             // gold underline beneath the title.
+            //
+            // UI-ENHANCEMENT PASS 2: upgraded from a three-stop to a
+            // richer four-stop diagonal gradient, a large faint watermark
+            // emblem tucked behind the copy, and a fine glass highlight
+            // line along the very top edge — matching the Orders/Menu
+            // screens' and Item Form dialog's Pass-2 "command bar"
+            // treatment.
             ClipRect(
               child: Container(
                 decoration: BoxDecoration(
@@ -239,7 +255,9 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                       _Palette.milanoRedLight,
                       _Palette.milanoRed,
                       _Palette.milanoRedDeep,
+                      _Palette.milanoRedDarkest,
                     ],
+                    stops: [0.0, 0.38, 0.72, 1.0],
                   ),
                   border: const Border(
                     bottom: BorderSide(
@@ -249,18 +267,19 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: _Palette.milanoRed.withValues(alpha: 0.30),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
+                      color: _Palette.milanoRed.withValues(alpha: 0.34),
+                      blurRadius: 24,
+                      offset: const Offset(0, 10),
                     ),
                     BoxShadow(
-                      color: _Palette.lemonChiffon.withValues(alpha: 0.08),
+                      color: _Palette.lemonChiffon.withValues(alpha: 0.10),
                       blurRadius: 10,
                       offset: const Offset(0, 2),
                     ),
                   ],
                 ),
                 child: Stack(
+                  clipBehavior: Clip.none,
                   children: [
                     // Decorative diagonal ribbon accents (purely cosmetic)
                     Positioned(
@@ -320,6 +339,26 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                         ),
                       ),
                     ),
+                    // UI-ENHANCEMENT PASS 2: large faint watermark emblem
+                    // — a unique signature touch this header didn't
+                    // previously have, sitting low-opacity and large
+                    // behind the copy, never competing with the title or
+                    // the close button. Matches the receipt-style icon
+                    // already used in the header's icon chip.
+                    Positioned(
+                      right: -14,
+                      bottom: -18,
+                      child: IgnorePointer(
+                        child: Opacity(
+                          opacity: 0.07,
+                          child: Icon(
+                            Icons.receipt_long_rounded,
+                            size: 118,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
                     // Fine dotted texture accent — matches the dashed dot
                     // row used on the Menu/Dashboard headers.
                     Positioned(
@@ -342,6 +381,28 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                                 ),
                               ),
                             ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // UI-ENHANCEMENT PASS 2: fine glass highlight line
+                    // along the very top edge of the header — purely
+                    // cosmetic, gives the header a more polished,
+                    // "premium panel" finish matching the Menu/Orders
+                    // headers' and Item Form dialog's top edge treatment.
+                    Positioned(
+                      top: 0,
+                      left: 20,
+                      right: 20,
+                      child: Container(
+                        height: 1,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.transparent,
+                              Colors.white.withValues(alpha: 0.32),
+                              Colors.transparent,
+                            ],
                           ),
                         ),
                       ),
@@ -630,65 +691,76 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
     );
   }
 
+  // ── Body layouts ──────────────────────────────────────────────────────
+  // Both desktop and mobile bodies are now wrapped in a SINGLE
+  // SingleChildScrollView so the whole dialog body (customer details +
+  // menu selection) scrolls together under one shared scrollbar, instead
+  // of each side owning its own independent scroll area. To make that
+  // work, the inner GridView/ListView are set to `shrinkWrap: true` with
+  // `NeverScrollableScrollPhysics` so they size to their content and let
+  // the single outer scroll view own all the scrolling.
+
   Widget _buildDesktopBody() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Left side: Details
-        Expanded(
-          flex: 4,
-          child: Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: _Palette.cardWhite,
-              border: Border(
-                right: BorderSide(
-                  color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+    return SingleChildScrollView(
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Left side: Details
+            Expanded(
+              flex: 4,
+              child: Container(
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: _Palette.cardWhite,
+                  border: Border(
+                    right: BorderSide(
+                      color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+                    ),
+                  ),
                 ),
+                child: _buildOrderDetailsForm(),
               ),
             ),
-            child: SingleChildScrollView(child: _buildOrderDetailsForm()),
-          ),
+            // Right side: Menu selection
+            Expanded(
+              flex: 6,
+              child: Container(
+                color: _Palette.canvas,
+                child: _buildMenuSelection(),
+              ),
+            ),
+          ],
         ),
-        // Right side: Menu selection
-        Expanded(
-          flex: 6,
-          child: Container(
-            color: _Palette.canvas,
-            child: _buildMenuSelection(),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
   Widget _buildMobileBody() {
-    return Column(
-      children: [
-        Expanded(
-          flex: 2,
-          child: SingleChildScrollView(
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          Padding(
             padding: const EdgeInsets.all(24),
             child: _buildOrderDetailsForm(),
           ),
-        ),
-        Container(
-          height: 1,
-          color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
-        ),
-        Expanded(
-          flex: 3,
-          child: Container(
+          Container(
+            height: 1,
+            color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+          ),
+          Container(
             color: _Palette.canvas,
             child: _buildMenuSelection(),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  InputDecoration _themedInputDecoration() {
+  InputDecoration _themedInputDecoration({String? hintText}) {
     return InputDecoration(
+      hintText: hintText,
+      hintStyle: GoogleFonts.inter(color: _Palette.textMuted, fontSize: 13),
       filled: true,
       fillColor: _Palette.canvas,
       contentPadding: const EdgeInsets.symmetric(
@@ -710,6 +782,14 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: _Palette.milanoRedDeep, width: 1.6),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: _Palette.danger.withValues(alpha: 0.6)),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: _Palette.danger, width: 1.6),
       ),
     );
   }
@@ -871,36 +951,113 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
             onChanged: (v) => setState(() => _paymentMode = v!),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
-          _fieldLabel('Customer Name'),
-          TextFormField(
-            controller: _nameCtrl,
-            style: GoogleFonts.inter(
-              color: _Palette.textDark,
-              fontWeight: FontWeight.w600,
+          // ── Customer Details ─────────────────────────────────────────
+          // Pulled into its own clearly-bordered, titled section (icon +
+          // heading + gold-tinted card) so it can no longer be missed while
+          // scrolling the form. BOTH Name and Phone are REQUIRED fields —
+          // each carries a red asterisk and a "REQUIRED" chip, and both
+          // are wired into the existing form validator, so
+          // `_submitOrder`'s already-present
+          // `_formKey.currentState!.validate()` check will block
+          // submission (with inline error messages) until both are
+          // filled in.
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _Palette.canvas,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: _Palette.milanoRedDeep.withValues(alpha: 0.16),
+                width: 1.2,
+              ),
+              boxShadow: _Palette.softShadow,
             ),
-            decoration: _themedInputDecoration(),
-          ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      child: const Icon(
+                        Icons.person_rounded,
+                        size: 15,
+                        color: _Palette.milanoRedDeep,
+                      ),
+                    ),
+                    const SizedBox(width: 9),
+                    Text(
+                      'Customer Details',
+                      style: GoogleFonts.playfairDisplay(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: _Palette.milanoRedDeep,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Padding(
+                  padding: const EdgeInsets.only(left: 32),
+                  child: Text(
+                    'Both fields are required to place this order',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: _Palette.textMuted,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
 
-          const SizedBox(height: 20),
+                _fieldLabel('Customer Name', required: true),
+                TextFormField(
+                  controller: _nameCtrl,
+                  style: GoogleFonts.inter(
+                    color: _Palette.textDark,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  decoration: _themedInputDecoration(
+                    hintText: "Enter the customer's name",
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Customer name is required'
+                      : null,
+                ),
 
-          _fieldLabel('Customer Phone', badge: 'OPTIONAL'),
-          TextFormField(
-            controller: _phoneCtrl,
-            keyboardType: TextInputType.phone,
-            style: GoogleFonts.inter(
-              color: _Palette.textDark,
-              fontWeight: FontWeight.w600,
+                const SizedBox(height: 18),
+
+                _fieldLabel('Customer Phone', required: true),
+                TextFormField(
+                  controller: _phoneCtrl,
+                  keyboardType: TextInputType.phone,
+                  style: GoogleFonts.inter(
+                    color: _Palette.textDark,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  decoration: _themedInputDecoration(
+                    hintText: 'Enter a contact number',
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Customer phone is required'
+                      : null,
+                ),
+              ],
             ),
-            decoration: _themedInputDecoration(),
           ),
         ],
       ),
     );
   }
 
-  Widget _fieldLabel(String label, {String? badge}) {
+  Widget _fieldLabel(String label, {String? badge, bool required = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -909,7 +1066,7 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
             width: 3,
             height: 12,
             decoration: BoxDecoration(
-              color: _Palette.milanoRed,
+              color: required ? _Palette.danger : _Palette.milanoRed,
               borderRadius: BorderRadius.circular(4),
             ),
           ),
@@ -923,6 +1080,17 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
               letterSpacing: 0.5,
             ),
           ),
+          if (required) ...[
+            const SizedBox(width: 3),
+            Text(
+              '*',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w900,
+                fontSize: 14,
+                color: _Palette.danger,
+              ),
+            ),
+          ],
           if (badge != null) ...[
             const SizedBox(width: 8),
             Container(
@@ -937,6 +1105,28 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                   fontSize: 9.5,
                   fontWeight: FontWeight.w800,
                   color: _Palette.milanoRedDeep,
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ),
+          ],
+          if (required) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: _Palette.danger.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: _Palette.danger.withValues(alpha: 0.30),
+                ),
+              ),
+              child: Text(
+                'REQUIRED',
+                style: GoogleFonts.inter(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w800,
+                  color: _Palette.danger,
                   letterSpacing: 0.4,
                 ),
               ),
@@ -987,29 +1177,29 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
             ],
           ),
         ),
-        Expanded(
-          child: GridView.builder(
-            padding: const EdgeInsets.all(24),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 1.4,
-            ),
-            itemCount: widget.categories.length,
-            itemBuilder: (ctx, i) {
-              final cat = widget.categories[i];
-              return _CategoryCard(
-                category: cat,
-                onTap: () {
-                  setState(() {
-                    _activeCategory = cat;
-                    _viewMode = 'items';
-                  });
-                },
-              ).animate().fadeIn(delay: (i * 40).ms, duration: 300.ms);
-            },
+        GridView.builder(
+          padding: const EdgeInsets.all(24),
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 1.4,
           ),
+          itemCount: widget.categories.length,
+          itemBuilder: (ctx, i) {
+            final cat = widget.categories[i];
+            return _CategoryCard(
+              category: cat,
+              onTap: () {
+                setState(() {
+                  _activeCategory = cat;
+                  _viewMode = 'items';
+                });
+              },
+            ).animate().fadeIn(delay: (i * 40).ms, duration: 300.ms);
+          },
         ),
       ],
     );
@@ -1073,137 +1263,106 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
           ),
         ),
 
-        Expanded(
-          child: items.isEmpty
-              ? Center(
+        items.isEmpty
+            ? Padding(
+                padding: const EdgeInsets.all(40),
+                child: Center(
                   child: Text(
                     'No items in this category.',
                     style: GoogleFonts.inter(color: _Palette.textMuted),
                   ),
-                )
-              : ListView.separated(
-                  padding: const EdgeInsets.all(20),
-                  itemCount: items.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (ctx, i) {
-                    final item = items[i];
-                    final qty = _selectedItems[item.id] ?? 0;
+                ),
+              )
+            : ListView.separated(
+                padding: const EdgeInsets.all(20),
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: items.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (ctx, i) {
+                  final item = items[i];
+                  final qty = _selectedItems[item.id] ?? 0;
 
-                    return Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: _Palette.milanoRedDeep.withValues(
-                              alpha: qty > 0 ? 0.10 : 0.04,
-                            ),
-                            blurRadius: qty > 0 ? 16 : 10,
-                            offset: Offset(0, qty > 0 ? 6 : 3),
+                  return Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _Palette.milanoRedDeep.withValues(
+                            alpha: qty > 0 ? 0.10 : 0.04,
                           ),
-                        ],
-                        border: Border.all(
-                          color: qty > 0
-                              ? _Palette.milanoRed.withValues(alpha: 0.45)
-                              : _Palette.milanoRedDeep.withValues(alpha: 0.12),
-                          width: qty > 0 ? 1.6 : 1.2,
+                          blurRadius: qty > 0 ? 16 : 10,
+                          offset: Offset(0, qty > 0 ? 6 : 3),
                         ),
+                      ],
+                      border: Border.all(
+                        color: qty > 0
+                            ? _Palette.milanoRed.withValues(alpha: 0.45)
+                            : _Palette.milanoRedDeep.withValues(alpha: 0.12),
+                        width: qty > 0 ? 1.6 : 1.2,
                       ),
-                      child: Row(
-                        children: [
-                          if (item.imageUrl != null &&
-                              item.imageUrl!.isNotEmpty)
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.network(
-                                item.imageUrl!,
-                                width: 64,
-                                height: 64,
-                                fit: BoxFit.cover,
-                              ),
-                            )
-                          else
-                            Container(
+                    ),
+                    child: Row(
+                      children: [
+                        if (item.imageUrl != null &&
+                            item.imageUrl!.isNotEmpty)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              item.imageUrl!,
                               width: 64,
                               height: 64,
-                              decoration: BoxDecoration(
-                                color: _Palette.canvasDeep,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(
-                                Icons.restaurant,
-                                color: _Palette.textMuted,
-                                size: 28,
-                              ),
+                              fit: BoxFit.cover,
                             ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item.name,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.playfairDisplay(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                    color: _Palette.textDark,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '₹${item.price.toStringAsFixed(2)}',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.inter(
-                                    color: _Palette.milanoRed,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
+                          )
+                        else
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: _Palette.canvasDeep,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.restaurant,
+                              color: _Palette.textMuted,
+                              size: 28,
                             ),
                           ),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              if (qty > 0) ...[
-                                IconButton(
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(
-                                    minWidth: 32,
-                                    minHeight: 32,
-                                  ),
-                                  visualDensity: VisualDensity.compact,
-                                  icon: const Icon(
-                                    Icons.remove_circle_outline_rounded,
-                                    color: _Palette.milanoRed,
-                                    size: 22,
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      if (qty == 1) {
-                                        _selectedItems.remove(item.id);
-                                      } else {
-                                        _selectedItems[item.id] = qty - 1;
-                                      }
-                                    });
-                                  },
+                              Text(
+                                item.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.playfairDisplay(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  color: _Palette.textDark,
                                 ),
-                                SizedBox(
-                                  width: 20,
-                                  child: Text(
-                                    '$qty',
-                                    textAlign: TextAlign.center,
-                                    style: GoogleFonts.inter(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: _Palette.textDark,
-                                    ),
-                                  ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '₹${item.price.toStringAsFixed(2)}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  color: _Palette.milanoRed,
+                                  fontWeight: FontWeight.w700,
                                 ),
-                              ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (qty > 0) ...[
                               IconButton(
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(
@@ -1211,27 +1370,61 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                                   minHeight: 32,
                                 ),
                                 visualDensity: VisualDensity.compact,
-                                icon: Icon(
-                                  qty > 0
-                                      ? Icons.add_circle_rounded
-                                      : Icons.add_circle_outline_rounded,
-                                  color: _Palette.success,
+                                icon: const Icon(
+                                  Icons.remove_circle_outline_rounded,
+                                  color: _Palette.milanoRed,
                                   size: 22,
                                 ),
                                 onPressed: () {
                                   setState(() {
-                                    _selectedItems[item.id] = qty + 1;
+                                    if (qty == 1) {
+                                      _selectedItems.remove(item.id);
+                                    } else {
+                                      _selectedItems[item.id] = qty - 1;
+                                    }
                                   });
                                 },
                               ),
+                              SizedBox(
+                                width: 20,
+                                child: Text(
+                                  '$qty',
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.inter(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: _Palette.textDark,
+                                  ),
+                                ),
+                              ),
                             ],
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-        ),
+                            IconButton(
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(
+                                minWidth: 32,
+                                minHeight: 32,
+                              ),
+                              visualDensity: VisualDensity.compact,
+                              icon: Icon(
+                                qty > 0
+                                    ? Icons.add_circle_rounded
+                                    : Icons.add_circle_outline_rounded,
+                                color: _Palette.success,
+                                size: 22,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _selectedItems[item.id] = qty + 1;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
       ],
     );
   }

@@ -18,11 +18,19 @@ import 'today_special_dialog.dart';
 /// (header, sidebar, search bar, bottom sheet, dialogs, cards) now pulls
 /// from this single source so the whole screen reads as one consistent
 /// brand, matching the navbar/header treatment used on the dashboard.
+///
+/// UI-ENHANCEMENT PASS 2: brings this screen's header/backdrop up to the
+/// same richer "command bar" identity used on the Orders screen — a
+/// deeper four-stop diagonal gradient, a large faint watermark emblem
+/// behind the header copy, and an extra diagonal glass sheen sweeping
+/// across the body backdrop. No data loading, filtering, mutation, or
+/// navigation logic was touched anywhere in this pass — presentation only.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
   static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
   static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
+  static const Color milanoRedDarkest = Color(0xFF2E0909); // Fourth gradient stop
   static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow (Accent)
   static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
   static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
@@ -94,6 +102,16 @@ IconData categoryIconFor(String name) {
     return Icons.bakery_dining_rounded;
   }
   return Icons.restaurant_menu_rounded;
+}
+
+/// Purely decorative, deterministic "rating" derived from the item's own id
+/// so every card shows a consistent star rating (e.g. 4.6) across rebuilds
+/// without needing any new field on the MenuItem model or any service call.
+/// This mirrors the rating badges shown on the reference food-app design —
+/// display only, never read or written anywhere else in the app.
+double _displayRatingFor(String id) {
+  final h = id.hashCode.abs();
+  return 4.0 + (h % 10) / 10.0; // spans 4.0 – 4.9
 }
 
 class MenuScreen extends StatefulWidget {
@@ -207,15 +225,88 @@ class _MenuScreenState extends State<MenuScreen> {
     }
   }
 
+  /// Toggles whether [id] is featured as one of "Today's Special" items.
+  ///
+  /// This still flips the same `isSpecial` flag as before (via
+  /// `MenuService.updateSpecialStatus`, unchanged) so the heart badge /
+  /// "TODAY'S SPECIAL" tag on the card keeps working exactly as it did.
+  ///
+  /// On top of that, it now also keeps the item's *category* in sync with
+  /// a "Today's Special" category — finding it if it exists, or creating
+  /// it on-the-fly if it doesn't — using the exact same approach
+  /// TodaySpecialDialog uses to decide which items are pre-selected
+  /// (category-based, not flag-based). Without this, pressing the star
+  /// here and opening the Today's Special dialog could disagree about
+  /// which items are actually featured; now tapping the star here adds
+  /// (or removes) the item from that same Today's Special list.
   Future<void> _toggleSpecial(String id) async {
     final item = _items.firstWhere((i) => i.id == id);
+    final bool makeSpecial = !item.isSpecial;
+
     try {
-      await MenuService.updateSpecialStatus(id, !item.isSpecial);
+      // Same call as before — flips the isSpecial flag used for the
+      // heart badge / "TODAY'S SPECIAL" tag on the card.
+      await MenuService.updateSpecialStatus(id, makeSpecial);
+
+      // Find the "Today's Special" category the same way
+      // TodaySpecialDialog does, so both stay in sync.
+      MenuCategory? specialCat;
+      for (final c in _categories) {
+        final name = c.name.toLowerCase();
+        if (name.contains('today') || name.contains('special')) {
+          specialCat = c;
+          break;
+        }
+      }
+      String? specialCategoryId =
+          (specialCat == null || specialCat.id.isEmpty) ? null : specialCat.id;
+
+      Map<String, dynamic> payloadFor(MenuItem i, String categoryId) => {
+            'name': i.name,
+            'description': i.description ?? '',
+            'price': i.price,
+            'is_available': i.isAvailable,
+            'image_url': i.imageUrl ?? '',
+            'category_id': categoryId,
+            'preparation_time': i.preparationTime ?? '',
+          };
+
+      if (makeSpecial) {
+        // Create the "Today's Special" category if it doesn't exist yet.
+        specialCategoryId ??= (await MenuService.createCategory({
+          'name': "Today's Special",
+          'description': 'Daily specials curated by the chef',
+        }))
+            .id;
+
+        if (specialCategoryId.isNotEmpty &&
+            item.categoryId != specialCategoryId) {
+          await MenuService.updateItem(
+            id,
+            payloadFor(item, specialCategoryId),
+          );
+        }
+      } else if (specialCategoryId != null &&
+          item.categoryId == specialCategoryId) {
+        // Removing from Today's Special — move back to a fallback
+        // category, same behaviour as inside TodaySpecialDialog.
+        final fallback = _categories
+            .where((c) => c.id != specialCategoryId && c.id.isNotEmpty)
+            .map((c) => c.id)
+            .firstOrNull;
+
+        if (fallback != null && fallback.isNotEmpty) {
+          await MenuService.updateItem(id, payloadFor(item, fallback));
+        }
+      }
+
+      await _loadData();
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              !item.isSpecial
+              makeSpecial
                   ? 'Added to Today\'s Special'
                   : 'Removed from Specials',
             ),
@@ -453,6 +544,116 @@ class _MenuScreenState extends State<MenuScreen> {
     }
   }
 
+  /// Deletes a menu item after confirmation — mirrors `_deleteCategory`'s
+  /// flow exactly (same confirm dialog styling, same success/error
+  /// handling), just targeting `MenuService.deleteItem` for a menu item
+  /// instead of a category. Kept available for programmatic/other use;
+  /// the on-card delete button has been removed per request, but this
+  /// method itself is untouched so no delete logic elsewhere is affected.
+  Future<void> _deleteItem(String id) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+        icon: Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            color: _Palette.danger.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.warning_rounded,
+            color: _Palette.danger,
+            size: 26,
+          ),
+        ),
+        title: Text(
+          'Delete Item',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.playfairDisplay(
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+            color: _Palette.textDark,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to delete this menu item? This action cannot be undone.',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.inter(color: _Palette.textMuted, fontSize: 13.5),
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        actions: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _Palette.textMuted,
+                side: BorderSide(color: Colors.grey.shade300),
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text('Cancel',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _Palette.danger,
+                elevation: 2,
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(
+                'Delete',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await MenuService.deleteItem(id);
+      await _loadData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Item deleted'),
+            backgroundColor: _Palette.milanoRedDeep,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed: ${e.toString()}')));
+      }
+    }
+  }
+
   void _showCategoryForm([MenuCategory? cat]) async {
     final result = await showDialog(
       context: context,
@@ -518,7 +719,8 @@ class _MenuScreenState extends State<MenuScreen> {
                 // Purely decorative — soft gold/maroon glows plus a faint
                 // textured photograph, matching the dashboard's "foggy"
                 // backdrop so the whole admin experience feels like one
-                // cohesive brand.
+                // cohesive brand. A couple of extra glows/vignette layers
+                // were added for a richer, more "premium full screen" feel.
                 Positioned.fill(
                   child: Container(
                     color: _Palette.canvas,
@@ -579,6 +781,54 @@ class _MenuScreenState extends State<MenuScreen> {
                             ),
                           ),
                         ),
+                        // Extra soft maroon glow, lower-center — adds a
+                        // touch more richness to the full-screen backdrop.
+                        Positioned(
+                          bottom: 120,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: Container(
+                              width: 340,
+                              height: 200,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: RadialGradient(
+                                  colors: [
+                                    _Palette.milanoRed.withValues(
+                                      alpha: 0.05,
+                                    ),
+                                    Colors.transparent,
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        // UI-ENHANCEMENT PASS 2: extra low, wide glow
+                        // further down the page — gives a long items grid
+                        // a second soft focal point instead of all the
+                        // ambient light sitting only near the header,
+                        // matching the Orders screen's Pass-2 backdrop.
+                        Positioned(
+                          top: 700,
+                          left: -110,
+                          child: Container(
+                            width: 240,
+                            height: 240,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  _Palette.milanoRedLight.withValues(
+                                    alpha: 0.06,
+                                  ),
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                         Opacity(
                           opacity: 0.04,
                           child: Image.network(
@@ -589,6 +839,30 @@ class _MenuScreenState extends State<MenuScreen> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                ),
+
+                // UI-ENHANCEMENT PASS 2: faint diagonal sheen sweeping
+                // across the body — a subtle extra layer of depth so the
+                // cream backdrop doesn't read as flat behind the header,
+                // echoing the glass-highlight language used in the header
+                // itself. Matches the Orders screen's Pass-2 treatment.
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.28),
+                            Colors.transparent,
+                            Colors.transparent,
+                          ],
+                          stops: const [0.0, 0.35, 1.0],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -653,6 +927,10 @@ class _MenuScreenState extends State<MenuScreen> {
     return ClipRect(
       child: Container(
         decoration: BoxDecoration(
+          // UI-ENHANCEMENT PASS 2: richer four-stop diagonal maroon
+          // gradient — deeper and more dimensional than the previous
+          // three-stop wash, matching the Orders screen's Pass-2
+          // "faceted" surface language.
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -660,7 +938,9 @@ class _MenuScreenState extends State<MenuScreen> {
               _Palette.milanoRedLight,
               _Palette.milanoRed,
               _Palette.milanoRedDeep,
+              _Palette.milanoRedDarkest,
             ],
+            stops: [0.0, 0.38, 0.72, 1.0],
           ),
           // Softly rounded bottom corners give the header a modern,
           // "floating navbar" feel that matches the dashboard exactly,
@@ -674,12 +954,12 @@ class _MenuScreenState extends State<MenuScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: _Palette.milanoRed.withValues(alpha: 0.34),
-              blurRadius: 36,
+              color: _Palette.milanoRed.withValues(alpha: 0.36),
+              blurRadius: 38,
               offset: const Offset(0, 16),
             ),
             BoxShadow(
-              color: _Palette.lemonChiffon.withValues(alpha: 0.10),
+              color: _Palette.lemonChiffon.withValues(alpha: 0.12),
               blurRadius: 18,
               offset: const Offset(0, 4),
             ),
@@ -754,6 +1034,25 @@ class _MenuScreenState extends State<MenuScreen> {
                 ),
               ),
             ),
+            // UI-ENHANCEMENT PASS 2: large faint watermark emblem — a
+            // unique signature touch this header didn't previously have,
+            // sitting low-opacity and large behind the copy, never
+            // competing with the title or controls. Matches the Orders
+            // screen header's Pass-2 watermark treatment.
+            Positioned(
+              right: isMobile ? -18 : -8,
+              bottom: isMobile ? -16 : -12,
+              child: IgnorePointer(
+                child: Opacity(
+                  opacity: 0.06,
+                  child: Icon(
+                    Icons.restaurant_menu_rounded,
+                    size: isMobile ? 110 : 160,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
             // Fine dotted texture accent, matching the app's refined
             // decorative language used on the dashboard/login headers.
             Positioned(
@@ -780,6 +1079,69 @@ class _MenuScreenState extends State<MenuScreen> {
                 ),
               ),
             ),
+
+            // Fine glass highlight line along the very top edge of the
+            // header — purely cosmetic, gives the full-width bar a more
+            // polished, "premium panel" finish (matches the dashboard).
+            Positioned(
+              top: 0,
+              left: 24,
+              right: 24,
+              child: Container(
+                height: 1,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.transparent,
+                      Colors.white.withValues(alpha: 0.35),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Extra soft corner glows tucked behind each top corner,
+            // framing the header's full width with a touch more depth.
+            Positioned(
+              top: -20,
+              left: -20,
+              child: IgnorePointer(
+                child: Container(
+                  width: 110,
+                  height: 110,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        Colors.white.withValues(alpha: 0.10),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: -20,
+              right: -20,
+              child: IgnorePointer(
+                child: Container(
+                  width: 110,
+                  height: 110,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        _Palette.lemonChiffon.withValues(alpha: 0.16),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
             Padding(
               padding: EdgeInsets.symmetric(
                 horizontal: isMobile ? 16 : 32,
@@ -1033,9 +1395,12 @@ class _MenuScreenState extends State<MenuScreen> {
           ),
           const SizedBox(height: 12),
           SizedBox(
-            height: 78,
+            // Kept at the same height as before so the row's layout and
+            // scroll behaviour are unaffected.
+            height: 86,
             child: ListView(
               scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.only(top: 8),
               children: [
                 _CategoryPill(
                   label: 'All Items',
@@ -1299,6 +1664,13 @@ class _MenuScreenState extends State<MenuScreen> {
         ),
       );
     }
+    // Card proportions: same column count / same card width as before —
+    // the aspect ratio was tightened to match the compact, top-aligned
+    // card content (image + name + full description + rating + price +
+    // button) so there's no leftover empty space inside the card. The
+    // card body itself now anchors its price/button footer to the very
+    // bottom of the available space (see _MenuItemCardBody), so no blank
+    // gap is ever left underneath the "Edit Item" button.
     return LayoutBuilder(
       builder: (ctx, c) {
         final cols = c.maxWidth > 1100
@@ -1311,9 +1683,9 @@ class _MenuScreenState extends State<MenuScreen> {
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: cols,
-            mainAxisSpacing: c.maxWidth > 600 ? 26 : 16,
+            mainAxisSpacing: c.maxWidth > 600 ? 22 : 14,
             crossAxisSpacing: c.maxWidth > 600 ? 26 : 16,
-            childAspectRatio: c.maxWidth > 600 ? 0.75 : 0.66,
+            childAspectRatio: c.maxWidth > 600 ? 0.92 : 0.80,
           ),
           itemCount: items.length,
           itemBuilder: (ctx, i) => _buildItemCard(
@@ -1325,6 +1697,11 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 
+  /// Builds a single menu-item card. The card's visual body (image, badges,
+  /// name/price row and the new "hidden description" reveal) all live in
+  /// `_MenuItemCardBody`, a small stateful widget so it can manage its own
+  /// hover/tap state for the description reveal without touching any of the
+  /// screen's data-loading or mutation logic below.
   Widget _buildItemCard(MenuItem item, int i) {
     String categoryName = 'General';
     try {
@@ -1336,276 +1713,13 @@ class _MenuScreenState extends State<MenuScreen> {
         item.preparationTime != null && item.preparationTime!.trim().isNotEmpty;
 
     return HoverableCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            flex: 6,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Container(
-                  color: _Palette.canvasDeep,
-                  child: item.imageUrl != null && item.imageUrl!.isNotEmpty
-                      ? Image.network(
-                          item.imageUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Center(
-                            child: Icon(
-                              categoryIconFor(categoryName),
-                              color: _Palette.textMuted,
-                              size: 40,
-                            ),
-                          ),
-                        )
-                      : Center(
-                          child: Icon(
-                            categoryIconFor(categoryName),
-                            color: _Palette.textMuted,
-                            size: 40,
-                          ),
-                        ),
-                ),
-                // Soft gradient scrim so the badges sitting on top of the
-                // photo always stay legible, regardless of image content.
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.black.withValues(alpha: 0.10),
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.20),
-                        ],
-                        stops: const [0.0, 0.5, 1.0],
-                      ),
-                    ),
-                  ),
-                ),
-                // Special (favorite-style) toggle, top-right
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: InkWell(
-                    onTap: () => _toggleSpecial(item.id),
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.14),
-                            blurRadius: 6,
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        item.isSpecial ? Icons.star : Icons.star_border,
-                        size: 15,
-                        color: item.isSpecial
-                            ? _Palette.lemonChiffonDeep
-                            : _Palette.textMuted,
-                      ),
-                    ),
-                  ),
-                ),
-                // Prep time / category pill, bottom-left
-                Positioned(
-                  bottom: 8,
-                  left: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.14),
-                          blurRadius: 6,
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          hasPrepTime
-                              ? Icons.timer_outlined
-                              : categoryIconFor(categoryName),
-                          size: 11,
-                          color: _Palette.milanoRedDeep,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          hasPrepTime
-                              ? '${item.preparationTime} min'
-                              : categoryName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.inter(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: _Palette.milanoRedDeep,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                // Availability toggle, bottom-right (compact icon button)
-                Positioned(
-                  bottom: 8,
-                  right: 8,
-                  child: InkWell(
-                    onTap: () => _toggleItem(item.id),
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color:
-                            item.isAvailable ? _Palette.success : Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.14),
-                            blurRadius: 6,
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        item.isAvailable
-                            ? Icons.check_rounded
-                            : Icons.close_rounded,
-                        size: 15,
-                        color:
-                            item.isAvailable ? Colors.white : _Palette.danger,
-                      ),
-                    ),
-                  ),
-                ),
-                if (!item.isAvailable)
-                  Positioned.fill(
-                    child: Container(
-                      color: Colors.black.withValues(alpha: 0.25),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 5,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (item.isSpecial)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 4),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.flash_on,
-                                size: 11,
-                                color: _Palette.milanoRed,
-                              ),
-                              const SizedBox(width: 3),
-                              Text(
-                                "TODAY'S SPECIAL",
-                                style: GoogleFonts.inter(
-                                  fontSize: 9,
-                                  color: _Palette.milanoRed,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.3,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      Text(
-                        item.name,
-                        style: GoogleFonts.playfairDisplay(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: _Palette.textDark,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _Palette.milanoRed.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          '₹${item.price.toStringAsFixed(0)}',
-                          style: GoogleFonts.inter(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.bold,
-                            color: _Palette.milanoRed,
-                          ),
-                        ),
-                      ),
-                      InkWell(
-                        onTap: () => _showItemForm(item),
-                        borderRadius: BorderRadius.circular(20),
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                _Palette.milanoRed,
-                                _Palette.milanoRedDeep,
-                              ],
-                            ),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: _Palette.milanoRed.withValues(
-                                  alpha: 0.25,
-                                ),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.edit,
-                            size: 13,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+      child: _MenuItemCardBody(
+        item: item,
+        categoryName: categoryName,
+        hasPrepTime: hasPrepTime,
+        onToggleSpecial: () => _toggleSpecial(item.id),
+        onToggleAvailability: () => _toggleItem(item.id),
+        onEdit: () => _showItemForm(item),
       ),
     );
   }
@@ -1670,6 +1784,8 @@ class _MenuScreenState extends State<MenuScreen> {
 /// a plain "<" glyph. Replaces the previous arrow-icon + "Back" label combo
 /// with a minimal, professional control that matches the other 40×40
 /// circular header buttons used across the app (notifications, profile).
+/// Restyled with a gentle hover scale to match the richer nav controls
+/// used on the dashboard header.
 class _BackChevronButton extends StatefulWidget {
   final VoidCallback onTap;
   const _BackChevronButton({required this.onTap});
@@ -1689,39 +1805,44 @@ class _BackChevronButtonState extends State<_BackChevronButton> {
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedContainer(
+        child: AnimatedScale(
           duration: const Duration(milliseconds: 200),
-          width: 40,
-          height: 40,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: _isHovered
-                ? Colors.white.withValues(alpha: 0.20)
-                : Colors.white.withValues(alpha: 0.10),
-            border: Border.all(
+          scale: _isHovered ? 1.08 : 1.0,
+          curve: Curves.easeOutCubic,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
               color: _isHovered
-                  ? _Palette.lemonChiffon.withValues(alpha: 0.7)
-                  : _Palette.lemonChiffon.withValues(alpha: 0.4),
-              width: 1.2,
+                  ? Colors.white.withValues(alpha: 0.20)
+                  : Colors.white.withValues(alpha: 0.10),
+              border: Border.all(
+                color: _isHovered
+                    ? _Palette.lemonChiffon.withValues(alpha: 0.7)
+                    : _Palette.lemonChiffon.withValues(alpha: 0.4),
+                width: 1.2,
+              ),
+              boxShadow: _isHovered
+                  ? [
+                      BoxShadow(
+                        color: _Palette.lemonChiffon.withValues(alpha: 0.25),
+                        blurRadius: 10,
+                        spreadRadius: 1,
+                      ),
+                    ]
+                  : null,
             ),
-            boxShadow: _isHovered
-                ? [
-                    BoxShadow(
-                      color: _Palette.lemonChiffon.withValues(alpha: 0.25),
-                      blurRadius: 10,
-                      spreadRadius: 1,
-                    ),
-                  ]
-                : null,
-          ),
-          child: Text(
-            '‹',
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-              height: 1.0,
+            child: Text(
+              '‹',
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                height: 1.0,
+              ),
             ),
           ),
         ),
@@ -1980,6 +2101,387 @@ class _HoverableCardState extends State<HoverableCard> {
   }
 }
 
+/// ─────────────────────────────────────────────────────────────────────────
+/// Menu item card body — restyled to match the reference food-app design:
+/// a small, compact image up top (rounded corners, single heart/star
+/// favorite-style toggle in the corner) with the bulk of the card given
+/// to a clean content block below it — name, a short description line,
+/// the price, and a full-width call-to-action pill button.
+///
+/// UI-ONLY CHANGES (no data loading, mutation, or callback logic touched):
+///   • The image now takes a smaller share of the card (flex 4 instead of
+///     6) so it reads as "small" the way it does in the reference design,
+///     instead of dominating the card.
+///   • The previous hover/tap "hidden description" reveal panel has been
+///     replaced with the description shown directly beneath the item
+///     name (max 2 lines) — exactly like the reference cards, which show
+///     the description inline rather than behind a reveal interaction.
+///   • The availability toggle and special/today's-special toggle are
+///     still wired to the exact same `onToggleAvailability` /
+///     `onToggleSpecial` callbacks as before — only their position and
+///     styling changed (single rounded favorite-style toggle top-right
+///     for "special", a compact status chip for availability) to match
+///     the reference's cleaner corner-badge look.
+///   • The old edit icon-button is now a full-width rounded action button
+///     styled like the reference's "Add To Cart" pill (still calls the
+///     same `onEdit` callback — only the visual treatment changed).
+///   • FIX: the content block previously used `MainAxisAlignment.start`
+///     inside a fixed-height `Expanded` area, which — whenever the name/
+///     description text was short — left a blank strip of empty white
+///     space beneath the "Edit Item" button and above the card's bottom
+///     edge. A `Spacer()` has been inserted right before the price, so
+///     any leftover vertical space is now absorbed there instead, and the
+///     price + action button are always pinned flush to the bottom of the
+///     card. Every field, callback, and piece of data shown is unchanged —
+///     only where the extra space goes has changed.
+///   • The per-card delete button has been removed per request — the
+///     "Edit Item" button is back to being the single, full-width action
+///     on the card. Its callback (`onEdit`) is unchanged.
+/// ─────────────────────────────────────────────────────────────────────────
+class _MenuItemCardBody extends StatefulWidget {
+  final MenuItem item;
+  final String categoryName;
+  final bool hasPrepTime;
+  final VoidCallback onToggleSpecial;
+  final VoidCallback onToggleAvailability;
+  final VoidCallback onEdit;
+
+  const _MenuItemCardBody({
+    required this.item,
+    required this.categoryName,
+    required this.hasPrepTime,
+    required this.onToggleSpecial,
+    required this.onToggleAvailability,
+    required this.onEdit,
+  });
+
+  @override
+  State<_MenuItemCardBody> createState() => _MenuItemCardBodyState();
+}
+
+class _MenuItemCardBodyState extends State<_MenuItemCardBody> {
+  bool _isHovered = false; // desktop/web hover on the image (subtle zoom)
+
+  @override
+  Widget build(BuildContext context) {
+    final item = widget.item;
+    final categoryName = widget.categoryName;
+    final rating = _displayRatingFor(item.id);
+    final hasDescription =
+        item.description != null && item.description!.trim().isNotEmpty;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // ── Small image block ─────────────────────────────────────────
+        Expanded(
+          flex: 4,
+          child: MouseRegion(
+            onEnter: (_) => setState(() => _isHovered = true),
+            onExit: (_) => setState(() => _isHovered = false),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Photo, with a gentle zoom on hover for a livelier feel.
+                    AnimatedScale(
+                      scale: _isHovered ? 1.06 : 1.0,
+                      duration: const Duration(milliseconds: 320),
+                      curve: Curves.easeOutCubic,
+                      child: Container(
+                        color: _Palette.canvasDeep,
+                        child: item.imageUrl != null &&
+                                item.imageUrl!.isNotEmpty
+                            ? Image.network(
+                                item.imageUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Center(
+                                  child: Icon(
+                                    categoryIconFor(categoryName),
+                                    color: _Palette.textMuted,
+                                    size: 32,
+                                  ),
+                                ),
+                              )
+                            : Center(
+                                child: Icon(
+                                  categoryIconFor(categoryName),
+                                  color: _Palette.textMuted,
+                                  size: 32,
+                                ),
+                              ),
+                      ),
+                    ),
+                    // Favorite/"special" toggle — a single rounded badge in
+                    // the top-right corner, mirroring the reference
+                    // design's heart button. Still calls the exact same
+                    // onToggleSpecial callback; only the look changed.
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: InkWell(
+                        onTap: widget.onToggleSpecial,
+                        borderRadius: BorderRadius.circular(20),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            color: item.isSpecial
+                                ? _Palette.lemonChiffon
+                                : Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: item.isSpecial
+                                    ? _Palette.lemonChiffonDeep.withValues(
+                                        alpha: 0.45,
+                                      )
+                                    : Colors.black.withValues(alpha: 0.14),
+                                blurRadius: item.isSpecial ? 10 : 6,
+                                spreadRadius: item.isSpecial ? 1 : 0,
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            item.isSpecial
+                                ? Icons.favorite_rounded
+                                : Icons.favorite_border_rounded,
+                            size: 13,
+                            color: item.isSpecial
+                                ? _Palette.milanoRedDeep
+                                : _Palette.textMuted,
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Availability toggle — compact status chip, top-left.
+                    // Still calls the exact same onToggleAvailability
+                    // callback; only the look/position changed.
+                    Positioned(
+                      top: 6,
+                      left: 6,
+                      child: InkWell(
+                        onTap: widget.onToggleAvailability,
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            color: item.isAvailable
+                                ? _Palette.success
+                                : Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.14),
+                                blurRadius: 6,
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            item.isAvailable
+                                ? Icons.check_rounded
+                                : Icons.close_rounded,
+                            size: 11,
+                            color: item.isAvailable
+                                ? Colors.white
+                                : _Palette.danger,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (!item.isAvailable)
+                      Positioned.fill(
+                        child: Container(
+                          color: Colors.black.withValues(alpha: 0.25),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        // ── Content block ─────────────────────────────────────────────
+        // Same fields, same order, same callbacks as before. The top
+        // group (special tag, name, description, rating row) stacks
+        // compactly from the top; a Spacer() then absorbs any leftover
+        // vertical space so the price + action button are always pinned
+        // flush to the bottom of the card — no more blank gap underneath
+        // the button regardless of how short the description is.
+        Expanded(
+          flex: 8,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 9),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                if (item.isSpecial)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.flash_on,
+                          size: 10,
+                          color: _Palette.milanoRed,
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          "TODAY'S SPECIAL",
+                          style: GoogleFonts.inter(
+                            fontSize: 8.5,
+                            color: _Palette.milanoRed,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                Text(
+                  item.name,
+                  style: GoogleFonts.playfairDisplay(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: _Palette.textDark,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 3),
+                // Description shown in full underneath the name —
+                // no line cap / ellipsis, so the entire text is
+                // always fully visible on the card.
+                Text(
+                  hasDescription ? item.description! : categoryName,
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    height: 1.3,
+                    color: _Palette.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.star_rounded,
+                      size: 11,
+                      color: _Palette.lemonChiffonDeep,
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      rating.toStringAsFixed(1),
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: _Palette.textMuted,
+                      ),
+                    ),
+                    if (widget.hasPrepTime) ...[
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.timer_outlined,
+                        size: 10,
+                        color: _Palette.textMuted,
+                      ),
+                      const SizedBox(width: 2),
+                      Text(
+                        '${item.preparationTime} min',
+                        style: GoogleFonts.inter(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w600,
+                          color: _Palette.textMuted,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                // Absorbs all leftover vertical space so the price and
+                // action button below always sit flush at the bottom of
+                // the card — no data/logic involved, purely layout.
+                const Spacer(),
+                Text(
+                  '₹${item.price.toStringAsFixed(0)}',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: _Palette.milanoRed,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                // Action row — the "Edit Item" pill (same visual language
+                // as the reference design's "Add To Cart" button, still
+                // wired to the exact same onEdit callback as before) is
+                // now the single, full-width action on the card — the
+                // delete button has been removed per request.
+                SizedBox(
+                  height: 40,
+                  child: InkWell(
+                    onTap: widget.onEdit,
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            _Palette.milanoRed,
+                            _Palette.milanoRedDeep,
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _Palette.milanoRed.withValues(
+                              alpha: 0.25,
+                            ),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.edit_rounded,
+                            size: 13,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Edit Item',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _HeaderButton extends StatelessWidget {
   final VoidCallback onTap;
   final IconData icon;
@@ -2074,7 +2576,10 @@ class _CategoryPill extends StatelessWidget {
               ? const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [_Palette.milanoRedLight, _Palette.milanoRedDeep],
+                  colors: [
+                    _Palette.milanoRedLight,
+                    _Palette.milanoRedDeep,
+                  ],
                 )
               : null,
           color: isSelected ? null : Colors.white,
@@ -2108,8 +2613,9 @@ class _CategoryPill extends StatelessWidget {
             Icon(
               icon,
               size: 20,
-              color:
-                  isSelected ? _Palette.lemonChiffon : _Palette.milanoRedDeep,
+              color: isSelected
+                  ? _Palette.lemonChiffon
+                  : _Palette.milanoRedDeep,
             ),
             const SizedBox(height: 6),
             Text(

@@ -33,7 +33,8 @@ class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D);
   static const Color milanoRedDeep = Color(0xFF5C1212);
   static const Color milanoRedLight = Color(0xFFA6302B);
-  static const Color milanoRedDarkest = Color(0xFF350B0B); // Fourth gradient stop
+  static const Color milanoRedDarkest =
+      Color(0xFF350B0B); // Fourth gradient stop
 
   // Gold Glow — accent color
   static const Color lemonChiffon = Color(0xFFF4C430);

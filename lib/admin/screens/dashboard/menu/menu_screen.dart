@@ -30,7 +30,8 @@ class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
   static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
   static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
-  static const Color milanoRedDarkest = Color(0xFF2E0909); // Fourth gradient stop
+  static const Color milanoRedDarkest =
+      Color(0xFF2E0909); // Fourth gradient stop
   static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow (Accent)
   static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
   static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
@@ -2193,27 +2194,27 @@ class _MenuItemCardBodyState extends State<_MenuItemCardBody> {
                       curve: Curves.easeOutCubic,
                       child: Container(
                         color: _Palette.canvasDeep,
-                        child: item.imageUrl != null &&
-                                item.imageUrl!.isNotEmpty
-                            ? Image.network(
-                                item.imageUrl!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Center(
-                                  child: Icon(
-                                    categoryIconFor(categoryName),
-                                    color: _Palette.textMuted,
-                                    size: 32,
+                        child:
+                            item.imageUrl != null && item.imageUrl!.isNotEmpty
+                                ? Image.network(
+                                    item.imageUrl!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) => Center(
+                                      child: Icon(
+                                        categoryIconFor(categoryName),
+                                        color: _Palette.textMuted,
+                                        size: 32,
+                                      ),
+                                    ),
+                                  )
+                                : Center(
+                                    child: Icon(
+                                      categoryIconFor(categoryName),
+                                      color: _Palette.textMuted,
+                                      size: 32,
+                                    ),
                                   ),
-                                ),
-                              )
-                            : Center(
-                                child: Icon(
-                                  categoryIconFor(categoryName),
-                                  color: _Palette.textMuted,
-                                  size: 32,
-                                ),
-                              ),
                       ),
                     ),
                     // Favorite/"special" toggle — a single rounded badge in
@@ -2613,9 +2614,8 @@ class _CategoryPill extends StatelessWidget {
             Icon(
               icon,
               size: 20,
-              color: isSelected
-                  ? _Palette.lemonChiffon
-                  : _Palette.milanoRedDeep,
+              color:
+                  isSelected ? _Palette.lemonChiffon : _Palette.milanoRedDeep,
             ),
             const SizedBox(height: 6),
             Text(

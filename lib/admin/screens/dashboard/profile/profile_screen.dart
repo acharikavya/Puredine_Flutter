@@ -32,7 +32,8 @@ class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
   static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
   static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
-  static const Color milanoRedDarkest = Color(0xFF2E0808); // Fourth gradient stop
+  static const Color milanoRedDarkest =
+      Color(0xFF2E0808); // Fourth gradient stop
   static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow (Accent)
   static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
   static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
@@ -757,7 +758,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(height: 3, color: _Palette.lemonChiffon.withValues(alpha: 0.85)),
+          Container(
+              height: 3, color: _Palette.lemonChiffon.withValues(alpha: 0.85)),
           Container(
             width: double.infinity,
             padding: EdgeInsets.all(isMobile ? 20 : 28),
@@ -807,7 +809,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             r?.restaurantType ?? 'Restaurant Type',
                             style: GoogleFonts.inter(
                               fontSize: isMobile ? 12 : 14,
-                              color: _Palette.lemonChiffon.withValues(alpha: 0.95),
+                              color:
+                                  _Palette.lemonChiffon.withValues(alpha: 0.95),
                               fontWeight: FontWeight.w600,
                             ),
                           ),

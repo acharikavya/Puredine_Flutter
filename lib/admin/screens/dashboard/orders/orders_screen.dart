@@ -37,7 +37,8 @@ class _OrdersTheme {
   static const Color milanoRed = Color(0xFF8B1D1D); // Primary maroon
   static const Color milanoRedDark = Color(0xFF5E1212); // Deeper maroon
   static const Color milanoRedLight = Color(0xFFA5271F); // Lighter maroon
-  static const Color milanoRedDarkest = Color(0xFF3A0B0B); // Fourth gradient stop
+  static const Color milanoRedDarkest =
+      Color(0xFF3A0B0B); // Fourth gradient stop
 
   // Gold Glow accents (Theme 1: #F4C430) replacing the old lemon-chiffon
   // tones, plus soft cream companions for badges/backgrounds.
@@ -612,8 +613,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color:
-                                    _OrdersTheme.gold.withValues(alpha: 0.6),
+                                color: _OrdersTheme.gold.withValues(alpha: 0.6),
                                 blurRadius: 8,
                               ),
                             ],

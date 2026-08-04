@@ -43,7 +43,8 @@ class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
   static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
   static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
-  static const Color milanoRedDarkest = Color(0xFF320A0A); // Fourth gradient stop
+  static const Color milanoRedDarkest =
+      Color(0xFF320A0A); // Fourth gradient stop
   static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow (Accent)
   static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
   static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
@@ -434,10 +435,8 @@ class BillScreen extends StatelessWidget {
                                               width: 5,
                                               decoration: BoxDecoration(
                                                 gradient: LinearGradient(
-                                                  begin:
-                                                      Alignment.topCenter,
-                                                  end: Alignment
-                                                      .bottomCenter,
+                                                  begin: Alignment.topCenter,
+                                                  end: Alignment.bottomCenter,
                                                   colors: [
                                                     _Palette.milanoRed
                                                         .withValues(
@@ -465,18 +464,16 @@ class BillScreen extends StatelessWidget {
                                                       'Total Amount',
                                                       style: AppTheme.sans(
                                                         size: 12,
-                                                        weight:
-                                                            FontWeight.w700,
-                                                        color: _Palette
-                                                            .textMuted,
+                                                        weight: FontWeight.w700,
+                                                        color:
+                                                            _Palette.textMuted,
                                                       ),
                                                     ),
                                                     Text(
                                                       '₹$finalTotal',
                                                       style: AppTheme.serif(
                                                         size: 32,
-                                                        weight:
-                                                            FontWeight.w900,
+                                                        weight: FontWeight.w900,
                                                         color:
                                                             _Palette.textDark,
                                                       ),
@@ -484,9 +481,8 @@ class BillScreen extends StatelessWidget {
                                                   ],
                                                 ),
                                                 Padding(
-                                                  padding:
-                                                      const EdgeInsets
-                                                          .symmetric(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
                                                     vertical: 12,
                                                   ),
                                                   child: Divider(
@@ -567,17 +563,13 @@ class BillScreen extends StatelessWidget {
                                                 width: 5,
                                                 decoration: BoxDecoration(
                                                   gradient: LinearGradient(
-                                                    begin:
-                                                        Alignment.topCenter,
-                                                    end: Alignment
-                                                        .bottomCenter,
+                                                    begin: Alignment.topCenter,
+                                                    end: Alignment.bottomCenter,
                                                     colors: [
-                                                      _Palette.gold
-                                                          .withValues(
+                                                      _Palette.gold.withValues(
                                                         alpha: 0.85,
                                                       ),
-                                                      _Palette.gold
-                                                          .withValues(
+                                                      _Palette.gold.withValues(
                                                         alpha: 0.35,
                                                       ),
                                                     ],
@@ -600,8 +592,7 @@ class BillScreen extends StatelessWidget {
                                                   ...order.itemsDetails.map(
                                                     (item) => Padding(
                                                       padding:
-                                                          const EdgeInsets
-                                                              .only(
+                                                          const EdgeInsets.only(
                                                         bottom: 6,
                                                       ),
                                                       child: Row(
@@ -611,8 +602,8 @@ class BillScreen extends StatelessWidget {
                                                         children: [
                                                           Text(
                                                             '${item.quantity}x ${item.name}',
-                                                            style: AppTheme
-                                                                .sans(
+                                                            style:
+                                                                AppTheme.sans(
                                                               size: 13,
                                                               color: _Palette
                                                                   .textMuted,
@@ -620,12 +611,11 @@ class BillScreen extends StatelessWidget {
                                                           ),
                                                           Text(
                                                             '₹${(item.quantity * (double.tryParse(item.price) ?? 0)).round()}',
-                                                            style: AppTheme
-                                                                .sans(
+                                                            style:
+                                                                AppTheme.sans(
                                                               size: 13,
-                                                              weight:
-                                                                  FontWeight
-                                                                      .w600,
+                                                              weight: FontWeight
+                                                                  .w600,
                                                               color: _Palette
                                                                   .textDark,
                                                             ),
@@ -642,8 +632,7 @@ class BillScreen extends StatelessWidget {
                                                       alpha: 0.10,
                                                     ),
                                                   ),
-                                                  if (order.subtotal >
-                                                      0) ...[
+                                                  if (order.subtotal > 0) ...[
                                                     _BreakdownRow(
                                                       'Subtotal',
                                                       '₹${order.subtotal.round()}',
@@ -680,8 +669,8 @@ class BillScreen extends StatelessWidget {
                                                           size: 16,
                                                           weight:
                                                               FontWeight.w800,
-                                                          color: _Palette
-                                                              .textDark,
+                                                          color:
+                                                              _Palette.textDark,
                                                         ),
                                                       ),
                                                       Text(
@@ -1351,8 +1340,7 @@ class _ScreenHeader extends StatelessWidget {
                                   style: AppTheme.sans(
                                     size: 12,
                                     weight: FontWeight.w600,
-                                    color:
-                                        Colors.white.withValues(alpha: 0.75),
+                                    color: Colors.white.withValues(alpha: 0.75),
                                   ).copyWith(letterSpacing: 0.3),
                                 ),
                               ],

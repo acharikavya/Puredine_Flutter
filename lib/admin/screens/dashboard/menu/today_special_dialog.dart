@@ -403,9 +403,8 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                         icon: const Icon(Icons.close_rounded,
                             color: _SpecialTheme.textOnMaroon),
                         splashRadius: 22,
-                        onPressed: _isSubmitting
-                            ? null
-                            : () => Navigator.pop(context),
+                        onPressed:
+                            _isSubmitting ? null : () => Navigator.pop(context),
                       ),
                     ),
                   ],
@@ -494,8 +493,8 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
         ),
         child: TextField(
           onChanged: (v) => setState(() => _searchQuery = v),
-          style: GoogleFonts.inter(
-              fontSize: 14, color: _SpecialTheme.maroonDeep),
+          style:
+              GoogleFonts.inter(fontSize: 14, color: _SpecialTheme.maroonDeep),
           decoration: InputDecoration(
             hintText: 'Search items...',
             hintStyle:
@@ -536,8 +535,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.restaurant_menu_rounded,
-                  size: 40,
-                  color: _SpecialTheme.maroon.withValues(alpha: 0.3)),
+                  size: 40, color: _SpecialTheme.maroon.withValues(alpha: 0.3)),
               const SizedBox(height: 10),
               Text(
                 'No menu items available yet. Add items to your menu first.',
@@ -558,8 +556,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.search_off_rounded,
-                size: 36,
-                color: _SpecialTheme.maroon.withValues(alpha: 0.3)),
+                size: 36, color: _SpecialTheme.maroon.withValues(alpha: 0.3)),
             const SizedBox(height: 8),
             Text(
               'No items found',
@@ -662,8 +659,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                         width: 48,
                         height: 48,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            Container(
+                        errorBuilder: (context, error, stackTrace) => Container(
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
@@ -706,8 +702,8 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
       padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
       decoration: BoxDecoration(
         border: Border(
-            top: BorderSide(
-                color: _SpecialTheme.maroon.withValues(alpha: 0.1))),
+            top:
+                BorderSide(color: _SpecialTheme.maroon.withValues(alpha: 0.1))),
         color: _SpecialTheme.creamLighter,
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(22),
@@ -774,9 +770,8 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                   ],
                 ),
                 child: ElevatedButton.icon(
-                  onPressed: (_isSubmitting || widget.allItems.isEmpty)
-                      ? null
-                      : _save,
+                  onPressed:
+                      (_isSubmitting || widget.allItems.isEmpty) ? null : _save,
                   icon: _isSubmitting
                       ? const SizedBox(
                           width: 14,
@@ -821,8 +816,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
     final size = MediaQuery.of(context).size;
 
     // Near-fullscreen, more immersive dialog footprint.
-    final dialogWidth =
-        size.width < 700 ? size.width * 0.96 : size.width * 0.6;
+    final dialogWidth = size.width < 700 ? size.width * 0.96 : size.width * 0.6;
     final dialogHeight = size.height * 0.9;
 
     return Dialog(

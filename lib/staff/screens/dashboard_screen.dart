@@ -1189,8 +1189,8 @@ class _DashboardHero extends StatelessWidget {
                             ),
                             child: CircleAvatar(
                               radius: 20,
-                              backgroundColor: _Palette.lemonChiffon
-                                  .withValues(alpha: 0.25),
+                              backgroundColor:
+                                  _Palette.lemonChiffon.withValues(alpha: 0.25),
                               child: Text(
                                 firstName[0],
                                 style: GoogleFonts.playfairDisplay(

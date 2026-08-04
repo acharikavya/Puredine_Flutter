@@ -30,7 +30,8 @@ class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
   static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
   static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
-  static const Color milanoRedDarkest = Color(0xFF320A0A); // Fourth gradient stop
+  static const Color milanoRedDarkest =
+      Color(0xFF320A0A); // Fourth gradient stop
   static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow (Accent)
   static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
   static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
@@ -1088,9 +1089,8 @@ class _HoverableDashCardState extends State<_HoverableDashCard> {
                         // state of the card.
                         AnimatedSlide(
                           duration: const Duration(milliseconds: 250),
-                          offset: _isHovered
-                              ? Offset.zero
-                              : const Offset(0, 0.4),
+                          offset:
+                              _isHovered ? Offset.zero : const Offset(0, 0.4),
                           child: AnimatedOpacity(
                             duration: const Duration(milliseconds: 250),
                             opacity: _isHovered ? 1 : 0,

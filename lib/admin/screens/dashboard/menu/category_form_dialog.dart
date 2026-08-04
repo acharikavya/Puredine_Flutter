@@ -26,7 +26,8 @@ class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
   static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
   static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
-  static const Color milanoRedDarkest = Color(0xFF2E0808); // Fourth gradient stop
+  static const Color milanoRedDarkest =
+      Color(0xFF2E0808); // Fourth gradient stop
   static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow (Accent)
   static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
   static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
@@ -343,8 +344,8 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                               children: List.generate(
                                 5,
                                 (i) => Container(
-                                  margin: const EdgeInsets.symmetric(
-                                      horizontal: 3),
+                                  margin:
+                                      const EdgeInsets.symmetric(horizontal: 3),
                                   width: 3.5,
                                   height: 3.5,
                                   decoration: BoxDecoration(
@@ -465,8 +466,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                                   color: Colors.white.withValues(alpha: 0.10),
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color:
-                                        Colors.white.withValues(alpha: 0.14),
+                                    color: Colors.white.withValues(alpha: 0.14),
                                   ),
                                 ),
                                 child: IconButton(

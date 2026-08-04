@@ -872,8 +872,7 @@ class _ScreenHeader extends StatelessWidget {
                                   style: AppTheme.sans(
                                     size: 12,
                                     weight: FontWeight.w600,
-                                    color:
-                                        Colors.white.withValues(alpha: 0.75),
+                                    color: Colors.white.withValues(alpha: 0.75),
                                   ).copyWith(letterSpacing: 0.3),
                                 ),
                               ],

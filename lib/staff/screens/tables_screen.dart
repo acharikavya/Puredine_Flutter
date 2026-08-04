@@ -495,10 +495,8 @@ class _TablesScreenState extends State<TablesScreen> {
                                                 height: 14,
                                                 decoration: BoxDecoration(
                                                   gradient: LinearGradient(
-                                                    begin:
-                                                        Alignment.topCenter,
-                                                    end: Alignment
-                                                        .bottomCenter,
+                                                    begin: Alignment.topCenter,
+                                                    end: Alignment.bottomCenter,
                                                     colors: [
                                                       _Palette.milanoRedLight,
                                                       _Palette.milanoRed,
@@ -610,8 +608,7 @@ class _TablesScreenState extends State<TablesScreen> {
                     child: Icon(
                       icon,
                       size: 14,
-                      color:
-                          isActive ? Colors.white : _Palette.milanoRedDeep,
+                      color: isActive ? Colors.white : _Palette.milanoRedDeep,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -940,8 +937,7 @@ class _ScreenHeader extends StatelessWidget {
                                   style: AppTheme.sans(
                                     size: 12,
                                     weight: FontWeight.w600,
-                                    color:
-                                        Colors.white.withValues(alpha: 0.75),
+                                    color: Colors.white.withValues(alpha: 0.75),
                                   ).copyWith(letterSpacing: 0.3),
                                 ),
                               ],

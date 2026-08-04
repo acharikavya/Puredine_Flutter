@@ -717,8 +717,7 @@ class _ScreenHeader extends StatelessWidget {
                                   style: AppTheme.sans(
                                     size: 12,
                                     weight: FontWeight.w600,
-                                    color:
-                                        Colors.white.withValues(alpha: 0.75),
+                                    color: Colors.white.withValues(alpha: 0.75),
                                   ).copyWith(letterSpacing: 0.3),
                                 ),
                               ],
@@ -896,8 +895,7 @@ class _ScreenHeader extends StatelessWidget {
                               icon: showNewestFirst
                                   ? Icons.arrow_downward_rounded
                                   : Icons.arrow_upward_rounded,
-                              value:
-                                  showNewestFirst ? 'Newest' : 'Oldest',
+                              value: showNewestFirst ? 'Newest' : 'Oldest',
                               label: 'Sort',
                               accent: Colors.white70,
                             ),
@@ -1709,8 +1707,7 @@ class _OrderCard extends StatelessWidget {
                     if (isNew)
                       GestureDetector(
                         onTap: () {
-                          final token =
-                              context.read<StaffAuthProvider>().token;
+                          final token = context.read<StaffAuthProvider>().token;
                           provider.updateOrderStatus(
                             order.id,
                             OrderStatus.confirmed,

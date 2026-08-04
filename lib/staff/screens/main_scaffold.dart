@@ -440,9 +440,7 @@ class _RoleAwareBottomNav extends StatelessWidget {
                                     : _Palette.milanoRedDeep.withValues(
                                         alpha: 0.12,
                                       ),
-                                width: isActive
-                                    ? (isBilling ? 2.0 : 1.6)
-                                    : 1.2,
+                                width: isActive ? (isBilling ? 2.0 : 1.6) : 1.2,
                               ),
                               boxShadow: isActive
                                   ? _Palette.accentGlow(accentColor)

@@ -29,7 +29,8 @@ class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
   static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
   static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
-  static const Color milanoRedDarkest = Color(0xFF2E0808); // Fourth gradient stop
+  static const Color milanoRedDarkest =
+      Color(0xFF2E0808); // Fourth gradient stop
   static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow (Accent)
   static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
   static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
@@ -123,11 +124,9 @@ class StaffLandingScreen extends StatelessWidget {
     // change — card content, hover behaviour, and navigation are untouched.
     final double horizontalPadding = isMobile ? 16 : 40;
     final double cardSpacing = isMobile ? 16 : 40;
-    final double mobileCardWidth = ((size.width -
-                (horizontalPadding * 2) -
-                cardSpacing) /
-            2)
-        .clamp(130.0, 172.0);
+    final double mobileCardWidth =
+        ((size.width - (horizontalPadding * 2) - cardSpacing) / 2)
+            .clamp(130.0, 172.0);
     final double cardWidth = isMobile ? mobileCardWidth : 240;
     final double cardHeight =
         isMobile ? (cardWidth * 2.2).clamp(300.0, 360.0) : 380;
@@ -329,8 +328,7 @@ class StaffLandingScreen extends StatelessWidget {
                                 physics: const BouncingScrollPhysics(),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     _StaffTypeCard(
                                       title: 'Billing Staff',
@@ -914,7 +912,8 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
                               // a more premium "badge" look.
                               AnimatedContainer(
                                 duration: const Duration(milliseconds: 300),
-                                padding: EdgeInsets.all(widget.isMobile ? 5 : 6),
+                                padding:
+                                    EdgeInsets.all(widget.isMobile ? 5 : 6),
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(

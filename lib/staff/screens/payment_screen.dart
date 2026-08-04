@@ -37,7 +37,8 @@ class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
   static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
   static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
-  static const Color milanoRedDarkest = Color(0xFF320A0A); // Fourth gradient stop
+  static const Color milanoRedDarkest =
+      Color(0xFF320A0A); // Fourth gradient stop
   static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow (Accent)
   static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
   static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
@@ -177,8 +178,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final itemsCount = order.itemsDetails.length;
     final selectedMethodLabel = _selectedMethod == null
         ? 'Not Selected'
-        : _methods
-            .firstWhere((m) => m['id'] == _selectedMethod)['label'] as String;
+        : _methods.firstWhere((m) => m['id'] == _selectedMethod)['label']
+            as String;
 
     return Scaffold(
       backgroundColor: _Palette.canvas,
@@ -966,7 +967,8 @@ class _SectionCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      child: Icon(icon, color: _Palette.milanoRedDeep, size: 17),
+                      child:
+                          Icon(icon, color: _Palette.milanoRedDeep, size: 17),
                     ),
                     const SizedBox(width: 11),
                     Text(
@@ -1260,8 +1262,7 @@ class _ScreenHeader extends StatelessWidget {
                                   style: AppTheme.sans(
                                     size: 12,
                                     weight: FontWeight.w600,
-                                    color:
-                                        Colors.white.withValues(alpha: 0.75),
+                                    color: Colors.white.withValues(alpha: 0.75),
                                   ).copyWith(letterSpacing: 0.3),
                                 ),
                               ],

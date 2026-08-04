@@ -1387,8 +1387,7 @@ class _ScreenHeader extends StatelessWidget {
                                   style: AppTheme.sans(
                                     size: 12,
                                     weight: FontWeight.w600,
-                                    color:
-                                        Colors.white.withValues(alpha: 0.75),
+                                    color: Colors.white.withValues(alpha: 0.75),
                                   ).copyWith(letterSpacing: 0.3),
                                 ),
                               ],
@@ -1701,7 +1700,8 @@ class _BackChipState extends State<_BackChip> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: _Palette.gold.withValues(alpha: _isHovered ? 0.3 : 0.18),
+                  color:
+                      _Palette.gold.withValues(alpha: _isHovered ? 0.3 : 0.18),
                   blurRadius: _isHovered ? 14 : 10,
                   spreadRadius: _isHovered ? 1 : 0.5,
                 ),

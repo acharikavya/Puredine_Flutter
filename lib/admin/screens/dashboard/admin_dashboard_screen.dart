@@ -462,9 +462,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                 }
                               }
 
-                              final double gridSpacing = isMobile
-                                  ? 14
-                                  : (isCompact ? 16 : 22);
+                              final double gridSpacing =
+                                  isMobile ? 14 : (isCompact ? 16 : 22);
 
                               return GridView.builder(
                                 shrinkWrap: true,
@@ -919,8 +918,7 @@ class _HoverableDashCardState extends State<_HoverableDashCard> {
   @override
   Widget build(BuildContext context) {
     final tag = '0${widget.index + 1}';
-    final double iconSize =
-        widget.isMobile ? 58 : (widget.isCompact ? 54 : 76);
+    final double iconSize = widget.isMobile ? 58 : (widget.isCompact ? 54 : 76);
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -958,8 +956,7 @@ class _HoverableDashCardState extends State<_HoverableDashCard> {
                       end: Alignment.bottomCenter,
                       colors: [_Palette.cardWhite, _Palette.cardWhite],
                     ),
-              borderRadius:
-                  BorderRadius.circular(widget.isCompact ? 18 : 24),
+              borderRadius: BorderRadius.circular(widget.isCompact ? 18 : 24),
               border: Border.all(
                 color: _isHovered
                     ? _Palette.milanoRed.withValues(alpha: 0.55)
@@ -982,8 +979,7 @@ class _HoverableDashCardState extends State<_HoverableDashCard> {
               ],
             ),
             child: ClipRRect(
-              borderRadius:
-                  BorderRadius.circular(widget.isCompact ? 18 : 24),
+              borderRadius: BorderRadius.circular(widget.isCompact ? 18 : 24),
               child: Stack(
                 children: [
                   // Top accent bar — a slim gradient strip reinforcing the
@@ -1034,12 +1030,8 @@ class _HoverableDashCardState extends State<_HoverableDashCard> {
 
                   // Index tag — subtle professional numbering
                   Positioned(
-                    top: widget.isMobile
-                        ? 12
-                        : (widget.isCompact ? 10 : 16),
-                    left: widget.isMobile
-                        ? 14
-                        : (widget.isCompact ? 12 : 18),
+                    top: widget.isMobile ? 12 : (widget.isCompact ? 10 : 16),
+                    left: widget.isMobile ? 14 : (widget.isCompact ? 12 : 18),
                     child: Text(
                       tag,
                       style: GoogleFonts.inter(
@@ -1055,12 +1047,10 @@ class _HoverableDashCardState extends State<_HoverableDashCard> {
 
                   Padding(
                     padding: EdgeInsets.symmetric(
-                      horizontal: widget.isMobile
-                          ? 14
-                          : (widget.isCompact ? 14 : 20),
-                      vertical: widget.isMobile
-                          ? 18
-                          : (widget.isCompact ? 16 : 24),
+                      horizontal:
+                          widget.isMobile ? 14 : (widget.isCompact ? 14 : 20),
+                      vertical:
+                          widget.isMobile ? 18 : (widget.isCompact ? 16 : 24),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,

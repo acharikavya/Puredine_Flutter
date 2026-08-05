@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -54,6 +55,13 @@ class MenuProvider extends ChangeNotifier {
 
       bool success = false;
       String? lastError;
+      // Tracks whether every failed attempt looked like a network-level
+      // failure (as opposed to a clean HTTP error status) — on Flutter
+      // Web this pattern (every endpoint fails with no status code) is
+      // the signature of a CORS block, since the browser refuses the
+      // response before it ever reaches this code.
+      bool allFailuresLookLikeNetworkOrCors = true;
+      bool sawAuthFailure = false;
 
       for (final endpoint in endpoints) {
         final url = '$_baseUrl$endpoint';
@@ -63,6 +71,10 @@ class MenuProvider extends ChangeNotifier {
           final response = await http
               .get(Uri.parse(url), headers: headers)
               .timeout(const Duration(seconds: 10));
+
+          // We got an actual HTTP response, so this was not a
+          // network/CORS-level failure for this endpoint.
+          allFailuresLookLikeNetworkOrCors = false;
 
           debugPrint('MenuProvider: $endpoint - Status ${response.statusCode}');
 
@@ -91,6 +103,9 @@ class MenuProvider extends ChangeNotifier {
               );
             }
           } else {
+            if (response.statusCode == 401 || response.statusCode == 403) {
+              sawAuthFailure = true;
+            }
             lastError =
                 'Failed to load menu from $endpoint (${response.statusCode})';
           }
@@ -101,7 +116,24 @@ class MenuProvider extends ChangeNotifier {
       }
 
       if (!success) {
-        _error = lastError ?? 'Failed to load menu items from any endpoint';
+        if (kIsWeb && allFailuresLookLikeNetworkOrCors) {
+          // Every single endpoint failed before returning any HTTP
+          // status — on web that almost always means the browser
+          // blocked the response due to missing CORS headers on the
+          // backend, not a problem with this app's code or your
+          // internet connection.
+          _error =
+              'Could not reach the menu server from the web app. This usually '
+              'means the backend needs to allow requests from this website\'s '
+              'address (CORS). Ask your backend team to enable CORS for this '
+              'web app\'s origin. (Technical detail: $lastError)';
+        } else if (sawAuthFailure) {
+          _error =
+              'You may need to sign in again — the menu server rejected the '
+              'request as unauthorized. (Technical detail: $lastError)';
+        } else {
+          _error = lastError ?? 'Failed to load menu items from any endpoint';
+        }
       }
     } catch (e) {
       _error = e.toString();

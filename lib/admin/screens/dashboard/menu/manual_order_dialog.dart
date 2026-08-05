@@ -22,6 +22,20 @@ import 'package:restaurant_unified_app/admin/services/tables_service.dart';
 /// line along the very top edge. No table loading, order submission,
 /// validation, quantity, or category/item navigation logic was touched
 /// anywhere in this pass — presentation only.
+///
+/// BUGFIX PASS: `_buildDesktopBody()` previously wrapped its two-column
+/// `Row` in `IntrinsicHeight` (nested inside a `SingleChildScrollView`) in
+/// order to give both columns a shared scroll bar. `IntrinsicHeight`
+/// requires every descendant to be able to report its intrinsic height —
+/// but `GridView`/`ListView` viewports (even with `shrinkWrap: true`)
+/// explicitly do not support that computation and throw a layout
+/// exception when asked to. On web/desktop this crashed the widget tree
+/// used for category/item selection, which is why items couldn't be
+/// tapped/added and the order couldn't be placed from a laptop, even
+/// though the same screens worked fine on mobile (which never used
+/// `IntrinsicHeight`). The fix removes the shared-scroll wrapper and
+/// gives each desktop column its own independent `SingleChildScrollView`
+/// instead — no order/table/validation/submission logic was touched.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
@@ -693,47 +707,57 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
   }
 
   // ── Body layouts ──────────────────────────────────────────────────────
-  // Both desktop and mobile bodies are now wrapped in a SINGLE
-  // SingleChildScrollView so the whole dialog body (customer details +
-  // menu selection) scrolls together under one shared scrollbar, instead
-  // of each side owning its own independent scroll area. To make that
-  // work, the inner GridView/ListView are set to `shrinkWrap: true` with
-  // `NeverScrollableScrollPhysics` so they size to their content and let
-  // the single outer scroll view own all the scrolling.
-
+  // Desktop gets two independently-scrollable side-by-side panels (the
+  // parent `Expanded` above already gives this Row a fixed, bounded
+  // height to work within — `size.height * 0.9` minus header/footer — so
+  // no outer scroll wrapper or IntrinsicHeight is needed here). Each
+  // panel scrolls on its own via its own SingleChildScrollView, and the
+  // inner GridView/ListView stay `shrinkWrap: true` with
+  // `NeverScrollableScrollPhysics` so they size to their content inside
+  // that per-panel scroll view instead of fighting it for gesture/scroll
+  // ownership.
+  //
+  // IMPORTANT: this is a pure layout fix — no table loading, order
+  // submission, validation, quantity, or category/item navigation logic
+  // was changed. Previously this method wrapped the Row in
+  // `IntrinsicHeight` inside a single `SingleChildScrollView`, which
+  // crashes because GridView/ListView viewports cannot report intrinsic
+  // height — that crash is what broke item selection/ordering on
+  // web/desktop while mobile (which never used IntrinsicHeight) kept
+  // working fine.
   Widget _buildDesktopBody() {
-    return SingleChildScrollView(
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Left side: Details
-            Expanded(
-              flex: 4,
-              child: Container(
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: _Palette.cardWhite,
-                  border: Border(
-                    right: BorderSide(
-                      color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
-                    ),
-                  ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Left side: Details
+        Expanded(
+          flex: 4,
+          child: Container(
+            decoration: BoxDecoration(
+              color: _Palette.cardWhite,
+              border: Border(
+                right: BorderSide(
+                  color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
                 ),
-                child: _buildOrderDetailsForm(),
               ),
             ),
-            // Right side: Menu selection
-            Expanded(
-              flex: 6,
-              child: Container(
-                color: _Palette.canvas,
-                child: _buildMenuSelection(),
-              ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(32),
+              child: _buildOrderDetailsForm(),
             ),
-          ],
+          ),
         ),
-      ),
+        // Right side: Menu selection
+        Expanded(
+          flex: 6,
+          child: Container(
+            color: _Palette.canvas,
+            child: SingleChildScrollView(
+              child: _buildMenuSelection(),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

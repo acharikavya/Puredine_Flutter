@@ -25,6 +25,18 @@ import 'package:restaurant_unified_app/utils/session_manager.dart';
 /// full-screen backdrop gained an extra diagonal sheen for more depth.
 /// No provider, controller, route, notification, or session logic was
 /// touched anywhere in this pass — only presentation changed.
+///
+/// UI-ENHANCEMENT PASS 3 (web-only card density): the dashboard grid
+/// previously rendered a fixed 2-per-row layout on every breakpoint,
+/// which meant desktop/laptop ("web") screens showed the exact same big
+/// two-tile-per-row cards as mobile, just stretched wider. Mobile is left
+/// completely untouched — same 2 columns, same card sizing, same
+/// spacing, same aspect ratios as before. On tablet/wide (web) widths the
+/// grid now scales up to 3–4 smaller, denser columns, and those cards get
+/// a proportionally smaller icon/typography/padding treatment (via a new
+/// purely-cosmetic `isCompact` sizing flag) so nothing overflows or looks
+/// cramped. No navigation, provider, route, or animation logic changed —
+/// only column count, card sizing, and spacing on non-mobile widths.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
@@ -404,21 +416,55 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                           ),
                           LayoutBuilder(
                             builder: (ctx, constraints) {
-                              // Fixed 2-per-row layout — cards render as
-                              // tall, narrow "portrait rectangle" tiles:
-                              // two cards per line, then the next two
-                              // cards on the following line, regardless
-                              // of breakpoint. Only the aspect ratio (how
-                              // tall the rectangle is) adapts to width.
-                              const int cols = 2;
-                              double aspect;
-                              if (constraints.maxWidth > 900) {
-                                aspect = 0.92;
-                              } else if (constraints.maxWidth > 600) {
-                                aspect = 0.82;
+                              // ── Card density ─────────────────────────
+                              // MOBILE (isMobile == true): completely
+                              // unchanged from before — fixed 2 columns,
+                              // same width-based aspect ratio steps, same
+                              // spacing, same "isCompact: false" card
+                              // sizing. Nothing here differs from the
+                              // original behaviour on phones.
+                              //
+                              // WEB / TABLET (isMobile == false): instead
+                              // of the old fixed 2-per-row layout, the
+                              // grid now scales up to 3–4 smaller, denser
+                              // columns depending on available width, and
+                              // passes `isCompact: true` down to the card
+                              // so its icon size, type scale, and padding
+                              // shrink proportionally — keeping every
+                              // card crisp and non-overflowing at the
+                              // smaller footprint instead of just
+                              // stretching the old large-card design.
+                              final int cols;
+                              final double aspect;
+                              final bool isCompact;
+
+                              if (isMobile) {
+                                cols = 2;
+                                isCompact = false;
+                                if (constraints.maxWidth > 900) {
+                                  aspect = 0.92;
+                                } else if (constraints.maxWidth > 600) {
+                                  aspect = 0.82;
+                                } else {
+                                  aspect = 0.72;
+                                }
                               } else {
-                                aspect = 0.72;
+                                isCompact = true;
+                                if (constraints.maxWidth > 1100) {
+                                  cols = 4;
+                                  aspect = 0.98;
+                                } else if (constraints.maxWidth > 760) {
+                                  cols = 3;
+                                  aspect = 0.92;
+                                } else {
+                                  cols = 2;
+                                  aspect = 0.88;
+                                }
                               }
+
+                              final double gridSpacing = isMobile
+                                  ? 14
+                                  : (isCompact ? 16 : 22);
 
                               return GridView.builder(
                                 shrinkWrap: true,
@@ -426,8 +472,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                 gridDelegate:
                                     SliverGridDelegateWithFixedCrossAxisCount(
                                   crossAxisCount: cols,
-                                  crossAxisSpacing: isMobile ? 14 : 22,
-                                  mainAxisSpacing: isMobile ? 14 : 22,
+                                  crossAxisSpacing: gridSpacing,
+                                  mainAxisSpacing: gridSpacing,
                                   childAspectRatio: aspect,
                                 ),
                                 itemCount: _dashboardOptions.length,
@@ -435,6 +481,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                   option: _dashboardOptions[i],
                                   index: i,
                                   isMobile: isMobile,
+                                  isCompact: isCompact,
                                   onTap: (details) => _triggerNavAnimation(
                                     details.globalPosition,
                                     _dashboardOptions[i].route,
@@ -838,17 +885,26 @@ class _TitleDivider extends StatelessWidget {
 /// rectangle. Hover/press states are richer: a gentle scale-up, deeper
 /// shadow, a glowing/rotating icon badge, an animated top accent bar, and
 /// a sliding "Open" pill that appears on hover.
+///
+/// UI-ENHANCEMENT PASS 3: added an `isCompact` sizing flag (web/tablet
+/// only — always `false` on mobile, so phones render byte-for-byte the
+/// same as before). When `isCompact` is true the icon badge, title/
+/// description type scale, and internal padding shrink proportionally so
+/// the smaller web grid tiles stay crisp and never overflow. Purely a
+/// sizing adjustment — no hover/press/animation/navigation logic changed.
 /// ─────────────────────────────────────────────────────────────────────────
 class _HoverableDashCard extends StatefulWidget {
   final _DashOption option;
   final int index;
   final bool isMobile;
+  final bool isCompact;
   final Function(TapDownDetails) onTap;
 
   const _HoverableDashCard({
     required this.option,
     required this.index,
     required this.isMobile,
+    this.isCompact = false,
     required this.onTap,
   });
 
@@ -863,7 +919,8 @@ class _HoverableDashCardState extends State<_HoverableDashCard> {
   @override
   Widget build(BuildContext context) {
     final tag = '0${widget.index + 1}';
-    final double iconSize = widget.isMobile ? 58 : 76;
+    final double iconSize =
+        widget.isMobile ? 58 : (widget.isCompact ? 54 : 76);
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -901,7 +958,8 @@ class _HoverableDashCardState extends State<_HoverableDashCard> {
                       end: Alignment.bottomCenter,
                       colors: [_Palette.cardWhite, _Palette.cardWhite],
                     ),
-              borderRadius: BorderRadius.circular(24),
+              borderRadius:
+                  BorderRadius.circular(widget.isCompact ? 18 : 24),
               border: Border.all(
                 color: _isHovered
                     ? _Palette.milanoRed.withValues(alpha: 0.55)
@@ -924,7 +982,8 @@ class _HoverableDashCardState extends State<_HoverableDashCard> {
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius:
+                  BorderRadius.circular(widget.isCompact ? 18 : 24),
               child: Stack(
                 children: [
                   // Top accent bar — a slim gradient strip reinforcing the
@@ -935,7 +994,9 @@ class _HoverableDashCardState extends State<_HoverableDashCard> {
                     right: 0,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
-                      height: _isHovered ? 5 : 3,
+                      height: _isHovered
+                          ? (widget.isCompact ? 4 : 5)
+                          : (widget.isCompact ? 2.5 : 3),
                       decoration: const BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
@@ -973,12 +1034,16 @@ class _HoverableDashCardState extends State<_HoverableDashCard> {
 
                   // Index tag — subtle professional numbering
                   Positioned(
-                    top: widget.isMobile ? 12 : 16,
-                    left: widget.isMobile ? 14 : 18,
+                    top: widget.isMobile
+                        ? 12
+                        : (widget.isCompact ? 10 : 16),
+                    left: widget.isMobile
+                        ? 14
+                        : (widget.isCompact ? 12 : 18),
                     child: Text(
                       tag,
                       style: GoogleFonts.inter(
-                        fontSize: 11,
+                        fontSize: widget.isCompact ? 10 : 11,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 1,
                         color: _isHovered
@@ -990,14 +1055,18 @@ class _HoverableDashCardState extends State<_HoverableDashCard> {
 
                   Padding(
                     padding: EdgeInsets.symmetric(
-                      horizontal: widget.isMobile ? 14 : 20,
-                      vertical: widget.isMobile ? 18 : 24,
+                      horizontal: widget.isMobile
+                          ? 14
+                          : (widget.isCompact ? 14 : 20),
+                      vertical: widget.isMobile
+                          ? 18
+                          : (widget.isCompact ? 16 : 24),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const SizedBox(height: 6),
+                        SizedBox(height: widget.isCompact ? 4 : 6),
 
                         // Icon badge — the centerpiece at the top of the
                         // tall card, with a subtle rotation + glow on hover.
@@ -1022,7 +1091,7 @@ class _HoverableDashCardState extends State<_HoverableDashCard> {
                                     : _Palette.milanoRed.withValues(
                                         alpha: 0.10,
                                       ),
-                                width: 6,
+                                width: widget.isCompact ? 4.5 : 6,
                               ),
                               boxShadow: _isHovered
                                   ? [
@@ -1040,7 +1109,9 @@ class _HoverableDashCardState extends State<_HoverableDashCard> {
                               color: _isHovered
                                   ? _Palette.lemonChiffon
                                   : _Palette.milanoRed,
-                              size: widget.isMobile ? 26 : 32,
+                              size: widget.isMobile
+                                  ? 26
+                                  : (widget.isCompact ? 24 : 32),
                             ),
                           ),
                         ),
@@ -1052,7 +1123,9 @@ class _HoverableDashCardState extends State<_HoverableDashCard> {
                             AnimatedDefaultTextStyle(
                               duration: const Duration(milliseconds: 300),
                               style: GoogleFonts.playfairDisplay(
-                                fontSize: widget.isMobile ? 15.5 : 19,
+                                fontSize: widget.isMobile
+                                    ? 15.5
+                                    : (widget.isCompact ? 14.5 : 19),
                                 fontWeight: FontWeight.bold,
                                 color: _isHovered
                                     ? _Palette.milanoRed
@@ -1068,16 +1141,18 @@ class _HoverableDashCardState extends State<_HoverableDashCard> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            SizedBox(height: widget.isCompact ? 6 : 8),
                             Text(
                               widget.option.description,
                               textAlign: TextAlign.center,
                               style: GoogleFonts.inter(
-                                fontSize: widget.isMobile ? 11.5 : 13,
+                                fontSize: widget.isMobile
+                                    ? 11.5
+                                    : (widget.isCompact ? 10.5 : 13),
                                 color: _Palette.textMuted,
-                                height: 1.45,
+                                height: 1.4,
                               ),
-                              maxLines: 3,
+                              maxLines: widget.isCompact ? 2 : 3,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ],
@@ -1095,9 +1170,9 @@ class _HoverableDashCardState extends State<_HoverableDashCard> {
                             duration: const Duration(milliseconds: 250),
                             opacity: _isHovered ? 1 : 0,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: widget.isCompact ? 10 : 12,
+                                vertical: widget.isCompact ? 5 : 6,
                               ),
                               decoration: BoxDecoration(
                                 color: _Palette.milanoRed.withValues(
@@ -1111,16 +1186,16 @@ class _HoverableDashCardState extends State<_HoverableDashCard> {
                                   Text(
                                     'OPEN',
                                     style: GoogleFonts.inter(
-                                      fontSize: 10,
+                                      fontSize: widget.isCompact ? 9 : 10,
                                       fontWeight: FontWeight.w800,
                                       letterSpacing: 1.2,
                                       color: _Palette.milanoRed,
                                     ),
                                   ),
                                   const SizedBox(width: 4),
-                                  const Icon(
+                                  Icon(
                                     Icons.arrow_outward_rounded,
-                                    size: 13,
+                                    size: widget.isCompact ? 11 : 13,
                                     color: _Palette.milanoRed,
                                   ),
                                 ],

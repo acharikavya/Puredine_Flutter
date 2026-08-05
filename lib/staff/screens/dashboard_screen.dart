@@ -46,6 +46,15 @@ import 'package:flutter_animate/flutter_animate.dart';
 /// Note: order-status badges (pending/preparing/ready/served) and the
 /// success/danger indicators keep their original semantic colors, since
 /// those carry functional meaning rather than brand styling.
+///
+/// BUGFIX (this pass): guarded the greeting name against an empty string.
+/// Previously `firstName[0]` would throw a RangeError (index out of range)
+/// if the staff member's `name` ever came back empty from the backend,
+/// since ''.split(' ').first still returns '' and you can't index into an
+/// empty string. That crash was identical on web and mobile since it's
+/// Dart-level logic, not a layout/overflow issue. Fixed by falling back to
+/// 'Staff' whenever the resolved name is empty, and by defensively guarding
+/// the avatar-initial lookup itself. No other behavior changed.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   // Dark Maroon — primary brand color (Theme 1)
@@ -220,7 +229,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         .where((t) => t.status == TableStatus.available)
         .length;
 
-    final userName = auth.user?.name ?? 'Staff';
+    // BUGFIX: fall back to 'Staff' not just when auth.user?.name is null,
+    // but also when it's an empty/whitespace-only string. Previously
+    // `''.split(' ').first` still returned '', and `firstName[0]` on that
+    // empty string threw a RangeError — a crash that showed up identically
+    // on web and mobile any time a staff record had a blank name.
+    final rawName = auth.user?.name.trim() ?? '';
+    final userName = rawName.isNotEmpty ? rawName : 'Staff';
     final firstName = userName.split(' ').first;
     final isMobile = MediaQuery.of(context).size.width < 600;
 
@@ -1192,7 +1207,13 @@ class _DashboardHero extends StatelessWidget {
                               backgroundColor:
                                   _Palette.lemonChiffon.withValues(alpha: 0.25),
                               child: Text(
-                                firstName[0],
+                                // BUGFIX: firstName is guaranteed non-empty
+                                // by the caller now (falls back to 'Staff'),
+                                // but this stays defensive in case firstName
+                                // is ever passed in directly from elsewhere.
+                                firstName.isNotEmpty
+                                    ? firstName[0].toUpperCase()
+                                    : '?',
                                 style: GoogleFonts.playfairDisplay(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,

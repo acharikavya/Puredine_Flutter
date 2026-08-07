@@ -134,14 +134,13 @@ String _todayLabel() {
 
 class BillScreen extends StatelessWidget {
   final String orderId;
-  final int tipAmount;
+
   final int finalTotal;
   final String paymentMethod;
 
   const BillScreen({
     super.key,
     required this.orderId,
-    required this.tipAmount,
     required this.finalTotal,
     required this.paymentMethod,
   });
@@ -646,10 +645,6 @@ class BillScreen extends StatelessWidget {
                                                     ),
                                                     const SizedBox(height: 6),
                                                   ],
-                                                  _BreakdownRow(
-                                                    'Tip',
-                                                    '₹$tipAmount',
-                                                  ),
                                                   Divider(
                                                     height: 16,
                                                     color: _Palette
@@ -916,13 +911,8 @@ class BillScreen extends StatelessWidget {
                     font,
                     boldFont,
                   ),
-                if (tipAmount > 0)
-                  _pdfInfoRow(
-                    'Tip',
-                    CurrencyUtils.format(tipAmount),
-                    font,
-                    boldFont,
-                  ),
+                //f (tipAmount > 0)
+
                 pw.SizedBox(height: 6),
                 pw.Container(height: 1, color: PdfColors.grey400),
                 pw.SizedBox(height: 6),

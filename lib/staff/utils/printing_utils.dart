@@ -14,6 +14,11 @@ class PrintingUtils {
     final pdf = pw.Document();
     final billNumber =
         'BILL-${order.id.substring(0, order.id.length < 8 ? order.id.length : 8).toUpperCase()}';
+    print("========== PDF ==========");
+    print("Subtotal : ${order.subtotal}");
+    print("Tax      : ${order.tax}");
+    print("Total    : ${order.total}");
+    print("=========================");
 
     pdf.addPage(
       pw.Page(
@@ -225,6 +230,11 @@ class PrintingUtils {
     final pdf = await _generateBillPdf(order, restaurantName: restaurantName);
     final billNumber =
         'BILL-${order.id.substring(0, order.id.length < 8 ? order.id.length : 8).toUpperCase()}';
+    print("========== PDF ==========");
+    print("Subtotal : ${order.subtotal}");
+    print("Tax      : ${order.tax}");
+    print("Total    : ${order.total}");
+    print("=========================");
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdf.save(),
       name: 'Bill_$billNumber',
@@ -238,6 +248,11 @@ class PrintingUtils {
     final pdf = await _generateBillPdf(order, restaurantName: restaurantName);
     final billNumber =
         'BILL-${order.id.substring(0, order.id.length < 8 ? order.id.length : 8).toUpperCase()}';
+    print("========== PDF ==========");
+    print("Subtotal : ${order.subtotal}");
+    print("Tax      : ${order.tax}");
+    print("Total    : ${order.total}");
+    print("=========================");
     await Printing.sharePdf(
       bytes: await pdf.save(),
       filename: 'Bill_$billNumber.pdf',

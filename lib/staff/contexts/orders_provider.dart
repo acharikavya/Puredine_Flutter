@@ -52,9 +52,32 @@ class OrdersProvider extends ChangeNotifier {
       if (response.statusCode == 200) {
         final decoded = json.decode(response.body);
 
-        final List ordersList = decoded['data']; // 🔥 FIX
+        final List ordersList = decoded['data'];
 
-        _orders = ordersList.map((o) => Order.fromJson(o)).toList();
+        final List<Order> newOrders =
+            ordersList.map((o) => Order.fromJson(o)).toList();
+
+        for (int i = 0; i < newOrders.length; i++) {
+          final existingIndex =
+              _orders.indexWhere((e) => e.id == newOrders[i].id);
+
+          if (existingIndex != -1) {
+            final existing = _orders[existingIndex];
+
+            newOrders[i] = newOrders[i].copyWith(
+              subtotal: existing.subtotal > 0
+                  ? existing.subtotal
+                  : newOrders[i].subtotal,
+              tax: existing.tax > 0 ? existing.tax : newOrders[i].tax,
+              total: existing.total > 0 ? existing.total : newOrders[i].total,
+              itemsDetails: existing.itemsDetails.isNotEmpty
+                  ? existing.itemsDetails
+                  : newOrders[i].itemsDetails,
+            );
+          }
+        }
+
+        _orders = newOrders;
       } else {
         debugPrint("Failed to load orders: ${response.body}");
       }
@@ -84,6 +107,11 @@ class OrdersProvider extends ChangeNotifier {
             ? decoded['data']
             : decoded;
         final detailedOrder = Order.fromJson(data as Map<String, dynamic>);
+        debugPrint("=================================");
+        debugPrint("Subtotal : ${detailedOrder.subtotal}");
+        debugPrint("Tax      : ${detailedOrder.tax}");
+        debugPrint("Total    : ${detailedOrder.total}");
+        debugPrint("=================================");
 
         final index = _orders.indexWhere((o) => o.id == id);
         if (index != -1) {
@@ -118,6 +146,7 @@ class OrdersProvider extends ChangeNotifier {
 
       // refresh after update
       await fetchOrders(token);
+      await fetchOrderDetail(id, token);
     } catch (e) {
       debugPrint("Update error: $e");
     }
@@ -159,6 +188,7 @@ class OrdersProvider extends ChangeNotifier {
       // 🔥 REFRESH UI
       if (paidResponse.statusCode == 200) {
         await fetchOrders(token);
+        await fetchOrderDetail(orderId, token);
       }
     } catch (e) {
       debugPrint("PAY ERROR: $e");

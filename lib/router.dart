@@ -166,7 +166,6 @@ GoRouter createRouter(AuthProvider authProvider) {
           final extra = state.extra as Map<String, dynamic>? ?? {};
           return BillScreen(
             orderId: extra['orderId'] as String? ?? '',
-            tipAmount: extra['tipAmount'] as int? ?? 0,
             finalTotal: extra['finalTotal'] as int? ?? 0,
             paymentMethod: extra['paymentMethod'] as String? ?? 'cash',
           );

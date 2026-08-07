@@ -151,6 +151,8 @@ class StaffAuthProvider extends ChangeNotifier {
 
   // 🔥 LOGOUT
   Future<void> logout() async {
+    debugPrint("========== LOGOUT CALLED ==========");
+    debugPrint(StackTrace.current.toString());
     _user = null;
     _role = null;
     _token = null;

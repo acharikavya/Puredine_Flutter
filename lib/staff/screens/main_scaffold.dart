@@ -10,6 +10,7 @@ import 'tables_screen.dart';
 import 'billing_screen.dart';
 import '../../utils/session_manager.dart';
 import 'profile_screen.dart';
+import 'package:go_router/go_router.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────
 /// Local "Theme 1 — Dark Maroon × Soft Cream × Gold Glow" palette — matches
@@ -146,20 +147,24 @@ class _MainScaffoldState extends State<MainScaffold>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     // App resumed
+    print("Lifecycle: $state");
+    if (state == AppLifecycleState.inactive) {
+      await SessionManager.updateLastActiveTime();
+    }
     if (state == AppLifecycleState.resumed) {
       bool isValid = await SessionManager.isSessionValid();
+      print("Session Valid: $isValid");
 
       if (!isValid && mounted) {
+        print("===== LOGGING OUT =====");
+
         await SessionManager.logout();
 
         if (!mounted) return;
         await context.read<StaffAuthProvider>().logout();
 
         if (mounted) {
-          Navigator.of(context).pushNamedAndRemoveUntil(
-            '/login',
-            (route) => false,
-          );
+          context.go('/login');
         }
       } else {
         await SessionManager.updateLastActiveTime();

@@ -93,6 +93,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     // App returned from background
+
     if (state == AppLifecycleState.resumed) {
       bool isValid = await SessionManager.isSessionValid();
 

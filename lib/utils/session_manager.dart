@@ -26,17 +26,24 @@ class SessionManager {
   static Future<bool> isSessionValid() async {
     final prefs = await SharedPreferences.getInstance();
 
-    final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+    final lastActive = prefs.getInt('lastActiveTime');
 
-    if (!isLoggedIn) return false;
+    print("Stored Last Active: $lastActive");
 
-    final lastActive = prefs.getInt('lastActiveTime') ?? 0;
+    if (lastActive == null) {
+      print("NO LAST ACTIVE FOUND");
+      return false;
+    }
 
     final now = DateTime.now().millisecondsSinceEpoch;
 
-    final differenceMinutes = (now - lastActive) ~/ (1000 * 60);
+    final difference = (now - lastActive) ~/ (1000 * 60);
 
-    return differenceMinutes <= sessionTimeoutMinutes;
+    print("Now: $now");
+    print("Difference: $difference");
+    print("Timeout: $sessionTimeoutMinutes");
+
+    return difference <= sessionTimeoutMinutes;
   }
 
   static Future<void> logout() async {

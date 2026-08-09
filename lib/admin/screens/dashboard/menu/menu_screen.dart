@@ -1,5 +1,6 @@
 import 'package:restaurant_unified_app/core/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -25,6 +26,70 @@ import 'today_special_dialog.dart';
 /// behind the header copy, and an extra diagonal glass sheen sweeping
 /// across the body backdrop. No data loading, filtering, mutation, or
 /// navigation logic was touched anywhere in this pass — presentation only.
+///
+/// UI-ENHANCEMENT PASS 3: "Read more" on a card no longer opens a popup
+/// dialog. Tapping it expands the description in place instead of
+/// showing a dialog.
+///
+/// UI-ENHANCEMENT PASS 4: two purely visual refinements —
+///   1. The description under each item name is now a single, clamped
+///      line (instead of two) when collapsed, matching the reference
+///      design's compact card copy.
+///   2. All menu item cards are now uniform in size again. The grid
+///      switched from the Pass‑3 "masonry" (free-height) column layout
+///      back to a standard `GridView` with a fixed aspect ratio, so
+///      every card — across every row, every screen size — occupies the
+///      exact same footprint. To keep "Read more" fully functional
+///      without breaking that uniform sizing, the description now lives
+///      in a small fixed-height box: collapsed it clips to one line,
+///      and expanded ("Read more" tapped) that same box reveals the
+///      complete description text via an internal scroll — the box's
+///      height never changes, so the card itself never changes size and
+///      neighbouring cards never shift. No data loading, mutation, or
+///      callback logic was touched in this pass — presentation only.
+///
+/// UI-ENHANCEMENT PASS 5: the Pass‑4 grid's `childAspectRatio` values were
+/// taller than the card's actual content needed, leaving a visible empty
+/// gap under the "Edit Item" button. The ratios in `_buildItemsGrid` were
+/// tuned to closely match the card's real content height so every card
+/// sat snug with no wasted space at the bottom.
+///
+/// UI-ENHANCEMENT PASS 6: fixes a problem the Pass‑4/5 fixed-
+/// aspect-ratio `GridView` introduced — because every card was locked to
+/// the exact same cell height, tapping "Read more" couldn't actually grow
+/// the card; the extra description text was confined to a small internal
+/// scroll box, which pushed the "Edit Item" button out of easy view.
+///
+/// The grid is back to the same lightweight, dependency-free "masonry"
+/// column layout used in Pass 3 (see `_buildItemsGrid`): items are split
+/// left-to-right, top-to-bottom into `cols` column buckets, each laid out
+/// as an ordinary `Column`, so a card is free to grow when its own
+/// description expands without affecting its neighbours. Crucially, the
+/// description is now a single collapsed line everywhere (from Pass 4),
+/// so every card's *collapsed* content is effectively identical in size —
+/// meaning the masonry layout naturally renders every collapsed card at
+/// the same height, with zero wasted space, exactly like a uniform grid.
+/// Tapping "Read more" then grows only that one card via `AnimatedSize`
+/// to fit the full description, pushing its own "Edit Item" button down
+/// with it — the button stays fully visible, never clipped or scrolled
+/// out of view. Tapping "Show less" shrinks it back. This applies
+/// identically on mobile and desktop; the same masonry logic just uses a
+/// different column count depending on screen width. No data loading,
+/// mutation, or callback logic was touched — only how cards size and grow.
+///
+/// UI-ENHANCEMENT PASS 7 (this pass): "Read more" now sits inline at the
+/// end of the same truncated description line (matching the reference
+/// design's "Tender, boneless murgh ... Read More" style) instead of on
+/// its own line underneath. Since Flutter's automatic `TextOverflow.
+/// ellipsis` would just as happily cut the appended "Read more" text off
+/// along with the rest of the sentence, the collapsed description is now
+/// measured with a `TextPainter` to find exactly how much of the
+/// description fits alongside "… Read more" on one line, so the link is
+/// always fully visible right after the truncated text. Expanding still
+/// works exactly the same way as Pass 6 (`AnimatedSize` grows the card,
+/// "Show less" appended inline at the end once expanded) — only where
+/// "Read more"/"Show less" sits relative to the text changed. No data,
+/// callback, or navigation logic was touched.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
@@ -1632,6 +1697,35 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 
+  /// Lays out the filtered menu items in a lightweight, dependency-free
+  /// "masonry" arrangement instead of a fixed-aspect-ratio `GridView`.
+  ///
+  /// WHY THIS LAYOUT: a fixed-aspect-ratio `GridView` (tried in Passes 4–5)
+  /// forces every card to the exact same cell height, which looks tidy
+  /// while every card is collapsed — but it makes it impossible for a
+  /// single card to grow when its description is expanded via "Read
+  /// more"; the extra text either gets clipped or has to scroll inside a
+  /// cramped box, pushing the "Edit Item" button out of view. That's not
+  /// what's wanted here.
+  ///
+  /// Instead, `_filteredItems` is split into `cols` column buckets in the
+  /// same left-to-right, top-to-bottom order a fixed grid would use
+  /// (`index % cols`), and each bucket is laid out as an ordinary
+  /// `Column` inside an `Expanded` slot of a `Row`. Each column sizes
+  /// itself to its own content, so any single card is free to grow when
+  /// "Read more" is tapped without disturbing its neighbours — the
+  /// "Edit Item" button simply gets pushed down with the rest of that
+  /// card's content and stays fully visible.
+  ///
+  /// Because every card's *collapsed* description is now a single
+  /// clamped line (see `_MenuItemCardBody`), every collapsed card's
+  /// content is effectively the same height already — so in practice
+  /// this masonry layout renders every collapsed card at a uniform size
+  /// with no wasted space, while still allowing individual cards to grow
+  /// on demand. Column count and spacing scale with the available width
+  /// — 2 columns on narrow/mobile layouts, 3 on medium widths, 4 on wide
+  /// desktop layouts. No data, filtering, or mutation logic was touched
+  /// here — layout only.
   Widget _buildItemsGrid() {
     final items = _filteredItems;
     if (items.isEmpty) {
@@ -1665,13 +1759,7 @@ class _MenuScreenState extends State<MenuScreen> {
         ),
       );
     }
-    // Card proportions: same column count / same card width as before —
-    // the aspect ratio was tightened to match the compact, top-aligned
-    // card content (image + name + full description + rating + price +
-    // button) so there's no leftover empty space inside the card. The
-    // card body itself now anchors its price/button footer to the very
-    // bottom of the available space (see _MenuItemCardBody), so no blank
-    // gap is ever left underneath the "Edit Item" button.
+
     return LayoutBuilder(
       builder: (ctx, c) {
         final cols = c.maxWidth > 1100
@@ -1679,30 +1767,46 @@ class _MenuScreenState extends State<MenuScreen> {
             : c.maxWidth > 700
                 ? 3
                 : 2;
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: cols,
-            mainAxisSpacing: c.maxWidth > 600 ? 22 : 14,
-            crossAxisSpacing: c.maxWidth > 600 ? 26 : 16,
-            childAspectRatio: c.maxWidth > 600 ? 0.92 : 0.80,
-          ),
-          itemCount: items.length,
-          itemBuilder: (ctx, i) => _buildItemCard(
-            items[i],
-            i,
-          ).animate().fadeIn(delay: (i * 30).ms, duration: 400.ms),
+        final double spacing = c.maxWidth > 600 ? 22 : 14;
+
+        // Same left-to-right, top-to-bottom item order a fixed grid
+        // would use (index % cols) — so cards still read column-by-
+        // column, row-by-row, exactly as expected.
+        final List<List<int>> columns = List.generate(cols, (_) => <int>[]);
+        for (var i = 0; i < items.length; i++) {
+          columns[i % cols].add(i);
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (var col = 0; col < cols; col++) ...[
+              if (col > 0) SizedBox(width: spacing),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final i in columns[col]) ...[
+                      _buildItemCard(items[i], i)
+                          .animate()
+                          .fadeIn(delay: (i * 30).ms, duration: 400.ms),
+                      if (i != columns[col].last) SizedBox(height: spacing),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ],
         );
       },
     );
   }
 
   /// Builds a single menu-item card. The card's visual body (image, badges,
-  /// name/price row and the new "hidden description" reveal) all live in
+  /// name/price row and the expandable description) all live in
   /// `_MenuItemCardBody`, a small stateful widget so it can manage its own
-  /// hover/tap state for the description reveal without touching any of the
-  /// screen's data-loading or mutation logic below.
+  /// hover/expand state without touching any of the screen's data-loading
+  /// or mutation logic below.
   Widget _buildItemCard(MenuItem item, int i) {
     String categoryName = 'General';
     try {
@@ -2110,13 +2214,10 @@ class _HoverableCardState extends State<HoverableCard> {
 /// the price, and a full-width call-to-action pill button.
 ///
 /// UI-ONLY CHANGES (no data loading, mutation, or callback logic touched):
-///   • The image now takes a smaller share of the card (flex 4 instead of
-///     6) so it reads as "small" the way it does in the reference design,
-///     instead of dominating the card.
-///   • The previous hover/tap "hidden description" reveal panel has been
-///     replaced with the description shown directly beneath the item
-///     name (max 2 lines) — exactly like the reference cards, which show
-///     the description inline rather than behind a reveal interaction.
+///   • The image now takes a smaller share of the card, sized with a
+///     fixed 4:3 `AspectRatio` instead of a flexed height, so it reads as
+///     "small" the way it does in the reference design, instead of
+///     dominating the card.
 ///   • The availability toggle and special/today's-special toggle are
 ///     still wired to the exact same `onToggleAvailability` /
 ///     `onToggleSpecial` callbacks as before — only their position and
@@ -2126,18 +2227,36 @@ class _HoverableCardState extends State<HoverableCard> {
 ///   • The old edit icon-button is now a full-width rounded action button
 ///     styled like the reference's "Add To Cart" pill (still calls the
 ///     same `onEdit` callback — only the visual treatment changed).
-///   • FIX: the content block previously used `MainAxisAlignment.start`
-///     inside a fixed-height `Expanded` area, which — whenever the name/
-///     description text was short — left a blank strip of empty white
-///     space beneath the "Edit Item" button and above the card's bottom
-///     edge. A `Spacer()` has been inserted right before the price, so
-///     any leftover vertical space is now absorbed there instead, and the
-///     price + action button are always pinned flush to the bottom of the
-///     card. Every field, callback, and piece of data shown is unchanged —
-///     only where the extra space goes has changed.
 ///   • The per-card delete button has been removed per request — the
 ///     "Edit Item" button is back to being the single, full-width action
 ///     on the card. Its callback (`onEdit`) is unchanged.
+///
+/// UI-ENHANCEMENT PASS 6:
+///   • The card body is a free-sizing `Column` again (`mainAxisSize:
+///     MainAxisSize.min`, no `Expanded`/`SingleChildScrollView`), so the
+///     whole card — image, name, description, rating, price, and the
+///     "Edit Item" button — simply grows to fit its own content. Paired
+///     with the masonry grid in `_buildItemsGrid`, expanding one card's
+///     description no longer disturbs any other card, and the "Edit
+///     Item" button always stays fully visible below the description
+///     instead of being pushed into a small internal scroll area.
+///   • The description ("Read more" / "Show less") is a single clamped
+///     line when collapsed. Tapping "Read more" swaps it to the full
+///     text and an `AnimatedSize` smoothly grows the block — and with it
+///     the whole card — to fit. Tapping "Show less" smoothly shrinks it
+///     back.
+///
+/// UI-ENHANCEMENT PASS 7 (this pass): "Read more"/"Show less" now sits
+/// inline at the end of the same line as the description text (matching
+/// the reference design's "Tender, boneless murgh ... Read More" style)
+/// instead of appearing on its own separate line underneath. A
+/// `TextPainter` measures the available width at build time and finds
+/// exactly how much of the collapsed description fits alongside
+/// "… Read more" on a single line, so the link is never accidentally
+/// clipped off the end the way plain `TextOverflow.ellipsis` could. When
+/// expanded, "Show less" is likewise appended right after the full text.
+/// No data, callback, or navigation logic was touched — only how the
+/// description text and its link are composed and measured.
 /// ─────────────────────────────────────────────────────────────────────────
 class _MenuItemCardBody extends StatefulWidget {
   final MenuItem item;
@@ -2162,28 +2281,206 @@ class _MenuItemCardBody extends StatefulWidget {
 
 class _MenuItemCardBodyState extends State<_MenuItemCardBody> {
   bool _isHovered = false; // desktop/web hover on the image (subtle zoom)
+  bool _descriptionExpanded = false; // "Read more" / "Show less" state
+
+  /// Tap recognizer backing the inline "Read more" / "Show less" span
+  /// inside the description `Text.rich`. Kept as a single long-lived
+  /// recognizer (rather than creating a new one every build) and
+  /// disposed in `dispose()`, as `TapGestureRecognizer` requires.
+  late final TapGestureRecognizer _readMoreTapRecognizer;
+
+  @override
+  void initState() {
+    super.initState();
+    _readMoreTapRecognizer = TapGestureRecognizer()
+      ..onTap = () => setState(
+            () => _descriptionExpanded = !_descriptionExpanded,
+          );
+  }
+
+  @override
+  void dispose() {
+    _readMoreTapRecognizer.dispose();
+    super.dispose();
+  }
+
+  /// Finds the longest prefix of [text] that, together with the
+  /// "… Read more" suffix, still fits within [maxWidth] on a single
+  /// line — using a `TextPainter` binary search rather than relying on
+  /// `TextOverflow.ellipsis`, which would just as happily truncate the
+  /// appended "Read more" text itself along with the description.
+  String _truncateForInlineLink({
+    required String text,
+    required TextStyle textStyle,
+    required String suffixEllipsis,
+    required String linkText,
+    required TextStyle linkStyle,
+    required double maxWidth,
+  }) {
+    final ellipsisPainter = TextPainter(
+      text: TextSpan(text: suffixEllipsis, style: textStyle),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final linkPainter = TextPainter(
+      text: TextSpan(text: linkText, style: linkStyle),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final double suffixWidth = ellipsisPainter.width + linkPainter.width;
+    final double availableForText = maxWidth - suffixWidth;
+    if (availableForText <= 0) return '';
+
+    final fullPainter = TextPainter(
+      text: TextSpan(text: text, style: textStyle),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    )..layout(maxWidth: double.infinity);
+
+    // Whole description already fits next to the link — no need to cut
+    // it at all (this also covers very short descriptions).
+    if (fullPainter.width <= availableForText) {
+      return text;
+    }
+
+    int low = 0;
+    int high = text.length;
+    while (low < high) {
+      final mid = (low + high + 1) ~/ 2;
+      final testPainter = TextPainter(
+        text: TextSpan(text: text.substring(0, mid), style: textStyle),
+        textDirection: TextDirection.ltr,
+        maxLines: 1,
+      )..layout(maxWidth: double.infinity);
+      if (testPainter.width <= availableForText) {
+        low = mid;
+      } else {
+        high = mid - 1;
+      }
+    }
+    return text.substring(0, low).trimRight();
+  }
+
+  /// The description block: when collapsed, a single line with
+  /// "… Read more" appended inline right after the (precisely measured)
+  /// truncated text — matching the reference design's layout. When
+  /// expanded, the full description is shown with "Show less" appended
+  /// inline at the end. Tapping either link toggles
+  /// `_descriptionExpanded`, and the surrounding `AnimatedSize` smoothly
+  /// grows/shrinks the card to fit. When there's no description, the
+  /// category name is shown instead (unchanged from before) with no
+  /// link, since there's nothing further to reveal.
+  Widget _buildDescriptionBlock() {
+    final item = widget.item;
+    final hasDescription =
+        item.description != null && item.description!.trim().isNotEmpty;
+    final fullText =
+        hasDescription ? item.description!.trim() : widget.categoryName;
+
+    final textStyle = GoogleFonts.inter(
+      fontSize: 10,
+      fontWeight: FontWeight.w500,
+      height: 1.3,
+      color: _Palette.textMuted,
+    );
+    final linkStyle = GoogleFonts.inter(
+      fontSize: 10,
+      fontWeight: FontWeight.w800,
+      letterSpacing: 0.2,
+      color: _Palette.milanoRedDeep,
+      decoration: TextDecoration.underline,
+      decorationColor: _Palette.milanoRedDeep.withValues(alpha: 0.45),
+    );
+
+    if (!hasDescription) {
+      // No description to expand — just show the category name, exactly
+      // as before, with no inline link.
+      return Text(
+        fullText,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: textStyle,
+      );
+    }
+
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      alignment: Alignment.topLeft,
+      child: _descriptionExpanded
+          ? Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(text: fullText, style: textStyle),
+                  TextSpan(
+                    text: '  Show less',
+                    style: linkStyle,
+                    recognizer: _readMoreTapRecognizer,
+                  ),
+                ],
+              ),
+            )
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                final truncated = _truncateForInlineLink(
+                  text: fullText,
+                  textStyle: textStyle,
+                  suffixEllipsis: '… ',
+                  linkText: 'Read more',
+                  linkStyle: linkStyle,
+                  maxWidth: constraints.maxWidth,
+                );
+                final bool wasCut = truncated != fullText;
+                return Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: wasCut ? '$truncated… ' : '$truncated  ',
+                        style: textStyle,
+                      ),
+                      TextSpan(
+                        text: 'Read more',
+                        style: linkStyle,
+                        recognizer: _readMoreTapRecognizer,
+                      ),
+                    ],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.clip,
+                );
+              },
+            ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
     final categoryName = widget.categoryName;
     final rating = _displayRatingFor(item.id);
-    final hasDescription =
-        item.description != null && item.description!.trim().isNotEmpty;
 
+    // The outer column sizes itself to its own content again
+    // (`mainAxisSize: MainAxisSize.min`): a fixed-ratio image up top,
+    // then the content block directly below it — no bounding/scrolling
+    // wrapper. Paired with the masonry grid in `_buildItemsGrid`, this
+    // lets the whole card (and only this card) grow when its
+    // description expands, so the "Edit Item" button always stays
+    // visible below it rather than being confined to a small scroll
+    // area. See the class doc comment above for the full rationale.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
       children: [
         // ── Small image block ─────────────────────────────────────────
-        Expanded(
-          flex: 4,
-          child: MouseRegion(
-            onEnter: (_) => setState(() => _isHovered = true),
-            onExit: (_) => setState(() => _isHovered = false),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
+        // Fixed 4:3 aspect ratio so the image keeps its proportions
+        // correctly regardless of the card's overall (now fixed) size.
+        MouseRegion(
+          onEnter: (_) => setState(() => _isHovered = true),
+          onExit: (_) => setState(() => _isHovered = false),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: AspectRatio(
+                aspectRatio: 4 / 3,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -2308,174 +2605,161 @@ class _MenuItemCardBodyState extends State<_MenuItemCardBody> {
         ),
 
         // ── Content block ─────────────────────────────────────────────
-        // Same fields, same order, same callbacks as before. The top
-        // group (special tag, name, description, rating row) stacks
-        // compactly from the top; a Spacer() then absorbs any leftover
-        // vertical space so the price + action button are always pinned
-        // flush to the bottom of the card — no more blank gap underneath
-        // the button regardless of how short the description is.
-        Expanded(
-          flex: 8,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 9),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                if (item.isSpecial)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 2),
+        // Same fields, same order, same callbacks as before. No bounding
+        // box or scroll wrapper — the Column above sizes itself to fit
+        // this content, so the card (and specifically the "Edit Item"
+        // button below) grows and shrinks together with the description
+        // block whenever "Read more"/"Show less" is tapped.
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 9),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (item.isSpecial)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.flash_on,
+                        size: 10,
+                        color: _Palette.milanoRed,
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        "TODAY'S SPECIAL",
+                        style: GoogleFonts.inter(
+                          fontSize: 8.5,
+                          color: _Palette.milanoRed,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              Text(
+                item.name,
+                style: GoogleFonts.playfairDisplay(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: _Palette.textDark,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              // Expandable description with "Read more"/"Show less" now
+              // inline at the end of the same line (see
+              // _buildDescriptionBlock doc comment above) — its
+              // AnimatedSize grows this card (and only this card) when
+              // tapped, so the "Edit Item" button always stays visible
+              // below it.
+              _buildDescriptionBlock(),
+              const SizedBox(height: 3),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.star_rounded,
+                    size: 11,
+                    color: _Palette.lemonChiffonDeep,
+                  ),
+                  const SizedBox(width: 3),
+                  Text(
+                    rating.toStringAsFixed(1),
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: _Palette.textMuted,
+                    ),
+                  ),
+                  if (widget.hasPrepTime) ...[
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.timer_outlined,
+                      size: 10,
+                      color: _Palette.textMuted,
+                    ),
+                    const SizedBox(width: 2),
+                    Text(
+                      '${item.preparationTime} min',
+                      style: GoogleFonts.inter(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w600,
+                        color: _Palette.textMuted,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '₹${item.price.toStringAsFixed(0)}',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: _Palette.milanoRed,
+                ),
+              ),
+              const SizedBox(height: 6),
+              // Action row — the "Edit Item" pill (same visual language
+              // as the reference design's "Add To Cart" button, still
+              // wired to the exact same onEdit callback as before) is
+              // the single, full-width action on the card.
+              SizedBox(
+                height: 40,
+                child: InkWell(
+                  onTap: widget.onEdit,
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          _Palette.milanoRed,
+                          _Palette.milanoRedDeep,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _Palette.milanoRed.withValues(
+                            alpha: 0.25,
+                          ),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(
-                          Icons.flash_on,
-                          size: 10,
-                          color: _Palette.milanoRed,
+                          Icons.edit_rounded,
+                          size: 13,
+                          color: Colors.white,
                         ),
-                        const SizedBox(width: 3),
+                        const SizedBox(width: 6),
                         Text(
-                          "TODAY'S SPECIAL",
+                          'Edit Item',
                           style: GoogleFonts.inter(
-                            fontSize: 8.5,
-                            color: _Palette.milanoRed,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.3,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
                         ),
                       ],
                     ),
                   ),
-                Text(
-                  item.name,
-                  style: GoogleFonts.playfairDisplay(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: _Palette.textDark,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 3),
-                // Description shown in full underneath the name —
-                // no line cap / ellipsis, so the entire text is
-                // always fully visible on the card.
-                Text(
-                  hasDescription ? item.description! : categoryName,
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                    height: 1.3,
-                    color: _Palette.textMuted,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.star_rounded,
-                      size: 11,
-                      color: _Palette.lemonChiffonDeep,
-                    ),
-                    const SizedBox(width: 3),
-                    Text(
-                      rating.toStringAsFixed(1),
-                      style: GoogleFonts.inter(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: _Palette.textMuted,
-                      ),
-                    ),
-                    if (widget.hasPrepTime) ...[
-                      const SizedBox(width: 8),
-                      Icon(
-                        Icons.timer_outlined,
-                        size: 10,
-                        color: _Palette.textMuted,
-                      ),
-                      const SizedBox(width: 2),
-                      Text(
-                        '${item.preparationTime} min',
-                        style: GoogleFonts.inter(
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w600,
-                          color: _Palette.textMuted,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                // Absorbs all leftover vertical space so the price and
-                // action button below always sit flush at the bottom of
-                // the card — no data/logic involved, purely layout.
-                const Spacer(),
-                Text(
-                  '₹${item.price.toStringAsFixed(0)}',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: _Palette.milanoRed,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                // Action row — the "Edit Item" pill (same visual language
-                // as the reference design's "Add To Cart" button, still
-                // wired to the exact same onEdit callback as before) is
-                // now the single, full-width action on the card — the
-                // delete button has been removed per request.
-                SizedBox(
-                  height: 40,
-                  child: InkWell(
-                    onTap: widget.onEdit,
-                    borderRadius: BorderRadius.circular(10),
-                    child: Container(
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            _Palette.milanoRed,
-                            _Palette.milanoRedDeep,
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
-                          BoxShadow(
-                            color: _Palette.milanoRed.withValues(
-                              alpha: 0.25,
-                            ),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.edit_rounded,
-                            size: 13,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Edit Item',
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ],

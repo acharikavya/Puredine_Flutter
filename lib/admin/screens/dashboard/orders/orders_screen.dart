@@ -255,164 +255,165 @@ class _OrdersScreenState extends State<OrdersScreen> {
     final size = MediaQuery.of(context).size;
     return Column(
       children: [
-        // ── Header Section ───────────────────────────────────────────────
-        // Fixed at the top, exactly like MenuScreen's custom header — it
-        // no longer scrolls away with the content beneath it.
-        _buildHeader(isMobile),
+          // ── Header Section ───────────────────────────────────────────────
+          // Fixed at the top, exactly like MenuScreen's custom header — it
+          // no longer scrolls away with the content beneath it.
+          _buildHeader(isMobile),
 
-        // ── Main Body Section ────────────────────────────────────────────
-        Expanded(
-          child: Stack(
-            children: [
-              // ── Ambient background dressing ─────────────────────────────
-              // Purely decorative — soft lemon/ruby glows plus a faint
-              // textured photograph, matching the Menu and Dashboard
-              // screens so the whole admin experience reads as one
-              // cohesive brand.
-              Positioned.fill(
-                child: Container(
-                  color: _OrdersTheme.canvas,
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        top: -70,
-                        right: -60,
-                        child: Container(
-                          width: 260,
-                          height: 260,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: RadialGradient(
-                              colors: [
-                                _OrdersTheme.lemonChiffon
-                                    .withValues(alpha: 0.5),
-                                Colors.transparent,
-                              ],
+          // ── Main Body Section ────────────────────────────────────────────
+          Expanded(
+            child: Stack(
+              children: [
+                // ── Ambient background dressing ─────────────────────────────
+                // Purely decorative — soft lemon/ruby glows plus a faint
+                // textured photograph, matching the Menu and Dashboard
+                // screens so the whole admin experience reads as one
+                // cohesive brand.
+                Positioned.fill(
+                  child: Container(
+                    color: _OrdersTheme.canvas,
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          top: -70,
+                          right: -60,
+                          child: Container(
+                            width: 260,
+                            height: 260,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  _OrdersTheme.lemonChiffon
+                                      .withValues(alpha: 0.5),
+                                  Colors.transparent,
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      Positioned(
-                        bottom: -90,
-                        left: -80,
-                        child: Container(
-                          width: 280,
-                          height: 280,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: RadialGradient(
-                              colors: [
-                                _OrdersTheme.milanoRed.withValues(alpha: 0.07),
-                                Colors.transparent,
-                              ],
+                        Positioned(
+                          bottom: -90,
+                          left: -80,
+                          child: Container(
+                            width: 280,
+                            height: 280,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  _OrdersTheme.milanoRed
+                                      .withValues(alpha: 0.07),
+                                  Colors.transparent,
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      // Extra low, wide glow further down the page —
-                      // gives the long orders list a second soft focal
-                      // point instead of all the ambient light sitting
-                      // only near the header. Matches the Admin
-                      // Dashboard / staff-side screens' Pass-2 backdrop.
-                      Positioned(
-                        top: 640,
-                        right: -110,
-                        child: Container(
-                          width: 230,
-                          height: 230,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: RadialGradient(
-                              colors: [
-                                _OrdersTheme.milanoRedLight.withValues(
-                                  alpha: 0.06,
-                                ),
-                                Colors.transparent,
-                              ],
+                        // Extra low, wide glow further down the page —
+                        // gives the long orders list a second soft focal
+                        // point instead of all the ambient light sitting
+                        // only near the header. Matches the Admin
+                        // Dashboard / staff-side screens' Pass-2 backdrop.
+                        Positioned(
+                          top: 640,
+                          right: -110,
+                          child: Container(
+                            width: 230,
+                            height: 230,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  _OrdersTheme.milanoRedLight.withValues(
+                                    alpha: 0.06,
+                                  ),
+                                  Colors.transparent,
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      Opacity(
-                        opacity: 0.04,
-                        child: Image.network(
-                          'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop',
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: double.infinity,
+                        Opacity(
+                          opacity: 0.04,
+                          child: Image.network(
+                            'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop',
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
 
-              // Faint diagonal sheen sweeping across the body — a subtle
-              // extra layer of depth so the cream backdrop doesn't read
-              // as flat behind the header, echoing the glass-highlight
-              // language used in the header itself.
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Colors.white.withValues(alpha: 0.28),
-                          Colors.transparent,
-                          Colors.transparent,
-                        ],
-                        stops: const [0.0, 0.35, 1.0],
+                // Faint diagonal sheen sweeping across the body — a subtle
+                // extra layer of depth so the cream backdrop doesn't read
+                // as flat behind the header, echoing the glass-highlight
+                // language used in the header itself.
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.28),
+                            Colors.transparent,
+                            Colors.transparent,
+                          ],
+                          stops: const [0.0, 0.35, 1.0],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
 
-              // Content — same fixed-header / scrollable-body pattern as
-              // MenuScreen: a SingleChildScrollView, instead of the header
-              // scrolling away inside a CustomScrollView/sliver list.
-              _isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        color: _OrdersTheme.milanoRed,
-                      ),
-                    )
-                  : _error != null
-                      ? _buildErrorState()
-                      : SingleChildScrollView(
-                          controller: _scrollController,
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: EdgeInsets.symmetric(
-                            horizontal:
-                                isMobile ? 16 : (size.width > 1400 ? 64 : 40),
-                            vertical: 32,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildStatsGrid(isMobile),
-                              const SizedBox(height: 32),
-                              _buildFilterSection(isMobile),
-                              const SizedBox(height: 24),
-                              Text(
-                                'Showing ${filtered.length > 50 ? 50 : filtered.length} of ${filtered.length} orders',
-                                style: GoogleFonts.inter(
-                                  color: AppColors.textMuted,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              _buildOrdersList(
-                                  filtered.take(50).toList(), isMobile),
-                            ],
-                          ),
+                // Content — same fixed-header / scrollable-body pattern as
+                // MenuScreen: a SingleChildScrollView, instead of the header
+                // scrolling away inside a CustomScrollView/sliver list.
+                _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: _OrdersTheme.milanoRed,
                         ),
-            ],
+                      )
+                    : _error != null
+                        ? _buildErrorState()
+                        : SingleChildScrollView(
+                            controller: _scrollController,
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: EdgeInsets.symmetric(
+                              horizontal:
+                                  isMobile ? 16 : (size.width > 1400 ? 64 : 40),
+                              vertical: 32,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildStatsGrid(isMobile),
+                                const SizedBox(height: 32),
+                                _buildFilterSection(isMobile),
+                                const SizedBox(height: 24),
+                                Text(
+                                  'Showing ${filtered.length > 50 ? 50 : filtered.length} of ${filtered.length} orders',
+                                  style: GoogleFonts.inter(
+                                    color: AppColors.textMuted,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                _buildOrdersList(
+                                    filtered.take(50).toList(), isMobile),
+                              ],
+                            ),
+                          ),
+              ],
+            ),
           ),
-        ),
       ],
     );
   }
@@ -3447,8 +3448,9 @@ class _AdminBottomNavTile extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 11,
                 fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
-                color:
-                    isActive ? _OrdersTheme.milanoRedDark : AppColors.textMuted,
+                color: isActive
+                    ? _OrdersTheme.milanoRedDark
+                    : AppColors.textMuted,
               ),
             ),
           ],
@@ -3700,7 +3702,8 @@ class _AdminSideNavTile extends StatelessWidget {
             boxShadow: isActive
                 ? [
                     BoxShadow(
-                      color: _OrdersTheme.milanoRedDark.withValues(alpha: 0.25),
+                      color:
+                          _OrdersTheme.milanoRedDark.withValues(alpha: 0.25),
                       blurRadius: 12,
                       offset: const Offset(0, 5),
                     ),

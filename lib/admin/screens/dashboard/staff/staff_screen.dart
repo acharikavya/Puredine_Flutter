@@ -2585,7 +2585,8 @@ class _AdminBottomNavTile extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 11,
                 fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
-                color: isActive ? _Palette.lemonChiffonDeep : _Palette.textDark,
+                color:
+                    isActive ? _Palette.lemonChiffonDeep : _Palette.textDark,
               ),
             ),
           ],

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:restaurant_unified_app/core/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
@@ -6,6 +7,10 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:restaurant_unified_app/admin/core/models/restaurant_model.dart';
 import 'package:restaurant_unified_app/admin/services/menu_service.dart';
+import 'package:provider/provider.dart';
+import 'package:restaurant_unified_app/core/auth_provider.dart';
+import 'package:restaurant_unified_app/admin/core/providers/restaurant_provider.dart';
+import 'package:restaurant_unified_app/admin/core/providers/notification_provider.dart';
 import 'category_form_dialog.dart';
 import 'item_form_dialog.dart';
 import 'manual_order_dialog.dart';
@@ -77,10 +82,10 @@ import 'today_special_dialog.dart';
 /// different column count depending on screen width. No data loading,
 /// mutation, or callback logic was touched — only how cards size and grow.
 ///
-/// UI-ENHANCEMENT PASS 7 (this pass): "Read more" now sits inline at the
-/// end of the same truncated description line (matching the reference
-/// design's "Tender, boneless murgh ... Read More" style) instead of on
-/// its own line underneath. Since Flutter's automatic `TextOverflow.
+/// UI-ENHANCEMENT PASS 7: "Read more" now sits inline at the end of the
+/// same truncated description line (matching the reference design's
+/// "Tender, boneless murgh ... Read More" style) instead of on its own
+/// line underneath. Since Flutter's automatic `TextOverflow.
 /// ellipsis` would just as happily cut the appended "Read more" text off
 /// along with the rest of the sentence, the collapsed description is now
 /// measured with a `TextPainter` to find exactly how much of the
@@ -90,6 +95,62 @@ import 'today_special_dialog.dart';
 /// "Show less" appended inline at the end once expanded) — only where
 /// "Read more"/"Show less" sits relative to the text changed. No data,
 /// callback, or navigation logic was touched.
+///
+/// UI-ENHANCEMENT PASS 8 (bottom navigation bar): adds a fixed, cream
+/// bottom navigation bar so the admin console reads as one consistent
+/// app while browsing the menu — tapping any tab navigates via the exact
+/// same `context.go(...)` pattern already used elsewhere in this file.
+/// No data loading, filtering, mutation, or navigation logic elsewhere
+/// in this file was touched.
+///
+/// UI-ENHANCEMENT PASS 9 (mobile-only bottom nav labels): on mobile
+/// widths only, the bottom nav's four tiles read "Menu / Staff / Tables /
+/// Order Bill" — matching the admin's actual day-to-day destinations.
+/// The bar's shape, colors, spacing, active/inactive styling, and
+/// tap-to-navigate behaviour (`context.go(item.route)`) are identical to
+/// the dashboard's bar — only the icon + label + destination route text
+/// differs.
+///
+/// UI-ENHANCEMENT PASS 12 (full desktop side navigation + mobile bottom
+/// nav parity, per the reference "PUREDINE" sidebar mock):
+///   1. A full-height desktop rail (`_AdminSideNav`) sits OUTSIDE the
+///      scrollable body, at the very top of `build()`'s `Scaffold.body`,
+///      so it spans the full screen height instead of scrolling away
+///      with the page content.
+///   2. `_AdminBottomNav` (the fixed cream bottom bar) continues to show
+///      only on mobile widths — since the full-height `_AdminSideNav`
+///      now covers desktop instead.
+///
+/// UI-ENHANCEMENT PASS 13 (desktop side nav parity with the Orders
+/// screen): `_AdminSideNav`/`_AdminSideNavTile` were re-themed to be a
+/// line-for-line match of the Orders screen's desktop side rail —
+/// same logo header block, same "ADMIN PANEL" pill badge, same tile
+/// layout (icon-in-circle, label, gradient active pill with a left gold
+/// accent bar and trailing chevron), and the same plain profile card
+/// pinned to the bottom. It's still mounted exactly the same way as
+/// before — as a fixed-width sibling inside `build()`'s outer `Row`,
+/// spanning the full screen height — only its internal visual styling
+/// changed to match the Orders screen. No data loading, filtering,
+/// mutation, or other navigation logic elsewhere in this file was
+/// touched by this pass.
+///
+/// UI-ENHANCEMENT PASS 14 (this pass — AdminDashboardScreen header
+/// merged into this screen): the header now carries the exact same
+/// "command bar" trio the dashboard shows — a live restaurant
+/// ACTIVE/INACTIVE status badge, a notification bell (unread dot +
+/// dropdown list, tap-to-mark-read, tap-through to the highlighted
+/// order), and a profile avatar (tap → `/admin/profile`) — sourced from
+/// the same `RestaurantProvider` / `NotificationProvider` /
+/// `AuthProvider` the dashboard already uses. They sit in a new top row
+/// above the existing "Menu Management" title, and the screen's own
+/// Create Order / Today's Special / Add Menu Item controls are
+/// unchanged and untouched below/alongside it. Because the private
+/// `_StatusBadge` / `_ProfileChip` / `_NotificationButton` /
+/// `_LiveTimeAgo` widgets that power the dashboard's header are
+/// file-scoped in Dart, they're duplicated verbatim near the bottom of
+/// this file — the exact same pattern already used for `_AdminBottomNav`
+/// above. No menu data-loading, filtering, mutation, dialog, or other
+/// navigation logic anywhere else in this file was touched by this pass.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
@@ -219,6 +280,22 @@ class _MenuScreenState extends State<MenuScreen> {
   void initState() {
     super.initState();
     _loadData();
+
+    // UI-ENHANCEMENT PASS 14: this screen's header now carries the same
+    // status badge + notification bell + profile avatar as
+    // AdminDashboardScreen. These two calls mirror
+    // AdminDashboardScreen.initState() exactly — fetch the restaurant so
+    // the ACTIVE/INACTIVE badge has real data, start notification
+    // polling so the bell's unread badge/list are live — so the header
+    // behaves identically whether the admin opens Menu Management
+    // directly or arrives here from the dashboard. None of the menu
+    // data-loading (`_loadData` above), filtering, mutation, or
+    // navigation logic elsewhere in this file was touched.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<RestaurantProvider>().fetchRestaurant();
+      context.read<NotificationProvider>().startPolling();
+    });
   }
 
   Future<void> _loadData() async {
@@ -770,216 +847,247 @@ class _MenuScreenState extends State<MenuScreen> {
 
     return Scaffold(
       backgroundColor: _Palette.canvas,
-      body: Column(
+      // UI-ENHANCEMENT PASS 9/11: the fixed cream bottom navigation bar
+      // (`_AdminBottomNav`) only shows on mobile widths. On desktop it's
+      // hidden — `bottomNavigationBar` is `null` — since the desktop
+      // layout now has the full-height `_AdminSideNav` (PASS 12) covering
+      // the same destinations instead.
+      bottomNavigationBar:
+          isDesktop ? null : const _AdminBottomNav(currentIndex: 0),
+      // UI-ENHANCEMENT PASS 12: the persistent desktop sidebar now lives
+      // at the very top of the body — a `Row` with `_AdminSideNav` on the
+      // left (desktop only) and the screen's existing header+content
+      // column in an `Expanded` beside it — so it spans the full screen
+      // height exactly like the reference design, instead of scrolling
+      // away with the page content. Mobile is completely unaffected: it
+      // still renders just the header+content column, full width.
+      body: Row(
         children: [
-          // ── Header Section ───────────────────────────────────────────────
-          // Fixed at the top, exactly like AdminDashboardScreen — it no
-          // longer scrolls away with the content beneath it.
-          _buildCustomHeader(),
-
-          // ── Main Body Section ────────────────────────────────────────────
+          if (isDesktop) const _AdminSideNav(currentIndex: 0),
           Expanded(
-            child: Stack(
+            child: Column(
               children: [
-                // ── Ambient background dressing ─────────────────────────
-                // Purely decorative — soft gold/maroon glows plus a faint
-                // textured photograph, matching the dashboard's "foggy"
-                // backdrop so the whole admin experience feels like one
-                // cohesive brand. A couple of extra glows/vignette layers
-                // were added for a richer, more "premium full screen" feel.
-                Positioned.fill(
-                  child: Container(
-                    color: _Palette.canvas,
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          top: -70,
-                          right: -60,
-                          child: Container(
-                            width: 280,
-                            height: 280,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: RadialGradient(
-                                colors: [
-                                  _Palette.lemonChiffon.withValues(
-                                    alpha: 0.32,
-                                  ),
-                                  Colors.transparent,
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          bottom: -90,
-                          left: -80,
-                          child: Container(
-                            width: 300,
-                            height: 300,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: RadialGradient(
-                                colors: [
-                                  _Palette.milanoRed.withValues(alpha: 0.08),
-                                  Colors.transparent,
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          top: 240,
-                          right: -110,
-                          child: Container(
-                            width: 220,
-                            height: 220,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: RadialGradient(
-                                colors: [
-                                  _Palette.lemonChiffonDeep.withValues(
-                                    alpha: 0.08,
-                                  ),
-                                  Colors.transparent,
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        // Extra soft maroon glow, lower-center — adds a
-                        // touch more richness to the full-screen backdrop.
-                        Positioned(
-                          bottom: 120,
-                          left: 0,
-                          right: 0,
-                          child: Center(
-                            child: Container(
-                              width: 340,
-                              height: 200,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: RadialGradient(
-                                  colors: [
-                                    _Palette.milanoRed.withValues(
-                                      alpha: 0.05,
+                // ── Header Section ─────────────────────────────────────────
+                // Fixed at the top, exactly like AdminDashboardScreen — it
+                // no longer scrolls away with the content beneath it.
+                _buildCustomHeader(),
+
+                // ── Main Body Section ──────────────────────────────────────
+                Expanded(
+                  child: Stack(
+                    children: [
+                      // ── Ambient background dressing ─────────────────────
+                      // Purely decorative — soft gold/maroon glows plus a
+                      // faint textured photograph, matching the dashboard's
+                      // "foggy" backdrop so the whole admin experience
+                      // feels like one cohesive brand. A couple of extra
+                      // glows/vignette layers were added for a richer,
+                      // more "premium full screen" feel.
+                      Positioned.fill(
+                        child: Container(
+                          color: _Palette.canvas,
+                          child: Stack(
+                            children: [
+                              Positioned(
+                                top: -70,
+                                right: -60,
+                                child: Container(
+                                  width: 280,
+                                  height: 280,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: RadialGradient(
+                                      colors: [
+                                        _Palette.lemonChiffon.withValues(
+                                          alpha: 0.32,
+                                        ),
+                                        Colors.transparent,
+                                      ],
                                     ),
-                                    Colors.transparent,
-                                  ],
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                bottom: -90,
+                                left: -80,
+                                child: Container(
+                                  width: 300,
+                                  height: 300,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: RadialGradient(
+                                      colors: [
+                                        _Palette.milanoRed.withValues(
+                                          alpha: 0.08,
+                                        ),
+                                        Colors.transparent,
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: 240,
+                                right: -110,
+                                child: Container(
+                                  width: 220,
+                                  height: 220,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: RadialGradient(
+                                      colors: [
+                                        _Palette.lemonChiffonDeep.withValues(
+                                          alpha: 0.08,
+                                        ),
+                                        Colors.transparent,
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // Extra soft maroon glow, lower-center — adds
+                              // a touch more richness to the full-screen
+                              // backdrop.
+                              Positioned(
+                                bottom: 120,
+                                left: 0,
+                                right: 0,
+                                child: Center(
+                                  child: Container(
+                                    width: 340,
+                                    height: 200,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: RadialGradient(
+                                        colors: [
+                                          _Palette.milanoRed.withValues(
+                                            alpha: 0.05,
+                                          ),
+                                          Colors.transparent,
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // UI-ENHANCEMENT PASS 2: extra low, wide glow
+                              // further down the page — gives a long items
+                              // grid a second soft focal point instead of
+                              // all the ambient light sitting only near the
+                              // header, matching the Orders screen's
+                              // Pass-2 backdrop.
+                              Positioned(
+                                top: 700,
+                                left: -110,
+                                child: Container(
+                                  width: 240,
+                                  height: 240,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: RadialGradient(
+                                      colors: [
+                                        _Palette.milanoRedLight.withValues(
+                                          alpha: 0.06,
+                                        ),
+                                        Colors.transparent,
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Opacity(
+                                opacity: 0.04,
+                                child: Image.network(
+                                  'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop',
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      // UI-ENHANCEMENT PASS 2: faint diagonal sheen
+                      // sweeping across the body — a subtle extra layer of
+                      // depth so the cream backdrop doesn't read as flat
+                      // behind the header, echoing the glass-highlight
+                      // language used in the header itself. Matches the
+                      // Orders screen's Pass-2 treatment.
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.white.withValues(alpha: 0.28),
+                                  Colors.transparent,
+                                  Colors.transparent,
+                                ],
+                                stops: const [0.0, 0.35, 1.0],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Content — same fixed-header / scrollable-body
+                      // pattern as AdminDashboardScreen: a
+                      // SingleChildScrollView centered with a max width,
+                      // instead of the header scrolling away inside a
+                      // CustomScrollView.
+                      _isLoading
+                          ? const Center(
+                              child: CircularProgressIndicator(
+                                color: _Palette.milanoRed,
+                              ),
+                            )
+                          : SingleChildScrollView(
+                              padding: EdgeInsets.fromLTRB(
+                                24,
+                                28,
+                                24,
+                                100 + bottomSafePad, // Extra bottom padding
+                              ),
+                              child: Center(
+                                child: ConstrainedBox(
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 1360),
+                                  child: _error != null
+                                      ? _buildError()
+                                      : isDesktop
+                                          ? Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                SizedBox(
+                                                  width: 300,
+                                                  child: _buildSidebar(),
+                                                ),
+                                                const SizedBox(width: 32),
+                                                Expanded(
+                                                  child: _buildMainContent(),
+                                                ),
+                                              ],
+                                            )
+                                          : Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.stretch,
+                                              children: [
+                                                _buildSidebar(),
+                                                const SizedBox(height: 32),
+                                                _buildMainContent(),
+                                              ],
+                                            ),
                                 ),
                               ),
                             ),
-                          ),
-                        ),
-                        // UI-ENHANCEMENT PASS 2: extra low, wide glow
-                        // further down the page — gives a long items grid
-                        // a second soft focal point instead of all the
-                        // ambient light sitting only near the header,
-                        // matching the Orders screen's Pass-2 backdrop.
-                        Positioned(
-                          top: 700,
-                          left: -110,
-                          child: Container(
-                            width: 240,
-                            height: 240,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: RadialGradient(
-                                colors: [
-                                  _Palette.milanoRedLight.withValues(
-                                    alpha: 0.06,
-                                  ),
-                                  Colors.transparent,
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        Opacity(
-                          opacity: 0.04,
-                          child: Image.network(
-                            'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop',
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            height: double.infinity,
-                          ),
-                        ),
-                      ],
-                    ),
+                    ],
                   ),
                 ),
-
-                // UI-ENHANCEMENT PASS 2: faint diagonal sheen sweeping
-                // across the body — a subtle extra layer of depth so the
-                // cream backdrop doesn't read as flat behind the header,
-                // echoing the glass-highlight language used in the header
-                // itself. Matches the Orders screen's Pass-2 treatment.
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.white.withValues(alpha: 0.28),
-                            Colors.transparent,
-                            Colors.transparent,
-                          ],
-                          stops: const [0.0, 0.35, 1.0],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Content — same fixed-header / scrollable-body pattern as
-                // AdminDashboardScreen: a SingleChildScrollView centered
-                // with a max width, instead of the header scrolling away
-                // inside a CustomScrollView.
-                _isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          color: _Palette.milanoRed,
-                        ),
-                      )
-                    : SingleChildScrollView(
-                        padding: EdgeInsets.fromLTRB(
-                          24,
-                          28,
-                          24,
-                          100 + bottomSafePad, // Extra bottom padding
-                        ),
-                        child: Center(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 1360),
-                            child: _error != null
-                                ? _buildError()
-                                : isDesktop
-                                    ? Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          SizedBox(
-                                            width: 300,
-                                            child: _buildSidebar(),
-                                          ),
-                                          const SizedBox(width: 32),
-                                          Expanded(child: _buildMainContent()),
-                                        ],
-                                      )
-                                    : Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.stretch,
-                                        children: [
-                                          _buildSidebar(),
-                                          const SizedBox(height: 32),
-                                          _buildMainContent(),
-                                        ],
-                                      ),
-                          ),
-                        ),
-                      ),
               ],
             ),
           ),
@@ -990,6 +1098,16 @@ class _MenuScreenState extends State<MenuScreen> {
 
   Widget _buildCustomHeader() {
     final isMobile = MediaQuery.of(context).size.width < 800;
+
+    // UI-ENHANCEMENT PASS 14: same providers AdminDashboardScreen reads
+    // for its header — RestaurantProvider for the ACTIVE/INACTIVE badge,
+    // AuthProvider for the profile avatar's initial/tooltip. Read here
+    // (not deeper down) so both the mobile and desktop header layouts
+    // below can use them.
+    final auth = context.watch<AuthProvider>();
+    final restaurantProv = context.watch<RestaurantProvider>();
+    final restaurant = restaurantProv.restaurant;
+
     return ClipRect(
       child: Container(
         decoration: BoxDecoration(
@@ -1218,17 +1336,21 @@ class _MenuScreenState extends State<MenuScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // UI-ENHANCEMENT PASS 14: the same status badge +
+                    // notification bell + profile avatar trio
+                    // AdminDashboardScreen shows at the top of its
+                    // header — wired to the exact same
+                    // `RestaurantProvider` / `NotificationProvider` /
+                    // `context.go('/admin/profile')` the dashboard uses.
+                    // The back-chevron control remains removed on both
+                    // mobile and desktop, as before; the date label
+                    // (desktop only) now sits just left of the bell
+                    // instead of alone at the far right.
                     Row(
                       children: [
-                        // Compact icon-only back control — no arrow icon,
-                        // no "Back" label, just a clean "<" glyph in a
-                        // circular glass button matching the app's other
-                        // header controls.
-                        _BackChevronButton(
-                          onTap: () => context.go('/admin/dashboard'),
-                        ),
+                        _StatusBadge(isActive: restaurant?.isActive ?? true),
                         const Spacer(),
-                        if (!isMobile)
+                        if (!isMobile) ...[
                           Text(
                             _todayLabel(),
                             style: GoogleFonts.inter(
@@ -1238,6 +1360,13 @@ class _MenuScreenState extends State<MenuScreen> {
                               color: Colors.white.withValues(alpha: 0.65),
                             ),
                           ),
+                          const SizedBox(width: 16),
+                        ],
+                        _NotificationButton(),
+                        const SizedBox(width: 12),
+                        _ProfileChip(
+                          email: auth.userEmail ?? 'admin@restaurant.com',
+                        ),
                       ],
                     ),
                     const SizedBox(height: 18),
@@ -1885,77 +2014,6 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 }
 
-/// Compact icon-only "back" control — a circular glass button showing only
-/// a plain "<" glyph. Replaces the previous arrow-icon + "Back" label combo
-/// with a minimal, professional control that matches the other 40×40
-/// circular header buttons used across the app (notifications, profile).
-/// Restyled with a gentle hover scale to match the richer nav controls
-/// used on the dashboard header.
-class _BackChevronButton extends StatefulWidget {
-  final VoidCallback onTap;
-  const _BackChevronButton({required this.onTap});
-
-  @override
-  State<_BackChevronButton> createState() => _BackChevronButtonState();
-}
-
-class _BackChevronButtonState extends State<_BackChevronButton> {
-  bool _isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedScale(
-          duration: const Duration(milliseconds: 200),
-          scale: _isHovered ? 1.08 : 1.0,
-          curve: Curves.easeOutCubic,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: 40,
-            height: 40,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: _isHovered
-                  ? Colors.white.withValues(alpha: 0.20)
-                  : Colors.white.withValues(alpha: 0.10),
-              border: Border.all(
-                color: _isHovered
-                    ? _Palette.lemonChiffon.withValues(alpha: 0.7)
-                    : _Palette.lemonChiffon.withValues(alpha: 0.4),
-                width: 1.2,
-              ),
-              boxShadow: _isHovered
-                  ? [
-                      BoxShadow(
-                        color: _Palette.lemonChiffon.withValues(alpha: 0.25),
-                        blurRadius: 10,
-                        spreadRadius: 1,
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Text(
-              '‹',
-              style: GoogleFonts.inter(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-                height: 1.0,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// Small decorative gradient divider placed beneath the section title —
 /// purely cosmetic, mirrors the same accent used on the admin dashboard.
 class _TitleDivider extends StatelessWidget {
@@ -1977,6 +2035,437 @@ class _TitleDivider extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// ─────────────────────────────────────────────────────────────────────────
+/// UI-ENHANCEMENT PASS 14 — dashboard header widgets, duplicated here.
+///
+/// `_StatusBadge`, `_ProfileChip`, `_NotificationButton`, and
+/// `_LiveTimeAgo` are copied verbatim from `AdminDashboardScreen` so this
+/// screen's header can show the same restaurant status badge,
+/// notification bell (with its unread dot, dropdown list, mark-as-read,
+/// and tap-through to the highlighted order), and profile avatar. Dart
+/// classes prefixed with `_` are file-scoped/private, so they can't be
+/// imported across files — this is the exact same duplication pattern
+/// already used above for `_AdminBottomNav`/`_AdminBottomNavTile`. Every
+/// callback, route, and provider call below is identical to the
+/// dashboard's own copy — nothing here is new business logic, only a
+/// second place these widgets are mounted.
+/// ─────────────────────────────────────────────────────────────────────────
+class _StatusBadge extends StatelessWidget {
+  final bool isActive;
+  const _StatusBadge({required this.isActive});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: _Palette.lemonChiffon,
+        borderRadius: BorderRadius.circular(100),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isActive ? Icons.check_circle_rounded : Icons.pause_circle_rounded,
+            size: 14,
+            color: _Palette.success,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            isActive ? 'ACTIVE' : 'INACTIVE',
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: _Palette.milanoRedDeep,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Profile button — a compact 40×40 circular tap target showing only the
+/// admin's initial (e.g. "A"). Tapping it opens the profile page. No
+/// email label, no logout control — identical to the dashboard's own
+/// `_ProfileChip`.
+class _ProfileChip extends StatefulWidget {
+  final String email;
+  const _ProfileChip({required this.email});
+
+  @override
+  State<_ProfileChip> createState() => _ProfileChipState();
+}
+
+class _ProfileChipState extends State<_ProfileChip> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final initial = widget.email.trim().isNotEmpty
+        ? widget.email.trim()[0].toUpperCase()
+        : 'A';
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: Tooltip(
+        message: widget.email,
+        child: GestureDetector(
+          onTap: () => context.go('/admin/profile'),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _isHovered
+                  ? Colors.white.withValues(alpha: 0.20)
+                  : Colors.white.withValues(alpha: 0.10),
+              border: Border.all(
+                color: _isHovered
+                    ? _Palette.lemonChiffon.withValues(alpha: 0.7)
+                    : Colors.white.withValues(alpha: 0.15),
+              ),
+              boxShadow: _isHovered
+                  ? [
+                      BoxShadow(
+                        color: _Palette.lemonChiffon.withValues(alpha: 0.3),
+                        blurRadius: 12,
+                        spreadRadius: 2,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Container(
+              width: 26,
+              height: 26,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _isHovered
+                    ? Colors.white
+                    : _Palette.lemonChiffon.withValues(alpha: 0.9),
+              ),
+              child: Text(
+                initial,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: _Palette.milanoRedDeep,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Notification bell — shows an unread dot when `NotificationProvider`
+/// has unread items; tapping opens the same dropdown/list dialog used on
+/// the dashboard (mark all as read, tap an item to mark it read and jump
+/// to `/admin/orders?highlightOrderId=...`).
+class _NotificationButton extends StatefulWidget {
+  @override
+  State<_NotificationButton> createState() => _NotificationButtonState();
+}
+
+class _NotificationButtonState extends State<_NotificationButton> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final prov = context.watch<NotificationProvider>();
+    final unread = prov.unreadCount;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: () => _showNotificationOverlay(context),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: _isHovered
+                ? Colors.white.withValues(alpha: 0.20)
+                : Colors.white.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _isHovered
+                  ? _Palette.lemonChiffon.withValues(alpha: 0.7)
+                  : Colors.white.withValues(alpha: 0.15),
+            ),
+          ),
+          child: Center(
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(
+                  Icons.notifications_outlined,
+                  color: Colors.white,
+                  size: 24,
+                ),
+                if (unread > 0)
+                  Positioned(
+                    right: -2,
+                    top: -2,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: _Palette.lemonChiffon,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: _Palette.milanoRedDeep,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showNotificationOverlay(BuildContext context) {
+    final prov = context.read<NotificationProvider>();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final isMobile = screenWidth < 600;
+
+        return Dialog(
+          alignment: isMobile ? Alignment.center : Alignment.topRight,
+          insetPadding: isMobile
+              ? const EdgeInsets.symmetric(horizontal: 16, vertical: 24)
+              : const EdgeInsets.only(top: 80, right: 100),
+          backgroundColor: Colors.transparent,
+          child: Container(
+            width: isMobile ? screenWidth - 32 : 400,
+            constraints: const BoxConstraints(maxHeight: 500, maxWidth: 400),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.14),
+                  blurRadius: 40,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: _Palette.lemonChiffon.withValues(alpha: 0.25),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(24),
+                      topRight: Radius.circular(24),
+                    ),
+                  ),
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: _Palette.milanoRed,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.notifications_outlined,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Notifications',
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: _Palette.milanoRedDeep,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (prov.notifications.isNotEmpty)
+                        TextButton(
+                          onPressed: () {
+                            prov.markAllAsRead();
+                            Navigator.pop(context);
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: _Palette.milanoRed,
+                          ),
+                          child: Text(
+                            'Mark all as read',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                Divider(height: 1, color: _Palette.lemonChiffonDeep),
+                if (prov.notifications.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 60),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: const BoxDecoration(
+                            color: _Palette.lemonChiffon,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.notifications_none_rounded,
+                            color: _Palette.milanoRed.withValues(alpha: 0.4),
+                            size: 48,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No new notifications',
+                          style: GoogleFonts.inter(
+                            color: _Palette.textMuted,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemCount: prov.notifications.length,
+                      itemBuilder: (context, i) {
+                        final n = prov.notifications[i];
+                        return ListTile(
+                          onTap: () {
+                            prov.markAsRead(n.id);
+                            Navigator.pop(context);
+                            context.go(
+                              '/admin/orders?highlightOrderId=${n.orderId}',
+                            );
+                          },
+                          leading: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: n.isRead
+                                  ? _Palette.lemonChiffon.withValues(alpha: 0.4)
+                                  : _Palette.milanoRed.withValues(alpha: 0.08),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.receipt_long_rounded,
+                              color: n.isRead
+                                  ? _Palette.textMuted
+                                  : _Palette.milanoRed,
+                              size: 20,
+                            ),
+                          ),
+                          title: Text(
+                            n.message,
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight:
+                                  n.isRead ? FontWeight.w500 : FontWeight.bold,
+                              color: _Palette.textDark,
+                            ),
+                          ),
+                          subtitle: _LiveTimeAgo(dt: n.createdAt),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 4,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Live-updating "Xm ago" / "Xh ago" label used under each notification
+/// row inside the dropdown — refreshes every 30 seconds while visible.
+class _LiveTimeAgo extends StatefulWidget {
+  final DateTime dt;
+  const _LiveTimeAgo({required this.dt});
+
+  @override
+  State<_LiveTimeAgo> createState() => _LiveTimeAgoState();
+}
+
+class _LiveTimeAgoState extends State<_LiveTimeAgo> {
+  late Timer _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      _format(widget.dt),
+      style: GoogleFonts.inter(fontSize: 11, color: _Palette.textMuted),
+    );
+  }
+
+  String _format(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
   }
 }
 
@@ -2246,17 +2735,17 @@ class _HoverableCardState extends State<HoverableCard> {
 ///     the whole card — to fit. Tapping "Show less" smoothly shrinks it
 ///     back.
 ///
-/// UI-ENHANCEMENT PASS 7 (this pass): "Read more"/"Show less" now sits
-/// inline at the end of the same line as the description text (matching
-/// the reference design's "Tender, boneless murgh ... Read More" style)
-/// instead of appearing on its own separate line underneath. A
-/// `TextPainter` measures the available width at build time and finds
-/// exactly how much of the collapsed description fits alongside
-/// "… Read more" on a single line, so the link is never accidentally
-/// clipped off the end the way plain `TextOverflow.ellipsis` could. When
-/// expanded, "Show less" is likewise appended right after the full text.
-/// No data, callback, or navigation logic was touched — only how the
-/// description text and its link are composed and measured.
+/// UI-ENHANCEMENT PASS 7: "Read more"/"Show less" now sits inline at the
+/// end of the same line as the description text (matching the reference
+/// design's "Tender, boneless murgh ... Read More" style) instead of
+/// appearing on its own separate line underneath. A `TextPainter`
+/// measures the available width at build time and finds exactly how
+/// much of the collapsed description fits alongside "… Read more" on a
+/// single line, so the link is never accidentally clipped off the end
+/// the way plain `TextOverflow.ellipsis` could. When expanded, "Show
+/// less" is likewise appended right after the full text. No data,
+/// callback, or navigation logic was touched — only how the description
+/// text and its link are composed and measured.
 /// ─────────────────────────────────────────────────────────────────────────
 class _MenuItemCardBody extends StatefulWidget {
   final MenuItem item;
@@ -2911,6 +3400,521 @@ class _CategoryPill extends StatelessWidget {
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
                 color: isSelected ? Colors.white : _Palette.milanoRedDeep,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// ─────────────────────────────────────────────────────────────────────────
+/// UI-ENHANCEMENT PASS 13 — Desktop side navigation, re-themed to match
+/// the Orders screen exactly.
+///
+/// A fixed cream left sidebar shown ONLY on desktop widths — mounted as
+/// a fixed-width sibling inside `build()`'s outer `Row` (see above),
+/// spanning the full screen height so it never scrolls away with the
+/// page content. Structurally and visually this is now a line-for-line
+/// match of the Orders screen's desktop side rail: a small "PUREDINE"
+/// logo header, an "ADMIN PANEL" pill badge, four nav tiles (Menu /
+/// Staff / Tables / Order Bill — the active one rendered as a solid
+/// maroon gradient pill with a left gold accent bar and a trailing
+/// chevron), and a small "Admin / Online" profile card pinned to the
+/// bottom via a `Spacer`.
+///
+/// Tapping a tile calls the same `context.go(item.route)` pattern
+/// already used everywhere else in this file (see `_AdminBottomNavTile`,
+/// `_SidebarItem`). No data loading, filtering, mutation, or other
+/// business logic is touched by this widget — it is purely additive
+/// presentation.
+/// ─────────────────────────────────────────────────────────────────────────
+class _AdminNavItem {
+  final IconData icon;
+  final String label;
+  final String route;
+  const _AdminNavItem({
+    required this.icon,
+    required this.label,
+    required this.route,
+  });
+}
+
+const List<_AdminNavItem> _kAdminNavItems = [
+  _AdminNavItem(
+    icon: Icons.restaurant_menu_rounded,
+    label: 'Menu',
+    route: '/admin/menu',
+  ),
+  _AdminNavItem(
+    icon: Icons.groups_rounded,
+    label: 'Staff',
+    route: '/admin/staff',
+  ),
+  _AdminNavItem(
+    icon: Icons.table_restaurant_rounded,
+    label: 'Tables',
+    route: '/admin/tables',
+  ),
+  _AdminNavItem(
+    icon: Icons.receipt_long_rounded,
+    label: 'Order Bill',
+    route: '/admin/orders',
+  ),
+];
+
+class _AdminSideNav extends StatelessWidget {
+  final int? currentIndex;
+  const _AdminSideNav({this.currentIndex});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 260,
+      decoration: BoxDecoration(
+        color: _Palette.canvas,
+        border: Border(
+          right: BorderSide(
+            color: _Palette.milanoRed.withValues(alpha: 0.10),
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 24,
+            offset: const Offset(4, 0),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        right: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ── Logo header ────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: _Palette.milanoRed,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _Palette.lemonChiffon.withValues(alpha: 0.6),
+                        width: 1.4,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.restaurant,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'PUREDINE',
+                    style: GoogleFonts.playfairDisplay(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.4,
+                      color: _Palette.milanoRedDeep,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Divider(
+              height: 1,
+              color: _Palette.milanoRed.withValues(alpha: 0.08),
+            ),
+            const SizedBox(height: 20),
+            // ── "ADMIN PANEL" badge ──────────────────────────────────
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: _Palette.lemonChiffon.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(100),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.shield_outlined,
+                      size: 14,
+                      color: _Palette.milanoRedDeep,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'ADMIN PANEL',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.6,
+                        color: _Palette.milanoRedDeep,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            // ── Nav items ──────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: Column(
+                children: [
+                  for (int i = 0; i < _kAdminNavItems.length; i++)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _AdminSideNavTile(
+                        item: _kAdminNavItems[i],
+                        isActive: currentIndex == i,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const Spacer(),
+            // ── Profile card ─────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 20),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: _Palette.milanoRed.withValues(alpha: 0.10),
+                  ),
+                  boxShadow: _Palette.softShadow,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      alignment: Alignment.center,
+                      decoration: const BoxDecoration(
+                        color: _Palette.milanoRed,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        'A',
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Admin',
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: _Palette.textDark,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Row(
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: const BoxDecoration(
+                                  color: _Palette.success,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Online',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  color: _Palette.textMuted,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One tappable row inside `_AdminSideNav`. Inactive tiles are a plain
+/// transparent row with a muted icon+label; the active tile becomes a
+/// solid maroon gradient pill with a small gold accent bar on its left
+/// edge and a trailing white chevron, matching the Orders screen's
+/// highlighted tile exactly. Navigation is a plain `context.go(item.
+/// route)` call, disabled when already active.
+class _AdminSideNavTile extends StatelessWidget {
+  final _AdminNavItem item;
+  final bool isActive;
+  const _AdminSideNavTile({required this.item, required this.isActive});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: isActive ? null : () => context.go(item.route),
+        borderRadius: BorderRadius.circular(14),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            gradient: isActive
+                ? const LinearGradient(
+                    colors: [
+                      _Palette.milanoRed,
+                      _Palette.milanoRedDeep,
+                    ],
+                  )
+                : null,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: isActive
+                ? [
+                    BoxShadow(
+                      color: _Palette.milanoRedDeep.withValues(alpha: 0.25),
+                      blurRadius: 12,
+                      offset: const Offset(0, 5),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            children: [
+              if (isActive)
+                Container(
+                  width: 3,
+                  height: 18,
+                  margin: const EdgeInsets.only(right: 10),
+                  decoration: BoxDecoration(
+                    color: _Palette.lemonChiffon,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              Container(
+                width: 34,
+                height: 34,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: isActive
+                      ? Colors.white.withValues(alpha: 0.16)
+                      : _Palette.milanoRed.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  item.icon,
+                  size: 17,
+                  color: isActive ? Colors.white : _Palette.milanoRedDeep,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  item.label,
+                  style: GoogleFonts.inter(
+                    fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
+                    fontSize: 14,
+                    color: isActive ? Colors.white : _Palette.textDark,
+                  ),
+                ),
+              ),
+              if (isActive)
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// ─────────────────────────────────────────────────────────────────────────
+/// UI-ENHANCEMENT PASS 8/9 — Bottom Navigation Bar (mobile only)
+///
+/// Identical in structure and styling to the `_AdminBottomNav` added to
+/// `AdminDashboardScreen`, duplicated here (private classes are
+/// file-scoped in Dart, so this doesn't conflict with the dashboard's
+/// copy) so this screen carries the exact same fixed cream bottom nav on
+/// mobile. Tapping a tile calls `context.go(route)` — the same
+/// navigation call this file already uses elsewhere. No business logic
+/// added. On desktop this bar is not shown at all (`build()` passes
+/// `bottomNavigationBar: null`) since the full-height `_AdminSideNav`
+/// above covers the same four destinations there.
+/// ─────────────────────────────────────────────────────────────────────────
+class _AdminBottomNavItem {
+  final IconData icon;
+  final String label;
+  final String route;
+  const _AdminBottomNavItem({
+    required this.icon,
+    required this.label,
+    required this.route,
+  });
+}
+
+/// Fixed cream bottom navigation bar matching the reference mobile design:
+/// a rounded-top panel with a thin gold top edge, four evenly-spaced
+/// tappable tiles ("Menu", "Staff", "Tables", "Order Bill"), each showing
+/// an icon inside a circular badge with a label underneath. The active
+/// tab's badge is filled solid gold with a white icon and a bold gold
+/// label; inactive tabs show a plain white badge with a dark-maroon icon
+/// and a muted dark label.
+///
+/// Purely presentational: tapping an inactive tile calls
+/// `context.go(route)`. On this screen `currentIndex` is `0` ("Menu"),
+/// since this is the Menu Management screen.
+class _AdminBottomNav extends StatelessWidget {
+  final int? currentIndex;
+  const _AdminBottomNav({this.currentIndex});
+
+  static const List<_AdminBottomNavItem> _items = [
+    _AdminBottomNavItem(
+      icon: Icons.restaurant_menu_rounded,
+      label: 'Menu',
+      route: '/admin/menu',
+    ),
+    _AdminBottomNavItem(
+      icon: Icons.groups_rounded,
+      label: 'Staff',
+      route: '/admin/staff',
+    ),
+    _AdminBottomNavItem(
+      icon: Icons.table_restaurant_rounded,
+      label: 'Tables',
+      route: '/admin/tables',
+    ),
+    _AdminBottomNavItem(
+      icon: Icons.receipt_long_rounded,
+      label: 'Order Bill',
+      route: '/admin/orders',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _Palette.canvas,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(28),
+          topRight: Radius.circular(28),
+        ),
+        border: const Border(
+          top: BorderSide(color: _Palette.lemonChiffon, width: 3),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 24,
+            offset: const Offset(0, -8),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              for (int i = 0; i < _items.length; i++)
+                _AdminBottomNavTile(
+                  item: _items[i],
+                  isActive: currentIndex == i,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One tappable tile inside `_AdminBottomNav` — an icon in a circular
+/// badge (solid gold + white icon when active, white + dark-maroon icon
+/// when inactive) with a label underneath. Navigation is a plain
+/// `context.go(item.route)` call; disabled entirely when the tile is
+/// already the active tab so tapping an already-active tab is a
+/// harmless no-op instead of an unnecessary re-navigation.
+class _AdminBottomNavTile extends StatelessWidget {
+  final _AdminBottomNavItem item;
+  final bool isActive;
+  const _AdminBottomNavTile({required this.item, required this.isActive});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: isActive ? null : () => context.go(item.route),
+      borderRadius: BorderRadius.circular(20),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isActive ? _Palette.lemonChiffon : Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: isActive
+                        ? _Palette.lemonChiffonDeep.withValues(alpha: 0.45)
+                        : Colors.black.withValues(alpha: 0.08),
+                    blurRadius: isActive ? 14 : 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Icon(
+                item.icon,
+                size: 22,
+                color: isActive ? Colors.white : _Palette.milanoRedDeep,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              item.label,
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
+                color:
+                    isActive ? _Palette.lemonChiffonDeep : _Palette.textDark,
               ),
             ),
           ],

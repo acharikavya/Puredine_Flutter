@@ -27,39 +27,6 @@ import 'package:restaurant_unified_app/utils/file_download_helper.dart';
 /// subtle identity at a glance. No provider, service, filtering, dialog,
 /// QR-generation, or download logic was touched anywhere in this pass —
 /// only presentation changed.
-///
-/// UI-ENHANCEMENT PASS 3 (mobile bottom nav + desktop side rail + back
-/// button removal):
-///   1. A fixed, cream bottom navigation bar (`_AdminBottomNav`) was
-///      added, showing "Menu / Staff / Tables / Order Bill" — mobile
-///      widths only (`bottomNavigationBar` is `null` on desktop).
-///      "Tables" renders as the active tab since that's this screen.
-///   2. A branded vertical side-navigation rail (`_DesktopSideNav`) was
-///      added — desktop widths only — sitting to the left of the main
-///      scrollable content. It carries a small brand mark, an "ADMIN
-///      PANEL" pill, the same four destinations as the bottom nav (with
-///      "Tables" shown active), and a small profile chip at the bottom.
-///      Tapping a tile uses the same `context.go(route)` pattern already
-///      used throughout this file.
-///   3. The top-left "‹" back chevron control (previously
-///      `_BackChevronButton`) has been removed from the header. The
-///      header's `Row` keeps its `Spacer()` so the date label / divider /
-///      add-table icon button continue to sit flush right exactly as
-///      before.
-///
-/// UI-ENHANCEMENT PASS 4 (desktop side nav now matches the Admin Orders
-/// screen exactly):
-///   The desktop side rail (`_DesktopSideNav`) is now a fixed, full-height
-///   panel flush against the left edge of the screen — identical in
-///   structure and styling to the Admin Orders screen's `_AdminSideNav`
-///   (same 260px width, same logo header, "ADMIN PANEL" pill, nav tiles
-///   with a gold-accented active pill, and a profile card pinned to the
-///   bottom via a `Spacer`). Previously it was a floating, rounded card
-///   inset with padding below the header; now — exactly like the Orders
-///   screen — it sits as a `Row` sibling alongside the header + scrollable
-///   content, spanning the full height of the body. No provider, service,
-///   filtering, dialog, QR-generation, download, or other business logic
-///   was touched in this pass — presentation and layout structure only.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   _Palette._();
@@ -692,219 +659,166 @@ class _TablesScreenState extends State<TablesScreen> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isMobile = size.width < 800;
-    // Shared horizontal content margin, reused by the mobile scroll
-    // padding and the desktop content padding below — same value as
-    // before (`size.width > 1400 ? 64 : 40`), just factored into one
-    // variable so both layouts stay in sync.
-    final double horizontalPad = size.width > 1400 ? 64.0 : 40.0;
 
     return Scaffold(
       backgroundColor: _Palette.canvas,
-      // UI-ENHANCEMENT PASS 3: fixed cream bottom navigation bar with
-      // "Menu / Staff / Tables / Order Bill" — mobile widths only. On
-      // desktop this is `null`; the `_DesktopSideNav` rail (added below,
-      // as a full-height `Row` sibling — see PASS 4) covers the same
-      // destinations there instead, matching the Admin Orders screen.
-      bottomNavigationBar:
-          isMobile ? const _AdminBottomNav(currentIndex: 2) : null,
-      // UI-ENHANCEMENT PASS 4: on desktop, the side nav is now a
-      // full-height `Row` sibling placed directly in the `Scaffold.body`
-      // — identical in structure to how OrdersScreen wires up its
-      // `_AdminSideNav` — instead of being nested inside the content
-      // Stack/Column below the header. The header + scrollable content
-      // (built by `_buildScreenBody`) occupy the remaining `Expanded`
-      // space to its right.
-      body: isMobile
-          ? _buildScreenBody(isMobile, horizontalPad)
-          : Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const _DesktopSideNav(currentIndex: 2),
-                Expanded(child: _buildScreenBody(isMobile, horizontalPad)),
-              ],
-            ),
-    );
-  }
-
-  /// The ambient background dressing + fixed header + scrollable body
-  /// content that makes up the main screen area — unchanged in content
-  /// from before this pass, just factored out into its own method (as
-  /// OrdersScreen already does with `_buildScreenBody`) so it can sit to
-  /// the right of the full-height `_DesktopSideNav` on desktop, or fill
-  /// the whole screen on mobile. No data loading, filtering, dialog, QR,
-  /// or download logic was touched — presentation/layout only.
-  Widget _buildScreenBody(bool isMobile, double horizontalPad) {
-    return Stack(
-      children: [
-        // ── Ambient background dressing ─────────────────────────────────
-        // Purely decorative — soft lemon/ruby glows plus a faint textured
-        // photograph, matching the rest of the admin app's "foggy"
-        // backdrop so this screen feels like one cohesive brand.
-        Positioned.fill(
-          child: Container(
-            color: _Palette.canvas,
-            child: Stack(
-              children: [
-                Positioned(
-                  top: -70,
-                  right: -60,
-                  child: Container(
-                    width: 260,
-                    height: 260,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          _Palette.lemonChiffon.withValues(alpha: 0.5),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: -90,
-                  left: -80,
-                  child: Container(
-                    width: 280,
-                    height: 280,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          _Palette.milanoRed.withValues(alpha: 0.07),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                // Extra low, wide glow further down the page — gives the
-                // long tables list a second soft focal point instead of
-                // all the ambient light sitting only near the header.
-                // Matches the Admin Orders screen's Pass-2 backdrop
-                // treatment.
-                Positioned(
-                  top: 640,
-                  right: -110,
-                  child: Container(
-                    width: 230,
-                    height: 230,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          _Palette.milanoRedLight.withValues(alpha: 0.06),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Opacity(
-                  opacity: 0.04,
-                  child: Image.network(
-                    'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop',
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        // Faint diagonal sheen sweeping across the body — a subtle extra
-        // layer of depth so the cream backdrop doesn't read as flat
-        // behind the header, echoing the glass-highlight language used
-        // in the header itself. Matches the Admin Orders screen exactly.
-        Positioned.fill(
-          child: IgnorePointer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.white.withValues(alpha: 0.28),
-                    Colors.transparent,
-                    Colors.transparent,
-                  ],
-                  stops: const [0.0, 0.35, 1.0],
-                ),
-              ),
-            ),
-          ),
-        ),
-
-        _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(color: _Palette.milanoRed),
-              )
-            : Column(
+      body: Stack(
+        children: [
+          // ── Ambient background dressing ─────────────────────────────────
+          // Purely decorative — soft lemon/ruby glows plus a faint textured
+          // photograph, matching the rest of the admin app's "foggy"
+          // backdrop so this screen feels like one cohesive brand.
+          Positioned.fill(
+            child: Container(
+              color: _Palette.canvas,
+              child: Stack(
                 children: [
-                  _buildHeader(isMobile),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: isMobile
-                          ? const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 24,
-                            )
-                          : EdgeInsets.fromLTRB(
-                              horizontalPad,
-                              24,
-                              horizontalPad,
-                              24,
-                            ),
-                      child: _buildBodyContent(isMobile),
+                  Positioned(
+                    top: -70,
+                    right: -60,
+                    child: Container(
+                      width: 260,
+                      height: 260,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            _Palette.lemonChiffon.withValues(alpha: 0.5),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -90,
+                    left: -80,
+                    child: Container(
+                      width: 280,
+                      height: 280,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            _Palette.milanoRed.withValues(alpha: 0.07),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Extra low, wide glow further down the page — gives the
+                  // long tables list a second soft focal point instead of
+                  // all the ambient light sitting only near the header.
+                  // Matches the Admin Orders screen's Pass-2 backdrop
+                  // treatment.
+                  Positioned(
+                    top: 640,
+                    right: -110,
+                    child: Container(
+                      width: 230,
+                      height: 230,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            _Palette.milanoRedLight.withValues(alpha: 0.06),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Opacity(
+                    opacity: 0.04,
+                    child: Image.network(
+                      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop',
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
                     ),
                   ),
                 ],
               ),
-      ],
-    );
-  }
+            ),
+          ),
 
-  /// The scrollable body content (stats row, filters, table count label,
-  /// and the tables list) — factored out so it can be reused by
-  /// `_buildScreenBody` on both mobile and desktop. No content, ordering,
-  /// or logic changed from the original inline `Column` — purely
-  /// extracted for reuse.
-  Widget _buildBodyContent(bool isMobile) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildStatsRow(isMobile),
-        const SizedBox(height: 24),
-        _buildFiltersBar(isMobile),
-        const SizedBox(height: 24),
-        Row(
-          children: [
-            Container(
-              width: 4,
-              height: 18,
-              decoration: BoxDecoration(
-                color: _Palette.milanoRed,
-                borderRadius: BorderRadius.circular(4),
+          // Faint diagonal sheen sweeping across the body — a subtle extra
+          // layer of depth so the cream backdrop doesn't read as flat
+          // behind the header, echoing the glass-highlight language used
+          // in the header itself. Matches the Admin Orders screen exactly.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withValues(alpha: 0.28),
+                      Colors.transparent,
+                      Colors.transparent,
+                    ],
+                    stops: const [0.0, 0.35, 1.0],
+                  ),
+                ),
               ),
             ),
-            const SizedBox(width: 8),
-            Text(
-              'Showing ${_filteredTables.length} tables',
-              style: GoogleFonts.inter(
-                color: _Palette.textMuted,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _buildTablesList(isMobile),
-        const SizedBox(height: 40),
-      ],
+          ),
+
+          _isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(color: _Palette.milanoRed),
+                )
+              : Column(
+                  children: [
+                    _buildHeader(isMobile),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.symmetric(
+                          horizontal:
+                              isMobile ? 16 : (size.width > 1400 ? 64 : 40),
+                          vertical: 24,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildStatsRow(isMobile),
+                            const SizedBox(height: 24),
+                            _buildFiltersBar(isMobile),
+                            const SizedBox(height: 24),
+                            Row(
+                              children: [
+                                Container(
+                                  width: 4,
+                                  height: 18,
+                                  decoration: BoxDecoration(
+                                    color: _Palette.milanoRed,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Showing ${_filteredTables.length} tables',
+                                  style: GoogleFonts.inter(
+                                    color: _Palette.textMuted,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            _buildTablesList(isMobile),
+                            const SizedBox(height: 40),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+        ],
+      ),
     );
   }
 
@@ -920,11 +834,6 @@ class _TablesScreenState extends State<TablesScreen> {
   /// the "add staff" icon button pattern used on StaffScreen's header.
   /// Purely visual; the navigation and add-table actions underneath are
   /// unchanged.
-  ///
-  /// UI-ENHANCEMENT PASS 3: the top-left back chevron control has been
-  /// removed entirely (see the top-of-file doc comment). The `Row` below
-  /// keeps its `Spacer()` so the date label / divider / add-table icon
-  /// button continue to sit flush right exactly as before.
   Widget _buildHeader(bool isMobile) {
     return ClipRect(
       child: Container(
@@ -1118,6 +1027,9 @@ class _TablesScreenState extends State<TablesScreen> {
                   children: [
                     Row(
                       children: [
+                        _BackChevronButton(
+                          onTap: () => context.go('/admin/dashboard'),
+                        ),
                         const Spacer(),
                         if (!isMobile) ...[
                           Text(
@@ -2045,6 +1957,70 @@ class _TablesScreenState extends State<TablesScreen> {
   }
 }
 
+/// Compact icon-only "back" control — a circular glass button showing only
+/// a plain "‹" glyph. Replaces the previous arrow-icon + "Back" label combo
+/// with a minimal, professional control, matching the same treatment used
+/// on OrdersScreen and MenuScreen.
+class _BackChevronButton extends StatefulWidget {
+  final VoidCallback onTap;
+  const _BackChevronButton({required this.onTap});
+
+  @override
+  State<_BackChevronButton> createState() => _BackChevronButtonState();
+}
+
+class _BackChevronButtonState extends State<_BackChevronButton> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 40,
+          height: 40,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: _isHovered
+                ? Colors.white.withValues(alpha: 0.20)
+                : Colors.white.withValues(alpha: 0.10),
+            border: Border.all(
+              color: _isHovered
+                  ? _Palette.lemonChiffon.withValues(alpha: 0.7)
+                  : _Palette.lemonChiffon.withValues(alpha: 0.4),
+              width: 1.2,
+            ),
+            boxShadow: _isHovered
+                ? [
+                    BoxShadow(
+                      color: _Palette.lemonChiffon.withValues(alpha: 0.25),
+                      blurRadius: 10,
+                      spreadRadius: 1,
+                    ),
+                  ]
+                : null,
+          ),
+          child: Text(
+            '‹',
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              height: 1.0,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Small decorative gradient divider placed beneath the header title —
 /// purely cosmetic, mirrors the same accent used on the dashboard, menu,
 /// orders, profile, and staff screens so the title treatment matches
@@ -2064,510 +2040,6 @@ class _TitleDivider extends StatelessWidget {
             Colors.transparent,
             _Palette.lemonChiffon.withValues(alpha: 0.9),
             Colors.transparent,
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// ─────────────────────────────────────────────────────────────────────────
-/// UI-ENHANCEMENT PASS 4 — Desktop-only branded side navigation rail,
-/// restyled to match the Admin Orders screen's `_AdminSideNav` exactly.
-///
-/// A fixed, full-height (`Scaffold.body`-height) vertical sidebar shown
-/// ONLY on desktop widths: a brand mark + name at the top, an "ADMIN
-/// PANEL" pill badge, four nav destinations (Menu / Staff / Tables /
-/// Order Bill) with the active one rendered as a solid maroon-gradient
-/// pill with a gold left accent bar and a trailing chevron, and a small
-/// profile chip pinned to the bottom via a `Spacer`. It is placed as a
-/// direct `Row` sibling in `Scaffold.body` (see `build()`), spanning the
-/// full available height — identical in structure to how
-/// `OrdersScreen`/`_AdminSideNav` is wired up, rather than being nested
-/// as a floating rounded card below the header.
-///
-/// This is entirely additive/restyled — it doesn't replace or resize any
-/// existing content, and tapping a tile uses the exact same
-/// `context.go(route)` pattern already used throughout this file (see
-/// `_addIconButton`, `_AdminBottomNavTile`). No data loading, filtering,
-/// dialog, QR, download, or other business logic is touched by this
-/// widget.
-/// ─────────────────────────────────────────────────────────────────────────
-class _DesktopSideNavItem {
-  final IconData icon;
-  final String label;
-  final String route;
-  const _DesktopSideNavItem({
-    required this.icon,
-    required this.label,
-    required this.route,
-  });
-}
-
-class _DesktopSideNav extends StatelessWidget {
-  final int? currentIndex;
-  const _DesktopSideNav({this.currentIndex});
-
-  static const List<_DesktopSideNavItem> _items = [
-    _DesktopSideNavItem(
-      icon: Icons.restaurant_menu_rounded,
-      label: 'Menu',
-      route: '/admin/menu',
-    ),
-    _DesktopSideNavItem(
-      icon: Icons.groups_rounded,
-      label: 'Staff',
-      route: '/admin/staff',
-    ),
-    _DesktopSideNavItem(
-      icon: Icons.table_restaurant_rounded,
-      label: 'Tables',
-      route: '/admin/tables',
-    ),
-    _DesktopSideNavItem(
-      icon: Icons.receipt_long_rounded,
-      label: 'Order Bill',
-      route: '/admin/orders',
-    ),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 260,
-      decoration: BoxDecoration(
-        color: _Palette.canvas,
-        border: Border(
-          right: BorderSide(
-            color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
-          ),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 24,
-            offset: const Offset(4, 0),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        right: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // ── Logo header ────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-              child: Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: _Palette.milanoRed,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: _Palette.lemonChiffon.withValues(alpha: 0.6),
-                        width: 1.4,
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.restaurant,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'PUREDINE',
-                    style: GoogleFonts.playfairDisplay(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.4,
-                      color: _Palette.milanoRedDeep,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Divider(
-              height: 1,
-              color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
-            ),
-            const SizedBox(height: 20),
-            // ── "ADMIN PANEL" badge ──────────────────────────────────
-            Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: _Palette.lemonChiffon.withValues(alpha: 0.55),
-                  borderRadius: BorderRadius.circular(100),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.shield_outlined,
-                      size: 14,
-                      color: _Palette.milanoRedDeep,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'ADMIN PANEL',
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.6,
-                        color: _Palette.milanoRedDeep,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            // ── Nav items ──────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              child: Column(
-                children: [
-                  for (int i = 0; i < _items.length; i++)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: _DesktopSideNavTile(
-                        item: _items[i],
-                        isActive: currentIndex == i,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            const Spacer(),
-            // ── Profile card ─────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 20),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
-                  ),
-                  boxShadow: _Palette.softShadow,
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 38,
-                      height: 38,
-                      alignment: Alignment.center,
-                      decoration: const BoxDecoration(
-                        color: _Palette.milanoRed,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        'A',
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Admin',
-                            style: GoogleFonts.inter(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                              color: _Palette.textDark,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Row(
-                            children: [
-                              Container(
-                                width: 6,
-                                height: 6,
-                                decoration: const BoxDecoration(
-                                  color: _Palette.success,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Online',
-                                style: GoogleFonts.inter(
-                                  fontSize: 11,
-                                  color: _Palette.textMuted,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// One tappable row inside `_DesktopSideNav`. Inactive tiles are a plain
-/// transparent row with a muted icon+label; the active tile becomes a
-/// solid maroon gradient pill with a small gold accent bar on its left
-/// edge and a trailing white chevron — identical to the Admin Orders
-/// screen's `_AdminSideNavTile`. Navigation is a plain
-/// `context.go(item.route)` call, disabled when already active.
-class _DesktopSideNavTile extends StatelessWidget {
-  final _DesktopSideNavItem item;
-  final bool isActive;
-  const _DesktopSideNavTile({required this.item, required this.isActive});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: isActive ? null : () => context.go(item.route),
-        borderRadius: BorderRadius.circular(14),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          decoration: BoxDecoration(
-            gradient: isActive
-                ? const LinearGradient(
-                    colors: [
-                      _Palette.milanoRed,
-                      _Palette.milanoRedDeep,
-                    ],
-                  )
-                : null,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: isActive
-                ? [
-                    BoxShadow(
-                      color: _Palette.milanoRedDeep.withValues(alpha: 0.25),
-                      blurRadius: 12,
-                      offset: const Offset(0, 5),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Row(
-            children: [
-              if (isActive)
-                Container(
-                  width: 3,
-                  height: 18,
-                  margin: const EdgeInsets.only(right: 10),
-                  decoration: BoxDecoration(
-                    color: _Palette.lemonChiffon,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              Container(
-                width: 34,
-                height: 34,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: isActive
-                      ? Colors.white.withValues(alpha: 0.16)
-                      : _Palette.milanoRed.withValues(alpha: 0.08),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  item.icon,
-                  size: 17,
-                  color: isActive ? Colors.white : _Palette.milanoRedDeep,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  item.label,
-                  style: GoogleFonts.inter(
-                    fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
-                    fontSize: 14,
-                    color: isActive ? Colors.white : _Palette.textDark,
-                  ),
-                ),
-              ),
-              if (isActive)
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: Colors.white,
-                  size: 18,
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// ─────────────────────────────────────────────────────────────────────────
-/// UI-ENHANCEMENT PASS 3 — Mobile-only bottom navigation bar.
-///
-/// A fixed, cream bottom navigation bar with four evenly-spaced tiles —
-/// Menu / Staff / Tables / Order Bill — each showing an icon inside a
-/// circular badge with a label underneath. The active tab's badge is
-/// filled solid gold with a white icon and bold gold label; inactive
-/// tabs show a plain white badge with a dark-maroon icon and muted dark
-/// label. Shown only on mobile widths (see `Scaffold.bottomNavigationBar`
-/// in `build()`); tapping a tile uses the same `context.go(route)`
-/// pattern already used throughout this file.
-/// ─────────────────────────────────────────────────────────────────────────
-class _AdminBottomNavItem {
-  final IconData icon;
-  final String label;
-  final String route;
-  const _AdminBottomNavItem({
-    required this.icon,
-    required this.label,
-    required this.route,
-  });
-}
-
-class _AdminBottomNav extends StatelessWidget {
-  final int? currentIndex;
-  const _AdminBottomNav({this.currentIndex});
-
-  static const List<_AdminBottomNavItem> _items = [
-    _AdminBottomNavItem(
-      icon: Icons.restaurant_menu_rounded,
-      label: 'Menu',
-      route: '/admin/menu',
-    ),
-    _AdminBottomNavItem(
-      icon: Icons.groups_rounded,
-      label: 'Staff',
-      route: '/admin/staff',
-    ),
-    _AdminBottomNavItem(
-      icon: Icons.table_restaurant_rounded,
-      label: 'Tables',
-      route: '/admin/tables',
-    ),
-    _AdminBottomNavItem(
-      icon: Icons.receipt_long_rounded,
-      label: 'Order Bill',
-      route: '/admin/orders',
-    ),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: _Palette.canvas,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(28),
-          topRight: Radius.circular(28),
-        ),
-        border: const Border(
-          top: BorderSide(color: _Palette.lemonChiffon, width: 3),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.10),
-            blurRadius: 24,
-            offset: const Offset(0, -8),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              for (int i = 0; i < _items.length; i++)
-                _AdminBottomNavTile(
-                  item: _items[i],
-                  isActive: currentIndex == i,
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// One tappable tile inside `_AdminBottomNav` — an icon in a circular
-/// badge (solid gold + white icon when active, white + dark-maroon icon
-/// when inactive) with a label underneath. Navigation is a plain
-/// `context.go(item.route)` call; disabled entirely when the tile is
-/// already the active tab so tapping an already-active tab is a
-/// harmless no-op instead of an unnecessary re-navigation.
-class _AdminBottomNavTile extends StatelessWidget {
-  final _AdminBottomNavItem item;
-  final bool isActive;
-  const _AdminBottomNavTile({required this.item, required this.isActive});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: isActive ? null : () => context.go(item.route),
-      borderRadius: BorderRadius.circular(20),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOutCubic,
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isActive ? _Palette.lemonChiffon : Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: isActive
-                        ? _Palette.lemonChiffonDeep.withValues(alpha: 0.45)
-                        : Colors.black.withValues(alpha: 0.08),
-                    blurRadius: isActive ? 14 : 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Icon(
-                item.icon,
-                size: 22,
-                color: isActive ? Colors.white : _Palette.milanoRedDeep,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              item.label,
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
-                color:
-                    isActive ? _Palette.lemonChiffonDeep : _Palette.textDark,
-              ),
-            ),
           ],
         ),
       ),

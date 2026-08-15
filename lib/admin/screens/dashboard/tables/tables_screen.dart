@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:restaurant_unified_app/admin/core/models/restaurant_model.dart';
 import 'package:restaurant_unified_app/admin/services/tables_service.dart';
@@ -288,13 +287,43 @@ class _TablesScreenState extends State<TablesScreen> {
           color: _Palette.milanoRedDeep,
         ),
       );
+
       final image = await painter.toImage(512);
-      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+
+      final byteData = await image.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
+
       if (byteData == null) return;
+
       final bytes = byteData.buffer.asUint8List();
-      await downloadFile(bytes, 'table_${t.tableNumber}_qr.png');
+
+      final success = await downloadFile(
+        bytes,
+        'table_${t.tableNumber}_qr.png',
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success ? 'QR downloaded successfully' : 'Failed to download QR',
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
     } catch (e) {
       debugPrint('Download failed: $e');
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to download QR'),
+          duration: Duration(seconds: 2),
+        ),
+      );
     }
   }
 
@@ -1027,9 +1056,6 @@ class _TablesScreenState extends State<TablesScreen> {
                   children: [
                     Row(
                       children: [
-                        _BackChevronButton(
-                          onTap: () => context.go('/admin/dashboard'),
-                        ),
                         const Spacer(),
                         if (!isMobile) ...[
                           Text(

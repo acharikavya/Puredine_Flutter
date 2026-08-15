@@ -555,33 +555,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   ? Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Material(
-                          color: Colors.white.withValues(alpha: 0.10),
-                          shape: const CircleBorder(),
-                          child: InkWell(
-                            onTap: () => context.go('/admin/dashboard'),
-                            customBorder: const CircleBorder(),
-                            child: Container(
-                              width: 40,
-                              height: 40,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: _OrdersTheme.goldSoft
-                                      .withValues(alpha: 0.6),
-                                  width: 1.2,
-                                ),
-                              ),
-                              child: const Icon(
-                                Icons.chevron_left_rounded,
-                                color: Colors.white,
-                                size: 26,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
                         Text(
                           'Orders',
                           style: GoogleFonts.playfairDisplay(
@@ -625,32 +598,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Material(
-                          color: Colors.white.withValues(alpha: 0.10),
-                          shape: const CircleBorder(),
-                          child: InkWell(
-                            onTap: () => context.go('/admin/dashboard'),
-                            customBorder: const CircleBorder(),
-                            child: Container(
-                              width: 44,
-                              height: 44,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: _OrdersTheme.goldSoft
-                                      .withValues(alpha: 0.6),
-                                  width: 1.2,
-                                ),
-                              ),
-                              child: const Icon(
-                                Icons.chevron_left_rounded,
-                                color: Colors.white,
-                                size: 28,
-                              ),
-                            ),
-                          ),
-                        ),
                         Expanded(
                           child: Center(
                             child: Column(

@@ -6,14 +6,10 @@ import 'shared/forgot_password_screen.dart';
 import 'shared/reset_password_screen.dart';
 
 // Admin Imports
-import 'admin/screens/dashboard/admin_dashboard_screen.dart';
-import 'admin/screens/dashboard/menu/menu_screen.dart';
-import 'admin/screens/dashboard/staff/staff_landing_screen.dart';
+// Admin Imports
+import 'admin/screens/dashboard/admin_main_scaffold.dart';
 import 'admin/screens/dashboard/staff/staff_screen.dart';
-import 'admin/screens/dashboard/tables/tables_screen.dart';
-import 'admin/screens/dashboard/orders/orders_screen.dart';
 import 'admin/screens/dashboard/profile/profile_screen.dart';
-
 // Staff Imports
 import 'staff/screens/main_scaffold.dart';
 import 'staff/screens/new_orders_screen.dart';
@@ -52,7 +48,7 @@ GoRouter createRouter(AuthProvider authProvider) {
       if (isAuthRoute || isRoot) {
         final role = authProvider.role;
         if (role == UserRole.admin) {
-          return '/admin/dashboard';
+          return '/admin/menu';
         } else if (role == UserRole.billingStaff ||
             role == UserRole.servingStaff) {
           return role == UserRole.billingStaff
@@ -84,17 +80,21 @@ GoRouter createRouter(AuthProvider authProvider) {
       ),
 
       // Admin Routes
+      // Admin Routes — all wrapped in AdminMainScaffold so a persistent
+      // bottom nav bar (like the staff module's MainScaffold) lets the
+      // admin jump between Dashboard/Menu/Staff/Tables/Orders without
+      // needing to hit back each time.
       GoRoute(
         path: '/admin/dashboard',
-        builder: (context, state) => const AdminDashboardScreen(),
+        builder: (context, state) => const AdminMainScaffold(initialTab: 0),
       ),
       GoRoute(
         path: '/admin/menu',
-        builder: (context, state) => const MenuScreen(),
+        builder: (context, state) => const AdminMainScaffold(initialTab: 0),
       ),
       GoRoute(
         path: '/admin/staff',
-        builder: (context, state) => const StaffLandingScreen(),
+        builder: (context, state) => const AdminMainScaffold(initialTab: 1),
       ),
       GoRoute(
         path: '/admin/staff/:role',
@@ -105,15 +105,15 @@ GoRouter createRouter(AuthProvider authProvider) {
       ),
       GoRoute(
         path: '/admin/tables',
-        builder: (context, state) => const TablesScreen(),
+        builder: (context, state) => const AdminMainScaffold(initialTab: 2),
       ),
       GoRoute(
         path: '/admin/orders',
-        builder: (context, state) => const OrdersScreen(),
+        builder: (context, state) => const AdminMainScaffold(initialTab: 3),
       ),
       GoRoute(
         path: '/admin/profile',
-        builder: (context, state) => const ProfileScreen(),
+        builder: (context, state) => const AdminMainScaffold(initialTab: 4),
       ),
 
       // Staff Routes

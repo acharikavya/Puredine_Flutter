@@ -562,13 +562,6 @@ class StaffLandingScreen extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          // Compact icon-only back control — no arrow icon,
-                          // no "Back" label, just a clean "‹" glyph in a
-                          // circular glass button matching the app's other
-                          // header controls.
-                          _BackChevronButton(
-                            onTap: () => context.go('/admin/dashboard'),
-                          ),
                           const Spacer(),
                           if (!isMobile)
                             Text(

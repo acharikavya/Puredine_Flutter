@@ -10,6 +10,9 @@ import 'category_form_dialog.dart';
 import 'item_form_dialog.dart';
 import 'manual_order_dialog.dart';
 import 'today_special_dialog.dart';
+import 'package:provider/provider.dart';
+import 'package:restaurant_unified_app/admin/core/models/notification_model.dart';
+import 'package:restaurant_unified_app/admin/core/providers/notification_provider.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────
 /// Local "Theme 1 — Dark Maroon × Soft Cream × Gold Glow" palette — matches
@@ -218,7 +221,65 @@ class _MenuScreenState extends State<MenuScreen> {
   @override
   void initState() {
     super.initState();
+
     _loadData();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      final notifProv = context.read<NotificationProvider>();
+      notifProv.startPolling();
+      notifProv.addListener(_onNotificationChanged);
+    });
+  }
+
+  @override
+  void dispose() {
+    final notifProv = context.read<NotificationProvider>();
+
+    notifProv.removeListener(_onNotificationChanged);
+
+    super.dispose();
+  }
+
+  void _onNotificationChanged() {
+    if (!mounted) return;
+
+    final notifProv = context.read<NotificationProvider>();
+
+    if (notifProv.notifications.isNotEmpty) {
+      final latest = notifProv.notifications.first;
+
+      if (!latest.isRead) {
+        _showTopToast(latest);
+      }
+    }
+  }
+
+  void _showTopToast(NotificationModel notification) {
+    late OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => _TopToastWidget(
+        notification: notification,
+        onDismiss: () {
+          if (overlayEntry.mounted) {
+            overlayEntry.remove();
+          }
+        },
+        onView: () {
+          if (overlayEntry.mounted) {
+            overlayEntry.remove();
+          }
+
+          context.go(
+            '/admin/orders?highlightOrderId=${notification.orderId}',
+          );
+        },
+      ),
+    );
+
+    Overlay.of(context).insert(overlayEntry);
   }
 
   Future<void> _loadData() async {
@@ -1220,15 +1281,8 @@ class _MenuScreenState extends State<MenuScreen> {
                   children: [
                     Row(
                       children: [
-                        // Compact icon-only back control — no arrow icon,
-                        // no "Back" label, just a clean "<" glyph in a
-                        // circular glass button matching the app's other
-                        // header controls.
-                        _BackChevronButton(
-                          onTap: () => context.go('/admin/dashboard'),
-                        ),
                         const Spacer(),
-                        if (!isMobile)
+                        if (!isMobile) ...[
                           Text(
                             _todayLabel(),
                             style: GoogleFonts.inter(
@@ -1238,6 +1292,13 @@ class _MenuScreenState extends State<MenuScreen> {
                               color: Colors.white.withValues(alpha: 0.65),
                             ),
                           ),
+                          const SizedBox(width: 16),
+                        ],
+                        // The old dashboard ("Home") screen previously
+                        // held this bell — since Home was removed from
+                        // the bottom nav, it now lives here instead,
+                        // wired to the exact same NotificationProvider.
+                        const _MenuNotificationBell(),
                       ],
                     ),
                     const SizedBox(height: 18),
@@ -2914,6 +2975,445 @@ class _CategoryPill extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Notification bell for the Menu Management header. Previously this
+/// only lived on the dashboard ("Home") screen; since Home was removed
+/// from the bottom nav, it moved here — same NotificationProvider, same
+/// unread badge, same tap-to-view-notifications behavior as before.
+class _MenuNotificationBell extends StatefulWidget {
+  const _MenuNotificationBell();
+
+  @override
+  State<_MenuNotificationBell> createState() => _MenuNotificationBellState();
+}
+
+class _MenuNotificationBellState extends State<_MenuNotificationBell> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final prov = context.watch<NotificationProvider>();
+    final unread = prov.unreadCount;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () => _showNotificationOverlay(context),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: _isHovered
+                ? Colors.white.withValues(alpha: 0.20)
+                : Colors.white.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _isHovered
+                  ? _Palette.lemonChiffon.withValues(alpha: 0.7)
+                  : Colors.white.withValues(alpha: 0.15),
+            ),
+          ),
+          child: Center(
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(
+                  Icons.notifications_outlined,
+                  color: Colors.white,
+                  size: 22,
+                ),
+                if (unread > 0)
+                  Positioned(
+                    right: -2,
+                    top: -2,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: _Palette.lemonChiffon,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: _Palette.milanoRedDeep,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showNotificationOverlay(BuildContext context) {
+    final prov = context.read<NotificationProvider>();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final isMobile = screenWidth < 600;
+
+        return Dialog(
+          alignment: isMobile ? Alignment.center : Alignment.topRight,
+          insetPadding: isMobile
+              ? const EdgeInsets.symmetric(horizontal: 16, vertical: 24)
+              : const EdgeInsets.only(top: 80, right: 100),
+          backgroundColor: Colors.transparent,
+          child: Container(
+            width: isMobile ? screenWidth - 32 : 400,
+            constraints: const BoxConstraints(maxHeight: 500, maxWidth: 400),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.14),
+                  blurRadius: 40,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: _Palette.lemonChiffon.withValues(alpha: 0.25),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(24),
+                      topRight: Radius.circular(24),
+                    ),
+                  ),
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: _Palette.milanoRed,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.notifications_outlined,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Notifications',
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: _Palette.milanoRedDeep,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (prov.notifications.isNotEmpty)
+                        TextButton(
+                          onPressed: () {
+                            prov.markAllAsRead();
+                            Navigator.pop(context);
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: _Palette.milanoRed,
+                          ),
+                          child: Text(
+                            'Mark all as read',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                Divider(height: 1, color: _Palette.lemonChiffonDeep),
+                if (prov.notifications.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 60),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: const BoxDecoration(
+                            color: _Palette.lemonChiffon,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.notifications_none_rounded,
+                            color: _Palette.milanoRed.withValues(alpha: 0.4),
+                            size: 48,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No new notifications',
+                          style: GoogleFonts.inter(
+                            color: _Palette.textMuted,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemCount: prov.notifications.length,
+                      itemBuilder: (context, i) {
+                        final n = prov.notifications[i];
+                        return ListTile(
+                          onTap: () {
+                            prov.markAsRead(n.id);
+                            Navigator.pop(context);
+                            context.go(
+                              '/admin/orders?highlightOrderId=${n.orderId}',
+                            );
+                          },
+                          leading: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: n.isRead
+                                  ? _Palette.lemonChiffon.withValues(alpha: 0.4)
+                                  : _Palette.milanoRed.withValues(alpha: 0.08),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.receipt_long_rounded,
+                              color: n.isRead
+                                  ? _Palette.textMuted
+                                  : _Palette.milanoRed,
+                              size: 20,
+                            ),
+                          ),
+                          title: Text(
+                            n.message,
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight:
+                                  n.isRead ? FontWeight.w500 : FontWeight.bold,
+                              color: _Palette.textDark,
+                            ),
+                          ),
+                          subtitle: Text(
+                            _formatTimeAgo(n.createdAt),
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: _Palette.textMuted,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 4,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _formatTimeAgo(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
+  }
+}
+
+class _TopToastWidget extends StatefulWidget {
+  final NotificationModel notification;
+  final VoidCallback onDismiss;
+  final VoidCallback onView;
+
+  const _TopToastWidget({
+    required this.notification,
+    required this.onDismiss,
+    required this.onView,
+  });
+
+  @override
+  State<_TopToastWidget> createState() => _TopToastWidgetState();
+}
+
+class _TopToastWidgetState extends State<_TopToastWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<Offset> _offsetAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+
+    _offsetAnimation = Tween<Offset>(
+      begin: const Offset(0, -1.5),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeOutBack,
+      ),
+    );
+
+    _controller.forward();
+
+    Future.delayed(const Duration(seconds: 5), () {
+      if (mounted) {
+        _controller.reverse().then((_) {
+          if (mounted) {
+            widget.onDismiss();
+          }
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top: 40,
+      left: 20,
+      right: 20,
+      child: SlideTransition(
+        position: _offsetAnimation,
+        child: Material(
+          color: Colors.transparent,
+          child: Center(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 600),
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.97),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: _Palette.lemonChiffonDeep,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.14),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 4,
+                          height: 34,
+                          margin: const EdgeInsets.only(right: 14),
+                          decoration: BoxDecoration(
+                            color: _Palette.milanoRed,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const Icon(
+                          Icons.notifications_active_rounded,
+                          color: _Palette.milanoRed,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'New Order',
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: _Palette.milanoRedDeep,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: widget.onDismiss,
+                          icon: const Icon(Icons.close),
+                          color: _Palette.textMuted,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.notification.message,
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: _Palette.textDark,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: ElevatedButton(
+                            onPressed: widget.onView,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _Palette.milanoRedDeep,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 10,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Text('View Order'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );

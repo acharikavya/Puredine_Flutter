@@ -54,7 +54,15 @@ class _Palette {
 }
 
 class AdminDashboardScreen extends StatefulWidget {
-  const AdminDashboardScreen({super.key});
+  /// Optional in-place tab switcher. When this screen is hosted inside
+  /// AdminMainScaffold's bottom-nav shell, tapping a dashboard card calls
+  /// this instead of pushing a brand-new route, so the bottom nav bar
+  /// stays visible (Instagram-style tab switching) instead of navigating
+  /// away to a separate full-screen route. If null (e.g. screen used
+  /// standalone), falls back to the original context.go(route) behavior.
+  final ValueChanged<String>? onNavigate;
+
+  const AdminDashboardScreen({super.key, this.onNavigate});
 
   @override
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
@@ -153,7 +161,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
     if (mounted) {
       setState(() => _isNavigating = false);
-      context.go(route);
+      if (widget.onNavigate != null) {
+        widget.onNavigate!(route);
+      } else {
+        context.go(route);
+      }
     }
   }
 

@@ -85,7 +85,7 @@ class _RestaurantUnifiedAppState extends State<RestaurantUnifiedApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Flutter App',
+      title: 'PureDine',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       routerConfig: _router,

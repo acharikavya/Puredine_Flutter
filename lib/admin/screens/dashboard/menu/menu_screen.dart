@@ -80,7 +80,7 @@ import 'package:restaurant_unified_app/admin/core/providers/notification_provide
 /// different column count depending on screen width. No data loading,
 /// mutation, or callback logic was touched — only how cards size and grow.
 ///
-/// UI-ENHANCEMENT PASS 7 (this pass): "Read more" now sits inline at the
+/// UI-ENHANCEMENT PASS 7: "Read more" now sits inline at the
 /// end of the same truncated description line (matching the reference
 /// design's "Tender, boneless murgh ... Read More" style) instead of on
 /// its own line underneath. Since Flutter's automatic `TextOverflow.
@@ -93,6 +93,19 @@ import 'package:restaurant_unified_app/admin/core/providers/notification_provide
 /// "Show less" appended inline at the end once expanded) — only where
 /// "Read more"/"Show less" sits relative to the text changed. No data,
 /// callback, or navigation logic was touched.
+///
+/// UI-ENHANCEMENT PASS 8 (this pass): "Read more" is now only shown when
+/// it's actually needed. Previously the link appeared on every card with
+/// a description, even short ones that already fit on a single line with
+/// room to spare — clicking it in that case just re-displayed the exact
+/// same text with a pointless "Show less" appended. The collapsed
+/// description is now first measured against the available width on its
+/// own (no link involved); if it already fits fully on one line, it's
+/// rendered as plain, non-interactive text with no "Read more" affordance
+/// at all. The "Read more" link — and the tap-to-expand/collapse
+/// behaviour — now only appears for descriptions that genuinely don't fit
+/// on one line. No data, callback, or navigation logic was touched —
+/// presentation only.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
@@ -2307,7 +2320,7 @@ class _HoverableCardState extends State<HoverableCard> {
 ///     the whole card — to fit. Tapping "Show less" smoothly shrinks it
 ///     back.
 ///
-/// UI-ENHANCEMENT PASS 7 (this pass): "Read more"/"Show less" now sits
+/// UI-ENHANCEMENT PASS 7: "Read more"/"Show less" now sits
 /// inline at the end of the same line as the description text (matching
 /// the reference design's "Tender, boneless murgh ... Read More" style)
 /// instead of appearing on its own separate line underneath. A
@@ -2316,8 +2329,15 @@ class _HoverableCardState extends State<HoverableCard> {
 /// "… Read more" on a single line, so the link is never accidentally
 /// clipped off the end the way plain `TextOverflow.ellipsis` could. When
 /// expanded, "Show less" is likewise appended right after the full text.
-/// No data, callback, or navigation logic was touched — only how the
-/// description text and its link are composed and measured.
+///
+/// UI-ENHANCEMENT PASS 8 (this pass): the collapsed description is now
+/// checked, up front, against the available width on its own — with no
+/// link involved at all. If the full text already fits on a single line,
+/// it's shown as plain, non-clickable text and no "Read more" link is
+/// rendered. Only when the full text genuinely doesn't fit does the
+/// truncate-and-append-"Read more" logic from Pass 7 kick in, and only
+/// then does tapping become possible. No data, callback, or navigation
+/// logic was touched — only how/when the link itself is shown.
 /// ─────────────────────────────────────────────────────────────────────────
 class _MenuItemCardBody extends StatefulWidget {
   final MenuItem item;
@@ -2365,11 +2385,32 @@ class _MenuItemCardBodyState extends State<_MenuItemCardBody> {
     super.dispose();
   }
 
+  /// Measures whether [text] already fits, in full, on a single line
+  /// within [maxWidth] — with no "Read more" link involved at all. Used
+  /// up front to decide whether the description needs truncation/a link
+  /// in the first place (Pass 8), before ever reasoning about the link.
+  bool _fitsOnOneLine({
+    required String text,
+    required TextStyle textStyle,
+    required double maxWidth,
+  }) {
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: textStyle),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    )..layout(maxWidth: double.infinity);
+    return painter.width <= maxWidth;
+  }
+
   /// Finds the longest prefix of [text] that, together with the
   /// "… Read more" suffix, still fits within [maxWidth] on a single
   /// line — using a `TextPainter` binary search rather than relying on
   /// `TextOverflow.ellipsis`, which would just as happily truncate the
   /// appended "Read more" text itself along with the description.
+  ///
+  /// Only ever called once `_fitsOnOneLine` has already established that
+  /// the full text does NOT fit on its own — so a genuine cut is always
+  /// needed here.
   String _truncateForInlineLink({
     required String text,
     required TextStyle textStyle,
@@ -2390,18 +2431,6 @@ class _MenuItemCardBodyState extends State<_MenuItemCardBody> {
     final double availableForText = maxWidth - suffixWidth;
     if (availableForText <= 0) return '';
 
-    final fullPainter = TextPainter(
-      text: TextSpan(text: text, style: textStyle),
-      textDirection: TextDirection.ltr,
-      maxLines: 1,
-    )..layout(maxWidth: double.infinity);
-
-    // Whole description already fits next to the link — no need to cut
-    // it at all (this also covers very short descriptions).
-    if (fullPainter.width <= availableForText) {
-      return text;
-    }
-
     int low = 0;
     int high = text.length;
     while (low < high) {
@@ -2420,15 +2449,19 @@ class _MenuItemCardBodyState extends State<_MenuItemCardBody> {
     return text.substring(0, low).trimRight();
   }
 
-  /// The description block: when collapsed, a single line with
-  /// "… Read more" appended inline right after the (precisely measured)
-  /// truncated text — matching the reference design's layout. When
-  /// expanded, the full description is shown with "Show less" appended
-  /// inline at the end. Tapping either link toggles
-  /// `_descriptionExpanded`, and the surrounding `AnimatedSize` smoothly
-  /// grows/shrinks the card to fit. When there's no description, the
-  /// category name is shown instead (unchanged from before) with no
-  /// link, since there's nothing further to reveal.
+  /// The description block.
+  ///
+  /// Behaviour (Pass 8):
+  ///   • No description at all → category name shown, plain, no link
+  ///     (unchanged from before).
+  ///   • Description present AND it already fits on one line at the
+  ///     available width → shown as plain text, no "Read more" link, not
+  ///     tappable. There's nothing to expand, so no affordance is shown.
+  ///   • Description present AND it does NOT fit on one line → exactly
+  ///     the Pass 7 behaviour: collapsed shows a precisely-measured
+  ///     truncated line with "… Read more" appended inline; tapping it
+  ///     expands to the full text with "Show less" appended inline, and
+  ///     `AnimatedSize` smoothly grows/shrinks the card to fit.
   Widget _buildDescriptionBlock() {
     final item = widget.item;
     final hasDescription =
@@ -2481,6 +2514,31 @@ class _MenuItemCardBodyState extends State<_MenuItemCardBody> {
             )
           : LayoutBuilder(
               builder: (context, constraints) {
+                // Pass 8: decide, up front and with no link involved at
+                // all, whether the full description already fits on one
+                // line at this width.
+                final bool fitsFully = _fitsOnOneLine(
+                  text: fullText,
+                  textStyle: textStyle,
+                  maxWidth: constraints.maxWidth,
+                );
+
+                if (fitsFully) {
+                  // The whole description already reads fine on one
+                  // line — no truncation happened, so there's nothing
+                  // to "read more" of. Show it plainly, not tappable.
+                  return Text(
+                    fullText,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textStyle,
+                  );
+                }
+
+                // Only reached when the description genuinely doesn't
+                // fit on one line — find exactly how much of it fits
+                // alongside "… Read more" and show that, with the link
+                // appended inline and tappable.
                 final truncated = _truncateForInlineLink(
                   text: fullText,
                   textStyle: textStyle,
@@ -2489,12 +2547,11 @@ class _MenuItemCardBodyState extends State<_MenuItemCardBody> {
                   linkStyle: linkStyle,
                   maxWidth: constraints.maxWidth,
                 );
-                final bool wasCut = truncated != fullText;
                 return Text.rich(
                   TextSpan(
                     children: [
                       TextSpan(
-                        text: wasCut ? '$truncated… ' : '$truncated  ',
+                        text: '$truncated… ',
                         style: textStyle,
                       ),
                       TextSpan(
@@ -2712,12 +2769,12 @@ class _MenuItemCardBodyState extends State<_MenuItemCardBody> {
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 2),
-              // Expandable description with "Read more"/"Show less" now
-              // inline at the end of the same line (see
-              // _buildDescriptionBlock doc comment above) — its
-              // AnimatedSize grows this card (and only this card) when
-              // tapped, so the "Edit Item" button always stays visible
-              // below it.
+              // Expandable description with "Read more"/"Show less" —
+              // only rendered when the description doesn't already fit
+              // on one line (see _buildDescriptionBlock doc comment
+              // above). Its AnimatedSize grows this card (and only this
+              // card) when tapped, so the "Edit Item" button always
+              // stays visible below it.
               _buildDescriptionBlock(),
               const SizedBox(height: 3),
               Row(

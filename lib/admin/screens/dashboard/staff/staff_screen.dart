@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
-import 'package:restaurant_unified_app/core/constants.dart';
-import 'package:restaurant_unified_app/core/theme.dart';
 import 'package:restaurant_unified_app/admin/core/models/restaurant_model.dart';
 import 'package:restaurant_unified_app/admin/services/staff_service.dart';
 
@@ -1493,7 +1491,7 @@ class _StaffScreenState extends State<StaffScreen> {
                   decoration: InputDecoration(
                     hintText: 'Search...',
                     hintStyle: GoogleFonts.inter(color: _Palette.textMuted),
-                    prefixIcon: Icon(
+                    prefixIcon: const Icon(
                       Icons.search,
                       size: 20,
                       color: _Palette.milanoRedDeep,
@@ -1880,7 +1878,7 @@ class _StaffScreenState extends State<StaffScreen> {
             flex: 3,
             child: Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.email_outlined,
                   size: 16,
                   color: _Palette.textMuted,

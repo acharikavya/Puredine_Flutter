@@ -444,7 +444,7 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
                               horizontal: isTinyScreen ? 8 : 0,
                             ),
                             child: ShaderMask(
-                              shaderCallback: (bounds) => LinearGradient(
+                              shaderCallback: (bounds) => const LinearGradient(
                                 colors: [
                                   _LoginPalette.white,
                                   _LoginPalette.lemonChiffon,
@@ -876,7 +876,7 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
   Widget _buildFieldLabel(String text) {
     return Text(
       text.toUpperCase(),
-      style: TextStyle(
+      style: const TextStyle(
         color: _LoginPalette.textMuted,
         fontSize: 11.5,
         fontWeight: FontWeight.w700,

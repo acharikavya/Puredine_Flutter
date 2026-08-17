@@ -1,4 +1,3 @@
-import 'package:restaurant_unified_app/core/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -94,7 +93,7 @@ import 'package:restaurant_unified_app/admin/core/providers/notification_provide
 /// "Read more"/"Show less" sits relative to the text changed. No data,
 /// callback, or navigation logic was touched.
 ///
-/// UI-ENHANCEMENT PASS 8 (this pass): "Read more" is now only shown when
+/// UI-ENHANCEMENT PASS 8: "Read more" is now only shown when
 /// it's actually needed. Previously the link appeared on every card with
 /// a description, even short ones that already fit on a single line with
 /// room to spare — clicking it in that case just re-displayed the exact
@@ -106,6 +105,22 @@ import 'package:restaurant_unified_app/admin/core/providers/notification_provide
 /// behaviour — now only appears for descriptions that genuinely don't fit
 /// on one line. No data, callback, or navigation logic was touched —
 /// presentation only.
+///
+/// UI-ENHANCEMENT PASS 9: removed the empty vertical space that used to
+/// sit at the top of the header — the date/notification-bell row
+/// previously had generous top padding and an 18px gap before the title
+/// block. The header's top/bottom padding and the gap beneath the
+/// date/bell row were both tightened.
+///
+/// UI-ENHANCEMENT PASS 10 (this pass): a second, more aggressive spacing
+/// pass to close the gap that was still visible between the header's top
+/// edge (dotted accent) and the "Menu Management" title. The header's
+/// top padding is now asymmetric — a minimal `top: 4` instead of a
+/// uniform `12` on all sides — and the gap between the date/bell row and
+/// the title block is trimmed from `8` down to `4`. Bottom padding stays
+/// at `12` so the action buttons on desktop keep their breathing room.
+/// No data, callback, layout structure, or navigation logic was touched
+/// anywhere in this pass — spacing values only.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
@@ -1283,9 +1298,16 @@ class _MenuScreenState extends State<MenuScreen> {
             ),
 
             Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: isMobile ? 16 : 32,
-                vertical: 20,
+              // PASS 10: asymmetric padding — a minimal `top: 4` (down
+              // from Pass 9's uniform `12`) closes the remaining gap
+              // between the header's top edge and the "Menu Management"
+              // title; `bottom: 12` is kept so the action buttons below
+              // the title still have breathing room.
+              padding: EdgeInsets.fromLTRB(
+                isMobile ? 16 : 32,
+                4,
+                isMobile ? 16 : 32,
+                12,
               ),
               child: SafeArea(
                 bottom: false,
@@ -1314,7 +1336,10 @@ class _MenuScreenState extends State<MenuScreen> {
                         const _MenuNotificationBell(),
                       ],
                     ),
-                    const SizedBox(height: 18),
+                    // PASS 10: tightened from `height: 8` to `height: 4` —
+                    // the last bit of dead space between the date/bell
+                    // row and the title block is now gone.
+                    const SizedBox(height: 4),
                     if (isMobile)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1329,7 +1354,7 @@ class _MenuScreenState extends State<MenuScreen> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          _TitleDivider(),
+                          const _TitleDivider(),
                           const SizedBox(height: 16),
                           SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
@@ -1379,7 +1404,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 10),
-                                _TitleDivider(),
+                                const _TitleDivider(),
                                 const SizedBox(height: 10),
                                 Text(
                                   'Manage your restaurant menu items and categories',
@@ -1407,7 +1432,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                   ),
                                 ),
                                 style: OutlinedButton.styleFrom(
-                                  side: BorderSide(
+                                  side: const BorderSide(
                                     color: _Palette.lemonChiffon,
                                     width: 2,
                                   ),
@@ -1608,8 +1633,8 @@ class _MenuScreenState extends State<MenuScreen> {
             ],
           ),
           const SizedBox(height: 6),
-          Padding(
-            padding: const EdgeInsets.only(left: 44),
+          const Padding(
+            padding: EdgeInsets.only(left: 44),
             child: _TitleDivider(),
           ),
           const SizedBox(height: 18),
@@ -2330,7 +2355,7 @@ class _HoverableCardState extends State<HoverableCard> {
 /// clipped off the end the way plain `TextOverflow.ellipsis` could. When
 /// expanded, "Show less" is likewise appended right after the full text.
 ///
-/// UI-ENHANCEMENT PASS 8 (this pass): the collapsed description is now
+/// UI-ENHANCEMENT PASS 8: the collapsed description is now
 /// checked, up front, against the available width on its own — with no
 /// link involved at all. If the full text already fits on a single line,
 /// it's shown as plain, non-clickable text and no "Read more" link is
@@ -2796,7 +2821,7 @@ class _MenuItemCardBodyState extends State<_MenuItemCardBody> {
                   ),
                   if (widget.hasPrepTime) ...[
                     const SizedBox(width: 8),
-                    Icon(
+                    const Icon(
                       Icons.timer_outlined,
                       size: 10,
                       color: _Palette.textMuted,
@@ -3197,7 +3222,7 @@ class _MenuNotificationBellState extends State<_MenuNotificationBell> {
                     ],
                   ),
                 ),
-                Divider(height: 1, color: _Palette.lemonChiffonDeep),
+                const Divider(height: 1, color: _Palette.lemonChiffonDeep),
                 if (prov.notifications.isEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 60),

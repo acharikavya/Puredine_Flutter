@@ -464,7 +464,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               padding: const EdgeInsets.symmetric(
                                 vertical: 22,
                               ),
-                              decoration: BoxDecoration(
+                              decoration: const BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
                                     _Palette.milanoRedLight,
@@ -474,7 +474,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
-                                border: const Border(
+                                border: Border(
                                   bottom: BorderSide(
                                     color: _Palette.lemonChiffon,
                                     width: 3,
@@ -606,7 +606,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               width: 4,
                               height: 16,
                               decoration: BoxDecoration(
-                                gradient: LinearGradient(
+                                gradient: const LinearGradient(
                                   colors: [
                                     _Palette.gold,
                                     _Palette.goldLight,
@@ -702,7 +702,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                       padding: const EdgeInsets.all(9),
                                       decoration: BoxDecoration(
                                         gradient: isSelected
-                                            ? LinearGradient(
+                                            ? const LinearGradient(
                                                 begin: Alignment.topLeft,
                                                 end: Alignment.bottomRight,
                                                 colors: [
@@ -750,7 +750,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                     if (isSelected)
                                       Container(
                                         padding: const EdgeInsets.all(4),
-                                        decoration: BoxDecoration(
+                                        decoration: const BoxDecoration(
                                           color: _Palette.milanoRedDeep,
                                           shape: BoxShape.circle,
                                         ),
@@ -857,7 +857,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 /// Menu Management screens.
 class _TitleDivider extends StatelessWidget {
   final double width;
-  const _TitleDivider({this.width = 46});
+  const _TitleDivider() : width = 46;
 
   @override
   Widget build(BuildContext context) {
@@ -1294,7 +1294,7 @@ class _ScreenHeader extends StatelessWidget {
                               ),
                             ],
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Icons.point_of_sale_rounded,
                             color: _Palette.lemonChiffon,
                             size: 23,

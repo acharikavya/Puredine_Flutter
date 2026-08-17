@@ -823,7 +823,7 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                                 ),
                                 suffixIcon: _imageController.text.isNotEmpty
                                     ? IconButton(
-                                        icon: Icon(
+                                        icon: const Icon(
                                           Icons.clear_rounded,
                                           size: 18,
                                           color: _Palette.textMuted,

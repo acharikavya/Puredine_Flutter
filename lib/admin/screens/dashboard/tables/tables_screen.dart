@@ -26,6 +26,21 @@ import 'package:restaurant_unified_app/utils/file_download_helper.dart';
 /// subtle identity at a glance. No provider, service, filtering, dialog,
 /// QR-generation, or download logic was touched anywhere in this pass —
 /// only presentation changed.
+///
+/// UI-ENHANCEMENT PASS 3: tightened the vertical space above the
+/// "Tables Management" title inside the header — reduced the header's
+/// top padding and the gap between the top icon row and the title block
+/// so the heading sits right under the top edge instead of floating
+/// further down the bar. Purely a spacing tweak; no provider, service,
+/// filtering, dialog, QR-generation, or download logic was touched.
+///
+/// UI-ENHANCEMENT PASS 4: the title block ("Tables Management" + its
+/// subtitle) now sits on the SAME row as the add-table icon button,
+/// instead of stacking underneath a separate top row. This pulls the
+/// title further up (level with the button, right at the top of the
+/// header) instead of floating lower in the bar. Purely a layout/spacing
+/// change — no provider, service, filtering, dialog, QR-generation, or
+/// download logic was touched.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   _Palette._();
@@ -384,7 +399,7 @@ class _TablesScreenState extends State<TablesScreen> {
                     ),
                   ),
                   IconButton(
-                    icon: Icon(
+                    icon: const Icon(
                       Icons.close,
                       size: 20,
                       color: _Palette.textMuted,
@@ -861,8 +876,15 @@ class _TablesScreenState extends State<TablesScreen> {
   /// remains a compact circular icon button (table icon + small gold "+"
   /// badge), tucked into the top row next to the back button — matching
   /// the "add staff" icon button pattern used on StaffScreen's header.
-  /// Purely visual; the navigation and add-table actions underneath are
-  /// unchanged.
+  /// UI-ENHANCEMENT PASS 3 tightens the header's top padding and the gap
+  /// between the top icon row and the title block so "Tables Management"
+  /// sits closer to the top edge.
+  /// UI-ENHANCEMENT PASS 4: the title block now sits directly in the same
+  /// row as the add-table icon button (title on the left, date/divider/
+  /// button on the right), instead of stacking below a separate top row.
+  /// This keeps the title and subtitle "up", level with the button, right
+  /// at the top of the header. Purely visual; the navigation and
+  /// add-table actions underneath are unchanged.
   Widget _buildHeader(bool isMobile) {
     return ClipRect(
       child: Container(
@@ -1045,41 +1067,42 @@ class _TablesScreenState extends State<TablesScreen> {
             Padding(
               padding: EdgeInsets.fromLTRB(
                 isMobile ? 20 : 40,
-                isMobile ? 16 : 24,
+                isMobile ? 10 : 12,
                 isMobile ? 20 : 40,
                 isMobile ? 20 : 28,
               ),
               child: SafeArea(
                 bottom: false,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                // Title block and the add-table icon button now share a
+                // single row — title/subtitle on the left, date/divider +
+                // button on the right — so the title sits "up", directly
+                // level with the button instead of stacked underneath it.
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Row(
-                      children: [
-                        const Spacer(),
-                        if (!isMobile) ...[
-                          Text(
-                            _todayLabel(),
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.3,
-                              color: Colors.white.withValues(alpha: 0.65),
-                            ),
-                          ),
-                          const SizedBox(width: 18),
-                          Container(
-                            width: 1,
-                            height: 18,
-                            color: Colors.white.withValues(alpha: 0.18),
-                          ),
-                          const SizedBox(width: 18),
-                        ],
-                        _addIconButton(),
-                      ],
+                    Expanded(
+                      child: _titleBlock(fontSize: isMobile ? 26 : 34),
                     ),
-                    const SizedBox(height: 18),
-                    _titleBlock(fontSize: isMobile ? 26 : 34),
+                    const SizedBox(width: 12),
+                    if (!isMobile) ...[
+                      Text(
+                        _todayLabel(),
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.3,
+                          color: Colors.white.withValues(alpha: 0.65),
+                        ),
+                      ),
+                      const SizedBox(width: 18),
+                      Container(
+                        width: 1,
+                        height: 18,
+                        color: Colors.white.withValues(alpha: 0.18),
+                      ),
+                      const SizedBox(width: 18),
+                    ],
+                    _addIconButton(),
                   ],
                 ),
               ),
@@ -1093,6 +1116,7 @@ class _TablesScreenState extends State<TablesScreen> {
   Widget _titleBlock({required double fontSize}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           'Tables Management',

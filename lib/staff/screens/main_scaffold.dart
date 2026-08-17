@@ -210,8 +210,8 @@ class _MainScaffoldState extends State<MainScaffold>
     // whole app shell reads as one consistent Dark Maroon × Gold theme.
     // `isBilling` itself is untouched and still drives which nav items,
     // labels, and icons are shown — only the accent *color* is unified.
-    final accentColor = AppColors.servingAccent;
-    final accentLightColor = AppColors.servingAccentLight;
+    const accentColor = AppColors.servingAccent;
+    const accentLightColor = AppColors.servingAccentLight;
 
     final servingItems = [
       const _NavItem(

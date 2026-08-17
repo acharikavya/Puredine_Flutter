@@ -5,7 +5,6 @@ import '../contexts/auth_provider.dart';
 import 'package:restaurant_unified_app/core/auth_provider.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
-import '../widgets/common_widgets.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────
@@ -400,7 +399,7 @@ class ProfileScreen extends StatelessWidget {
                                       width: 36,
                                       height: 36,
                                       decoration: BoxDecoration(
-                                        gradient: LinearGradient(
+                                        gradient: const LinearGradient(
                                           colors: [
                                             _Palette.milanoRedLight,
                                             _Palette.milanoRedDeep,
@@ -647,7 +646,7 @@ class _SectionCard extends StatelessWidget {
                     width: 4,
                     height: 20,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
+                      gradient: const LinearGradient(
                         colors: [_Palette.gold, _Palette.goldLight],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
@@ -667,8 +666,8 @@ class _SectionCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.only(left: 45),
+            const Padding(
+              padding: EdgeInsets.only(left: 45),
               child: _TitleDivider(),
             ),
             const SizedBox(height: 16),
@@ -998,7 +997,7 @@ class _ProfileHeroHeader extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 8),
-                          _TitleDivider(),
+                          const _TitleDivider(),
                           const SizedBox(height: 8),
                           Wrap(
                             crossAxisAlignment: WrapCrossAlignment.center,

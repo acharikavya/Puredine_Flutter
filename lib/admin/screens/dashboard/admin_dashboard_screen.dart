@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:restaurant_unified_app/core/constants.dart';
 import 'package:restaurant_unified_app/core/auth_provider.dart';
 import 'package:restaurant_unified_app/admin/core/providers/restaurant_provider.dart';
 import 'package:restaurant_unified_app/admin/core/providers/notification_provider.dart';
@@ -511,7 +510,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 if (restaurantProv.isLoading)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
+                    child: const LinearProgressIndicator(
                       minHeight: 3,
                       color: _Palette.milanoRed,
                       backgroundColor: _Palette.lemonChiffon,
@@ -764,7 +763,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 10),
-                          _TitleDivider(),
+                          const _TitleDivider(),
                           const SizedBox(height: 10),
                           Text(
                             (restaurant?.restaurantType ?? 'CAFE')
@@ -809,7 +808,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                   ),
                                 ),
                                 const SizedBox(height: 12),
-                                _TitleDivider(),
+                                const _TitleDivider(),
                                 const SizedBox(height: 12),
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -964,7 +963,7 @@ class _HoverableDashCardState extends State<_HoverableDashCard> {
                         _Palette.cardWhite,
                       ],
                     )
-                  : LinearGradient(
+                  : const LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [_Palette.cardWhite, _Palette.cardWhite],
@@ -1606,7 +1605,7 @@ class _NotificationButtonState extends State<_NotificationButton> {
                     ],
                   ),
                 ),
-                Divider(height: 1, color: _Palette.lemonChiffonDeep),
+                const Divider(height: 1, color: _Palette.lemonChiffonDeep),
                 if (prov.notifications.isEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 60),

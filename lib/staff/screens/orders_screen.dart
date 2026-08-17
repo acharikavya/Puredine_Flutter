@@ -520,7 +520,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                                 width: 4,
                                                 height: 16,
                                                 decoration: BoxDecoration(
-                                                  gradient: LinearGradient(
+                                                  gradient:
+                                                      const LinearGradient(
                                                     colors: [
                                                       _Palette.gold,
                                                       _Palette.goldLight,
@@ -593,7 +594,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             gradient: isActive
-                ? LinearGradient(
+                ? const LinearGradient(
                     colors: [
                       _Palette.milanoRedLight,
                       _Palette.milanoRedDeep,
@@ -689,7 +690,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
 /// for a consistent brand language.
 class _TitleDivider extends StatelessWidget {
   final double width;
-  const _TitleDivider({this.width = 46});
+  const _TitleDivider() : width = 46;
 
   @override
   Widget build(BuildContext context) {
@@ -1026,7 +1027,7 @@ class _ScreenHeader extends StatelessWidget {
                               ),
                             ],
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Icons.receipt_long_rounded,
                             color: _Palette.lemonChiffon,
                             size: 23,
@@ -1365,7 +1366,7 @@ class _CreateOrderCircleButtonState extends State<_CreateOrderCircleButton> {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: LinearGradient(
+              gradient: const LinearGradient(
                 colors: [_Palette.gold, _Palette.goldLight],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -1570,7 +1571,7 @@ class _OrderCard extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              child: Icon(
+                              child: const Icon(
                                 Icons.table_bar_rounded,
                                 size: 22,
                                 color: _Palette.milanoRedDeep,
@@ -1648,7 +1649,7 @@ class _OrderCard extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.person_outline,
                             size: 14,
                             color: _Palette.textMuted,
@@ -1682,7 +1683,7 @@ class _OrderCard extends StatelessWidget {
                                 alpha: 0.08,
                               ),
                             ),
-                            child: Icon(
+                            child: const Icon(
                               Icons.chevron_right_rounded,
                               size: 13,
                               color: _Palette.milanoRedDeep,

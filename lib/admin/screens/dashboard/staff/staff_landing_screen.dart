@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:restaurant_unified_app/core/constants.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────
 /// Local "Theme 1 — Dark Maroon × Soft Cream × Gold Glow" palette — matches
@@ -739,7 +738,7 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
     // UI-ENHANCEMENT PASS 2: slim gold top-cap height, matching the Orders
     // screen's stat-card identity strip. Reserved from the card's own fixed
     // height so it never disturbs the existing content layout below it.
-    final double topCapHeight = 3;
+    const double topCapHeight = 3;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),

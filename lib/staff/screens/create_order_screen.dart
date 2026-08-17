@@ -724,7 +724,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                     width: 4,
                     height: 16,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
+                      gradient: const LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
@@ -824,7 +824,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                     children: [
                       // Large faint watermark emblem — echoes the main
                       // header's signature touch at a smaller scale.
-                      Positioned(
+                      const Positioned(
                         right: -16,
                         bottom: -18,
                         child: IgnorePointer(
@@ -1098,7 +1098,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
 /// Menu Management / New Orders screens for a consistent brand language.
 class _TitleDivider extends StatelessWidget {
   final double width;
-  const _TitleDivider({this.width = 54});
+  const _TitleDivider() : width = 54;
 
   @override
   Widget build(BuildContext context) {
@@ -1419,7 +1419,7 @@ class _ScreenHeader extends StatelessWidget {
                               ),
                             ],
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Icons.receipt_long_rounded,
                             color: _Palette.lemonChiffon,
                             size: 23,
@@ -1827,7 +1827,7 @@ class _MenuItemRowState extends State<_MenuItemRow> {
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
+                    gradient: const LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
@@ -1885,7 +1885,7 @@ class _MenuItemRowState extends State<_MenuItemRow> {
                             ),
                           ),
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.remove_rounded,
                           color: _Palette.milanoRedDeep,
                           size: 18,
@@ -1918,7 +1918,7 @@ class _MenuItemRowState extends State<_MenuItemRow> {
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
+                          gradient: const LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [

@@ -258,7 +258,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
             // large behind the copy, never competing with the title or
             // controls. Matches the Admin Orders / Dashboard screens'
             // Pass-2 watermark treatment.
-            Positioned(
+            const Positioned(
               right: -14,
               bottom: -18,
               child: IgnorePointer(

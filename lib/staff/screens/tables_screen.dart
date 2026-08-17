@@ -494,7 +494,8 @@ class _TablesScreenState extends State<TablesScreen> {
                                                 width: 4,
                                                 height: 14,
                                                 decoration: BoxDecoration(
-                                                  gradient: LinearGradient(
+                                                  gradient:
+                                                      const LinearGradient(
                                                     begin: Alignment.topCenter,
                                                     end: Alignment.bottomCenter,
                                                     colors: [
@@ -566,7 +567,7 @@ class _TablesScreenState extends State<TablesScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             gradient: isActive
-                ? LinearGradient(
+                ? const LinearGradient(
                     colors: [_Palette.gold, _Palette.goldLight],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -653,7 +654,7 @@ class _TablesScreenState extends State<TablesScreen> {
 /// brand language.
 class _TitleDivider extends StatelessWidget {
   final double width;
-  const _TitleDivider({this.width = 40});
+  const _TitleDivider() : width = 40;
 
   @override
   Widget build(BuildContext context) {
@@ -969,7 +970,7 @@ class _ScreenHeader extends StatelessWidget {
                               ),
                             ],
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Icons.grid_view_rounded,
                             color: _Palette.lemonChiffon,
                             size: 23,

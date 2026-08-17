@@ -28,6 +28,14 @@ import 'package:restaurant_unified_app/admin/services/orders_service.dart';
 /// color-coded top cap so each figure has its own subtle identity at a
 /// glance. No provider, filtering, sorting, status-update, or PDF/print
 /// logic was touched anywhere in this pass — only presentation changed.
+///
+/// UI-ENHANCEMENT PASS 3: tightened the vertical space above the
+/// "Orders Management" title inside the header — reduced the header's
+/// top padding and swapped the title's vertical `Center` alignment for
+/// a top-aligned `Align` so the heading sits right under the top edge
+/// instead of floating in the middle of the bar. Purely a spacing/
+/// alignment tweak; no provider, filtering, sorting, status-update, or
+/// PDF/print logic was touched.
 /// -----------------------------------------------------------------------
 class _OrdersTheme {
   // Primary brand — Dark Maroon (#8B1D1D) per Theme 1. Field names kept
@@ -389,7 +397,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
         width: double.infinity,
         padding: EdgeInsets.fromLTRB(
           isMobile ? 20 : 40,
-          isMobile ? 32 : 48,
+          isMobile ? 14 : 18,
           isMobile ? 20 : 40,
           32,
         ),
@@ -416,7 +424,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
             bottomLeft: Radius.circular(isMobile ? 28 : 38),
             bottomRight: Radius.circular(isMobile ? 28 : 38),
           ),
-          border: Border(
+          border: const Border(
             bottom: BorderSide(color: _OrdersTheme.gold, width: 4),
           ),
           boxShadow: [
@@ -599,7 +607,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: Center(
+                          child: Align(
+                            alignment: Alignment.topCenter,
                             child: Column(
                               children: [
                                 Text(

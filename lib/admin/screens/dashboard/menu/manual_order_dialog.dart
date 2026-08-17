@@ -360,7 +360,7 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                     // behind the copy, never competing with the title or
                     // the close button. Matches the receipt-style icon
                     // already used in the header's icon chip.
-                    Positioned(
+                    const Positioned(
                       right: -14,
                       bottom: -18,
                       child: IgnorePointer(
@@ -670,7 +670,7 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Icon(
+                                          const Icon(
                                             Icons.check_circle_rounded,
                                             size: 16,
                                             color: _Palette.lemonChiffon,
@@ -1346,7 +1346,7 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                               color: _Palette.canvasDeep,
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Icon(
+                            child: const Icon(
                               Icons.restaurant,
                               color: _Palette.textMuted,
                               size: 28,

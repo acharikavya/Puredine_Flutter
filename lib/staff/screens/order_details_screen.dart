@@ -577,7 +577,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
 /// consistent brand language.
 class _TitleDivider extends StatelessWidget {
   final double width;
-  const _TitleDivider({this.width = 40});
+  const _TitleDivider() : width = 40;
 
   @override
   Widget build(BuildContext context) {
@@ -904,7 +904,7 @@ class _ScreenHeader extends StatelessWidget {
                               ),
                             ],
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Icons.table_restaurant_rounded,
                             color: _Palette.lemonChiffon,
                             size: 23,
@@ -1308,7 +1308,7 @@ class _SectionCard extends StatelessWidget {
                           width: 4,
                           height: 20,
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
+                            gradient: const LinearGradient(
                               colors: [_Palette.gold, _Palette.goldLight],
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,

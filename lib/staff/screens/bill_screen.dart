@@ -1033,7 +1033,7 @@ class BillScreen extends StatelessWidget {
 /// Details / Payment screens.
 class _TitleDivider extends StatelessWidget {
   final double width;
-  const _TitleDivider({this.width = 46});
+  const _TitleDivider() : width = 46;
 
   @override
   Widget build(BuildContext context) {
@@ -1362,7 +1362,7 @@ class _ScreenHeader extends StatelessWidget {
                               ),
                             ],
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Icons.receipt_long_rounded,
                             color: _Palette.lemonChiffon,
                             size: 23,
@@ -1681,7 +1681,7 @@ class _ReceiptRow extends StatelessWidget {
         Text(
           value,
           style: mono
-              ? TextStyle(
+              ? const TextStyle(
                   fontFamily: 'monospace',
                   fontSize: 13,
                   fontWeight: FontWeight.w700,

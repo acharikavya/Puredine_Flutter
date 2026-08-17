@@ -638,7 +638,7 @@ class _BillingScreenState extends State<BillingScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             gradient: isActive
-                ? LinearGradient(
+                ? const LinearGradient(
                     colors: [_Palette.milanoRedLight, _Palette.milanoRedDeep],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -1010,7 +1010,7 @@ class _ScreenHeader extends StatelessWidget {
                               ),
                             ],
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Icons.account_balance_wallet_rounded,
                             color: _Palette.lemonChiffon,
                             size: 20,
@@ -1392,7 +1392,7 @@ class _BillingCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
               decoration: BoxDecoration(
                 gradient: isUnpaid
-                    ? LinearGradient(
+                    ? const LinearGradient(
                         colors: [
                           _Palette.milanoRedLight,
                           _Palette.milanoRedDeep,
@@ -1490,14 +1490,14 @@ class _BillingCard extends StatelessWidget {
                           width: 1,
                         ),
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.chevron_right,
                         size: 20,
                         color: Colors.white,
                       ),
                     )
                   else
-                    Icon(
+                    const Icon(
                       Icons.chevron_right,
                       size: 22,
                       color: _Palette.successDeep,
@@ -1612,7 +1612,7 @@ class _BillingCard extends StatelessWidget {
                                 ),
                                 alignment: Alignment.center,
                                 decoration: BoxDecoration(
-                                  gradient: LinearGradient(
+                                  gradient: const LinearGradient(
                                     colors: [
                                       _Palette.gold,
                                       _Palette.goldLight,

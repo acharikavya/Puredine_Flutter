@@ -423,7 +423,7 @@ class _NewOrdersScreenState extends State<NewOrdersScreen> {
 /// screens for a consistent brand language.
 class _TitleDivider extends StatelessWidget {
   final double width;
-  const _TitleDivider({this.width = 48});
+  const _TitleDivider() : width = 48;
 
   @override
   Widget build(BuildContext context) {
@@ -749,7 +749,7 @@ class _ScreenHeader extends StatelessWidget {
                               ),
                             ],
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Icons.receipt_long_rounded,
                             color: _Palette.lemonChiffon,
                             size: 23,
@@ -1346,7 +1346,7 @@ class _OrderCard extends StatelessWidget {
               Container(
                 decoration: BoxDecoration(
                   gradient: isNew
-                      ? LinearGradient(
+                      ? const LinearGradient(
                           colors: [
                             _Palette.milanoRedLight,
                             _Palette.milanoRedDeep,
@@ -1536,7 +1536,7 @@ class _OrderCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Icons.restaurant,
                             color: _Palette.milanoRedDeep,
                             size: 30,
@@ -1596,7 +1596,7 @@ class _OrderCard extends StatelessWidget {
                         ),
                         child: Row(
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.person_outline,
                               color: _Palette.milanoRedDeep,
                               size: 20,
@@ -1719,7 +1719,7 @@ class _OrderCard extends StatelessWidget {
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 17),
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
+                            gradient: const LinearGradient(
                               colors: [_Palette.gold, _Palette.goldLight],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
@@ -1789,7 +1789,7 @@ class _OrderCard extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(width: 6),
-                              Icon(
+                              const Icon(
                                 Icons.arrow_forward,
                                 size: 16,
                                 color: _Palette.milanoRedDeep,

@@ -408,7 +408,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 width: 4,
                                 height: 16,
                                 decoration: BoxDecoration(
-                                  gradient: LinearGradient(
+                                  gradient: const LinearGradient(
                                     begin: Alignment.topCenter,
                                     end: Alignment.bottomCenter,
                                     colors: [
@@ -1198,7 +1198,7 @@ class _DashboardHero extends StatelessWidget {
                           padding: const EdgeInsets.all(2.4),
                           child: Container(
                             padding: const EdgeInsets.all(2),
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               shape: BoxShape.circle,
                               color: _Palette.milanoRedDeep,
                             ),
@@ -1384,14 +1384,14 @@ class _DashboardHero extends StatelessWidget {
                               value: '$activeOrdersCount',
                               label: 'Active',
                             ),
-                            _StatDivider(),
+                            const _StatDivider(),
                             _StatPill(
                               icon: Icons.notifications_active_rounded,
                               value: '$newOrdersCount',
                               label: 'New',
                               isAlert: newOrdersCount > 0,
                             ),
-                            _StatDivider(),
+                            const _StatDivider(),
                             _StatPill(
                               icon: Icons.grid_view_rounded,
                               value: '$availableTablesCount',
@@ -1932,7 +1932,7 @@ class _MiniOrderCard extends StatelessWidget {
                             ),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Icons.restaurant_rounded,
                             color: _Palette.milanoRedDeep,
                             size: 18,
@@ -1974,7 +1974,7 @@ class _MiniOrderCard extends StatelessWidget {
                               const SizedBox(height: 2),
                               Row(
                                 children: [
-                                  Icon(
+                                  const Icon(
                                     Icons.access_time,
                                     size: 12,
                                     color: _Palette.textMuted,
@@ -2010,7 +2010,7 @@ class _MiniOrderCard extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.shopping_bag_outlined,
                               size: 14,
                               color: _Palette.textMuted,

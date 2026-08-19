@@ -141,7 +141,31 @@ class _MainScaffoldState extends State<MainScaffold>
 
     _currentIndex = widget.initialTab;
 
-    SessionManager.updateLastActiveTime();
+    _checkSessionOnStartup();
+  }
+
+  Future<void> _checkSessionOnStartup() async {
+    final isValid = await SessionManager.isSessionValid();
+
+    print('Startup Session Valid: $isValid');
+
+    if (!isValid) {
+      print('===== STARTUP SESSION INVALID =====');
+
+      await SessionManager.logout();
+
+      if (!mounted) return;
+
+      await context.read<StaffAuthProvider>().logout();
+
+      if (!mounted) return;
+
+      context.go('/login');
+
+      return;
+    }
+
+    await SessionManager.updateLastActiveTime();
   }
 
   @override

@@ -290,28 +290,81 @@ class _TablesScreenState extends State<TablesScreen> {
 
   Future<void> _downloadQR(TableModel t, String qrData) async {
     try {
+      const double qrSize = 1024;
+      const double padding = 120;
+      const double canvasSize = qrSize + (padding * 2);
+
       final painter = QrPainter(
         data: qrData,
         version: QrVersions.auto,
+
+        // Maximum error correction for easier scanning.
+        errorCorrectionLevel: QrErrorCorrectLevel.H,
+
+        // Keep modules clean and separated.
+        gapless: false,
+
+        // BLACK QR
         eyeStyle: const QrEyeStyle(
           eyeShape: QrEyeShape.square,
-          color: _Palette.milanoRedDeep,
+          color: Colors.black,
         ),
+
         dataModuleStyle: const QrDataModuleStyle(
           dataModuleShape: QrDataModuleShape.square,
-          color: _Palette.milanoRedDeep,
+          color: Colors.black,
         ),
+
+        // WHITE QR background.
+        emptyColor: Colors.white,
       );
 
-      final image = await painter.toImage(512);
+      // Create a completely opaque white image.
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
+
+      // White background over the ENTIRE exported image.
+      canvas.drawRect(
+        Rect.fromLTWH(
+          0,
+          0,
+          canvasSize,
+          canvasSize,
+        ),
+        Paint()..color = Colors.white,
+      );
+
+      // Put the QR in the middle, leaving a large white quiet zone.
+      canvas.save();
+
+      canvas.translate(padding, padding);
+
+      painter.paint(
+        canvas,
+        const Size(qrSize, qrSize),
+      );
+
+      canvas.restore();
+
+      // Convert to final PNG.
+      final picture = recorder.endRecording();
+
+      final image = await picture.toImage(
+        canvasSize.toInt(),
+        canvasSize.toInt(),
+      );
 
       final byteData = await image.toByteData(
         format: ui.ImageByteFormat.png,
       );
 
-      if (byteData == null) return;
+      if (byteData == null) {
+        throw Exception('Failed to create QR PNG');
+      }
 
       final bytes = byteData.buffer.asUint8List();
+
+      debugPrint('QR PNG generated: ${bytes.length} bytes');
 
       final success = await downloadFile(
         bytes,
@@ -328,8 +381,9 @@ class _TablesScreenState extends State<TablesScreen> {
           duration: const Duration(seconds: 2),
         ),
       );
-    } catch (e) {
-      debugPrint('Download failed: $e');
+    } catch (e, stackTrace) {
+      debugPrint('QR download failed: $e');
+      debugPrint('$stackTrace');
 
       if (!mounted) return;
 

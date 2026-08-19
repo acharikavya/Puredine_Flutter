@@ -8,16 +8,104 @@ import 'tables/tables_screen.dart';
 import 'orders/orders_screen.dart';
 import 'profile/profile_screen.dart';
 
-/// Local nav colors — matches the app's maroon/gold brand identity used
-/// throughout the admin dashboard header and cards. Purely cosmetic;
-/// doesn't touch any shared theme/AppColors file.
+/// Local nav colors — matches the app's "Dark Maroon × Soft Cream × Gold
+/// Glow" brand identity (Theme 1) used throughout the admin dashboard
+/// header and cards. Purely cosmetic; doesn't touch any shared
+/// theme/AppColors file.
+///
+/// UI-ENHANCEMENT PASS: the bottom navigation bar has been restyled to
+/// match the staff module's `_RoleAwareBottomNav` (MainScaffold) exactly —
+/// a cream/gold docked bar with a top gold indicator dot + a circular
+/// icon badge (gold-ringed, gradient-filled, glowing when active) instead
+/// of the previous floating "pill" bar with a lifted gold circle. The
+/// extra shadow helpers below (`softShadow`, `chipShadow`,
+/// `floatUpShadow`, `goldGlow`, `accentGlow`) mirror `_Palette`'s in
+/// main_scaffold.dart so the two bottom bars are visually identical in
+/// construction, just reusing this file's own `_NavPalette` colors. All
+/// pre-existing color constants are unchanged so nothing else that
+/// already references `_NavPalette` is affected.
 class _NavPalette {
   static const Color maroon = Color(0xFF8B1D1D);
   static const Color maroonDark = Color(0xFF6E1616);
+  static const Color maroonDeep = Color(0xFF4E0F0F);
+  static const Color maroonLight = Color(0xFFA83030);
   static const Color gold = Color(0xFFF4C430);
+  static const Color goldDeep = Color(0xFFD9A62A);
   static const Color muted = Color(0xFF8A6F5E);
   static const Color cream = Color(0xFFFDF3E6);
+  static const Color creamDeep = Color(0xFFF5E9D6);
   static const Color chipBg = Color(0xFFF3E1CE);
+
+  /// Themed soft shadow for resting cards/panels — mirrors `_Palette`'s
+  /// softShadow in main_scaffold.dart.
+  static List<BoxShadow> get softShadow => [
+        BoxShadow(
+          color: maroonDeep.withValues(alpha: 0.07),
+          blurRadius: 20,
+          offset: const Offset(0, 8),
+        ),
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.03),
+          blurRadius: 4,
+          offset: const Offset(0, 2),
+        ),
+      ];
+
+  /// Small resting shadow for icon chips — gives inactive icon badges a
+  /// gentle lift so they stay clearly visible against the cream chrome.
+  static List<BoxShadow> get chipShadow => [
+        BoxShadow(
+          color: maroonDeep.withValues(alpha: 0.06),
+          blurRadius: 8,
+          offset: const Offset(0, 3),
+        ),
+      ];
+
+  /// Elevated shadow that floats "up" — used for the bottom navigation bar
+  /// so it reads as a raised, premium dock rather than a flat strip.
+  static List<BoxShadow> get floatUpShadow => [
+        BoxShadow(
+          color: maroonDeep.withValues(alpha: 0.14),
+          blurRadius: 28,
+          offset: const Offset(0, -10),
+        ),
+        BoxShadow(
+          color: gold.withValues(alpha: 0.10),
+          blurRadius: 24,
+          offset: const Offset(0, -4),
+        ),
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.03),
+          blurRadius: 4,
+          offset: const Offset(0, -1),
+        ),
+      ];
+
+  /// Soft ambient gold glow, used behind brand/avatar chips.
+  static List<BoxShadow> goldGlow({double alpha = 0.35}) => [
+        BoxShadow(
+          color: gold.withValues(alpha: alpha),
+          blurRadius: 14,
+          spreadRadius: 0.5,
+        ),
+      ];
+
+  /// Wider, softer glow used behind an *active* accent-tinted badge — gives
+  /// the currently-selected item a gentle "lit up" halo instead of a flat
+  /// tinted circle, making the active state unmistakable at a glance.
+  static List<BoxShadow> accentGlow(Color color, {double alpha = 0.32}) => [
+        BoxShadow(
+          color: color.withValues(alpha: alpha),
+          blurRadius: 18,
+          spreadRadius: 1,
+          offset: const Offset(0, 6),
+        ),
+        BoxShadow(
+          color: gold.withValues(alpha: 0.14),
+          blurRadius: 10,
+          offset: const Offset(0, 2),
+        ),
+      ];
 }
 
 class _AdminNavItem {
@@ -33,14 +121,19 @@ const double _kDesktopBreakpoint = 900;
 
 /// Persistent bottom-nav shell for the admin console, mirroring the same
 /// pattern already used by the staff module's MainScaffold. Wraps the five
-/// admin screens (Dashboard, Menu, Staff, Tables, Orders) in an
-/// IndexedStack so switching tabs preserves each screen's scroll position,
-/// filters, and other state instead of rebuilding from scratch — the same
+/// admin screens (Menu, Staff, Tables, Orders, Profile) in an IndexedStack
+/// so switching tabs preserves each screen's scroll position, filters, and
+/// other state instead of rebuilding from scratch — the same
 /// Instagram-style behavior the staff side already has.
 ///
 /// On wide (desktop/web) viewports, the same tab list is presented as a
 /// persistent side navigation rail instead of a bottom bar. On narrow
-/// (mobile) viewports the layout is unchanged from before.
+/// (mobile) viewports the bottom bar now uses the exact same visual
+/// language as the staff module's `_RoleAwareBottomNav` — see
+/// [_AdminBottomNav] — styled to Theme 1 (Dark Maroon × Soft Cream × Gold
+/// Glow), with a top gold indicator dot and a gold-ringed, glowing gradient
+/// badge on the active tab. No tab order, routes, or tap behavior were
+/// changed.
 class AdminMainScaffold extends StatefulWidget {
   final int initialTab;
   const AdminMainScaffold({super.key, this.initialTab = 0});
@@ -130,78 +223,197 @@ class _AdminMainScaffoldState extends State<AdminMainScaffold> {
           );
         }
 
-        // Mobile/tablet layout: unchanged bottom navigation bar.
+        // Mobile/tablet layout: bottom navigation bar restyled to match
+        // the staff module's `_RoleAwareBottomNav` exactly (Theme 1 — Dark
+        // Maroon × Soft Cream × Gold Glow): top gold indicator dot + a
+        // circular icon badge that turns into a gold-ringed, glowing
+        // gradient disc on the active tab. Same `_navItems` list and the
+        // same `setState(() => _currentIndex = i)` tap behavior as
+        // before — only the presentation changed.
         return Scaffold(
+          backgroundColor: _NavPalette.cream,
           body: body,
-          bottomNavigationBar: SafeArea(
-            top: false,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 16,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
-              ),
-              child: SizedBox(
-                height: 62,
-                child: Row(
-                  children: List.generate(_navItems.length, (i) {
-                    final isSelected = _currentIndex == i;
-                    final item = _navItems[i];
-                    return Expanded(
-                      child: InkWell(
-                        onTap: () => setState(() => _currentIndex = i),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? _NavPalette.maroon.withValues(alpha: 0.10)
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              child: Icon(
-                                item.icon,
-                                size: 21,
-                                color: isSelected
-                                    ? _NavPalette.maroon
-                                    : _NavPalette.muted,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              item.label,
-                              style: GoogleFonts.inter(
-                                fontSize: 10,
-                                fontWeight: isSelected
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
-                                color: isSelected
-                                    ? _NavPalette.maroon
-                                    : _NavPalette.muted,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-              ),
-            ),
+          bottomNavigationBar: _AdminBottomNav(
+            items: _navItems,
+            currentIndex: _currentIndex,
+            onSelect: (i) => setState(() => _currentIndex = i),
           ),
         );
       },
+    );
+  }
+}
+
+// ─── Admin Bottom Navigation Bar ──────────────────────────────────────────
+// Mirrors the staff module's `_RoleAwareBottomNav` (main_scaffold.dart)
+// exactly: a cream→gold-capped dock (gradient background, rounded top
+// corners, thin gold top border, floatUpShadow) holding a row of tabs.
+// Each tab shows a small top indicator dot above an always-visible
+// circular icon badge — a soft white chip at rest, a maroon gradient disc
+// with a gold ring + ambient glow when active — plus a bold gold label
+// underneath. Behavior is unchanged: exactly the same [items] list, same
+// [currentIndex], and tapping an item calls [onSelect] with its index.
+class _AdminBottomNav extends StatelessWidget {
+  final List<_AdminNavItem> items;
+  final int currentIndex;
+  final ValueChanged<int> onSelect;
+
+  const _AdminBottomNav({
+    required this.items,
+    required this.currentIndex,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Colors.white, _NavPalette.creamDeep.withValues(alpha: 0.5)],
+        ),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(28),
+          topRight: Radius.circular(28),
+        ),
+        // Thin gold cap line across the top of the dock, echoing the
+        // lemon-chiffon border used on every staff screen header and on
+        // the staff bottom nav.
+        border: Border(
+          top: BorderSide(
+            color: _NavPalette.gold.withValues(alpha: 0.65),
+            width: 2.5,
+          ),
+        ),
+        boxShadow: _NavPalette.floatUpShadow,
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+          child: Row(
+            children: items.asMap().entries.map((e) {
+              final idx = e.key;
+              final item = e.value;
+              final isActive = currentIndex == idx;
+
+              return Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => onSelect(idx),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 240),
+                    curve: Curves.easeOutCubic,
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // ── Top indicator dot — a tiny gold-rimmed accent
+                        // dot that fades/pops in above the active badge,
+                        // giving a second, unmistakable "you are here"
+                        // signal beyond just the badge color change. ────
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.easeOutCubic,
+                          margin: const EdgeInsets.only(bottom: 4),
+                          width: isActive ? 18 : 0,
+                          height: 3.5,
+                          decoration: BoxDecoration(
+                            color: isActive
+                                ? _NavPalette.gold
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(4),
+                            boxShadow: isActive
+                                ? [
+                                    BoxShadow(
+                                      color: _NavPalette.gold
+                                          .withValues(alpha: 0.5),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 1),
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                        ),
+                        // ── Always-visible circular icon badge — a soft
+                        // white chip at rest so the glyph stays crisp
+                        // against the bar, and a bold maroon gradient
+                        // disc with a gold ring + ambient glow when
+                        // active. ─────────────────────────────────────
+                        AnimatedScale(
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.easeOutBack,
+                          scale: isActive ? 1.0 : 0.94,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 220),
+                            curve: Curves.easeOutCubic,
+                            width: isActive ? 50 : 44,
+                            height: isActive ? 50 : 44,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: isActive
+                                  ? const LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        _NavPalette.maroonLight,
+                                        _NavPalette.maroonDeep,
+                                      ],
+                                    )
+                                  : null,
+                              color: isActive ? null : Colors.white,
+                              border: Border.all(
+                                color: isActive
+                                    ? _NavPalette.gold.withValues(alpha: 0.85)
+                                    : _NavPalette.maroonDeep.withValues(
+                                        alpha: 0.12,
+                                      ),
+                                width: isActive ? 1.8 : 1.2,
+                              ),
+                              boxShadow: isActive
+                                  ? _NavPalette.accentGlow(_NavPalette.maroon)
+                                  : _NavPalette.chipShadow,
+                            ),
+                            child: Icon(
+                              item.icon,
+                              color: isActive
+                                  ? Colors.white
+                                  : _NavPalette.maroonDeep.withValues(
+                                      alpha: 0.68,
+                                    ),
+                              size: isActive ? 26 : 22,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        // Label
+                        AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 220),
+                          style: GoogleFonts.inter(
+                            fontSize: 10.5,
+                            fontWeight:
+                                isActive ? FontWeight.w800 : FontWeight.w600,
+                            color: isActive
+                                ? _NavPalette.maroon
+                                : _NavPalette.muted,
+                          ),
+                          child: Text(
+                            item.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -213,6 +425,9 @@ class _AdminMainScaffoldState extends State<AdminMainScaffold> {
 /// (logo header, "ADMIN PANEL" badge, pill-style nav rows, admin footer
 /// card) instead of a bottom bar. Purely a presentational alternative;
 /// no navigation logic is duplicated or diverges between layouts.
+///
+/// Unchanged in this pass — only the mobile bottom nav above was
+/// restyled.
 class _AdminSideNavRail extends StatelessWidget {
   final List<_AdminNavItem> items;
   final int currentIndex;

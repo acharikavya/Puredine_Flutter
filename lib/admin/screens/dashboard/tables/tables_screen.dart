@@ -41,6 +41,33 @@ import 'package:restaurant_unified_app/utils/file_download_helper.dart';
 /// header) instead of floating lower in the bar. Purely a layout/spacing
 /// change — no provider, service, filtering, dialog, QR-generation, or
 /// download logic was touched.
+///
+/// UI-ENHANCEMENT PASS 5: restyled the QR Code dialog (`_showQRDialog`)
+/// to fully match the "Dark Maroon × Soft Cream × Gold Glow" theme —
+/// a maroon→gold command-bar header, a gold-ring frame around the QR
+/// canvas, and gradient maroon/gold action buttons replacing the plain
+/// red/blue buttons. The dialog heading was simplified to just the table
+/// number (no more "QR Code -" prefix and no duplicate subtitle line
+/// underneath). Purely presentational — the QR data, download, and
+/// copy-link logic are byte-for-byte unchanged.
+///
+/// UI-ENHANCEMENT PASS 6 (bugfix, purely visual): fixed a mobile-only
+/// render overflow inside the QR dialog's action-button row ("Download
+/// PNG" / "Copy Link"). The dialog card previously used a hard-coded
+/// `width: 360`, which is wider than the viewport on narrow phones, so
+/// the icon+label content inside each button had less room than it
+/// needed and Flutter reported a RenderFlex overflow. Fixed by:
+///   1. Making the dialog card's width responsive (same clamp pattern as
+///      the existing `_dialogWidth()` helper used by the Add Table
+///      dialog), via a new `_qrDialogWidth()` helper, so the card never
+///      exceeds the actual screen width.
+///   2. Wrapping each button's icon+label content in a
+///      `FittedBox(fit: BoxFit.scaleDown)` so that on any remaining
+///      ultra-narrow screens the content scales down instead of
+///      overflowing.
+/// No provider, service, filtering, dialog-trigger, QR-generation,
+/// download, or copy-link logic was touched — only the sizing/wrapping
+/// needed to make the button row render without an overflow error.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   _Palette._();
@@ -396,6 +423,39 @@ class _TablesScreenState extends State<TablesScreen> {
     }
   }
 
+  /// UI-ENHANCEMENT PASS 6: computes the QR dialog card's width so it
+  /// always fits the current screen instead of using a hard-coded 360px,
+  /// which was the root cause of the mobile "RenderFlex overflowed by
+  /// 18 pixels" error inside the action-button row. Desktop/tablet keeps
+  /// the original 360px card width; on narrow phones the width shrinks to
+  /// (screen width − outer insets) so the card — and everything inside
+  /// it, including the Download/Copy buttons — never overflows. Mirrors
+  /// the same clamp pattern as the existing `_dialogWidth()` helper used
+  /// by the Add Table dialog.
+  double _qrDialogWidth(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    const outerInset = 48.0; // default showDialog horizontal insets
+    if (screenWidth < 360 + outerInset) {
+      return (screenWidth - outerInset).clamp(240.0, 360.0);
+    }
+    return 360.0;
+  }
+
+  /// UI-ENHANCEMENT PASS 5: restyled to match the "Dark Maroon × Soft
+  /// Cream × Gold Glow" theme end-to-end — a maroon→gold command-bar
+  /// header (replacing the plain white header row), a gold-ring frame
+  /// around the QR canvas, and gradient maroon/gold action buttons
+  /// (replacing the flat red "Download PNG" / blue "Copy Link" buttons).
+  /// The heading now shows ONLY the table number ("Table 86") — the old
+  /// "QR Code - Table 86" prefix and the duplicate "Table 86" subtitle
+  /// line beneath it have been removed. The QR data, download callback,
+  /// and copy-to-clipboard callback are all byte-for-byte unchanged.
+  ///
+  /// UI-ENHANCEMENT PASS 6 (bugfix, purely visual): the card width now
+  /// comes from `_qrDialogWidth()` instead of a fixed 360, and each
+  /// action button's icon+label is wrapped in a `FittedBox` so the
+  /// "Download PNG" / "Copy Link" row can never overflow on narrow mobile
+  /// screens. See the PASS 6 note above `_Palette` for full details.
   void _showQRDialog(TableModel t) {
     const baseUrl = 'https://customerfinal1.vercel.app/customer/scan-qr';
     final qrData = (t.qrCode != null && t.qrCode!.isNotEmpty)
@@ -404,172 +464,343 @@ class _TablesScreenState extends State<TablesScreen> {
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         child: Container(
-          width: 360,
-          padding: const EdgeInsets.all(28),
+          // Responsive width — fixes the mobile-only RenderFlex overflow
+          // that occurred when this was hard-coded to 360 on screens
+          // narrower than ~360 + 48px of dialog insets.
+          width: _qrDialogWidth(ctx),
           decoration: BoxDecoration(
             color: _Palette.canvas,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: _Palette.lemonChiffon.withValues(alpha: 0.5),
+              width: 1.4,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: _Palette.milanoRedDeep.withValues(alpha: 0.25),
+                blurRadius: 30,
+                offset: const Offset(0, 14),
+              ),
+              BoxShadow(
+                color: _Palette.lemonChiffon.withValues(alpha: 0.18),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
+          clipBehavior: Clip.antiAlias,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: _Palette.milanoRed.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.qr_code_2,
-                      color: _Palette.milanoRed,
-                      size: 22,
-                    ),
+              // ── Command-bar header — a compact maroon → gold strip so
+              // the dialog reads as part of the same brand identity as
+              // the rest of the screen, instead of a plain white popup
+              // header. Heading now shows only "Table {number}".
+              Container(
+                padding: const EdgeInsets.fromLTRB(20, 18, 14, 18),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      _Palette.milanoRedLight,
+                      _Palette.milanoRedDeep,
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'QR Code - Table ${t.tableNumber}',
-                          style: GoogleFonts.playfairDisplay(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                  border: Border(
+                    bottom: BorderSide(color: _Palette.lemonChiffon, width: 3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _Palette.lemonChiffon.withValues(alpha: 0.6),
+                          width: 1.2,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.qr_code_2,
+                        color: _Palette.lemonChiffon,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        'Table ${t.tableNumber}',
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 21,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Material(
+                      color: Colors.transparent,
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: () => Navigator.pop(ctx),
+                        child: Container(
+                          width: 30,
+                          height: 30,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.14),
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            size: 17,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(28, 24, 28, 28),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Gold-ring QR frame — a slim maroon → gold gradient
+                    // border wrapping the white QR canvas, matching the
+                    // theme's signature "gold glow" edge treatment.
+                    Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            _Palette.lemonChiffon,
+                            _Palette.milanoRed,
+                          ],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                _Palette.milanoRedDeep.withValues(alpha: 0.12),
+                            blurRadius: 18,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: _Palette.cardWhite,
+                          borderRadius: BorderRadius.circular(17),
+                        ),
+                        child: QrImageView(
+                          data: qrData,
+                          version: QrVersions.auto,
+                          size: 220,
+                          eyeStyle: const QrEyeStyle(
+                            eyeShape: QrEyeShape.square,
+                            color: _Palette.milanoRedDeep,
+                          ),
+                          dataModuleStyle: const QrDataModuleStyle(
+                            dataModuleShape: QrDataModuleShape.square,
                             color: _Palette.milanoRedDeep,
                           ),
                         ),
-                        Text(
-                          'Table ${t.tableNumber}',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            color: _Palette.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _Palette.lemonChiffon.withValues(alpha: 0.35),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color:
+                              _Palette.lemonChiffonDeep.withValues(alpha: 0.4),
+                        ),
+                      ),
+                      child: SelectableText(
+                        qrData,
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          color: _Palette.textMuted,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    Row(
+                      children: [
+                        // Primary action — solid maroon gradient, matching
+                        // the header bar and the app's primary CTA color.
+                        Expanded(
+                          child: Material(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () {
+                                Navigator.pop(ctx);
+                                _downloadQR(t, qrData);
+                              },
+                              child: Ink(
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      _Palette.milanoRedLight,
+                                      _Palette.milanoRedDeep,
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: _Palette.milanoRedDeep
+                                          .withValues(alpha: 0.3),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 6),
+                                    ),
+                                  ],
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                    horizontal: 4,
+                                  ),
+                                  // FittedBox guarantees this icon+label
+                                  // content can never overflow its
+                                  // Expanded button, even on the
+                                  // narrowest phone screens — the fix for
+                                  // the reported mobile RenderFlex
+                                  // overflow.
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.download_rounded,
+                                          size: 17,
+                                          color: Colors.white,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Download PNG',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        // Secondary action — gold gradient with dark
+                        // maroon text/icon for contrast, so the two
+                        // buttons read as one cohesive maroon×gold pair
+                        // instead of the previous mismatched red/blue.
+                        Expanded(
+                          child: Material(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () {
+                                Clipboard.setData(
+                                  ClipboardData(text: qrData),
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Link copied to clipboard'),
+                                  ),
+                                );
+                              },
+                              child: Ink(
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      _Palette.lemonChiffon,
+                                      _Palette.lemonChiffonDeep,
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: _Palette.milanoRedDeep
+                                        .withValues(alpha: 0.12),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: _Palette.lemonChiffonDeep
+                                          .withValues(alpha: 0.35),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 6),
+                                    ),
+                                  ],
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                    horizontal: 4,
+                                  ),
+                                  // Same overflow-safe wrapper as the
+                                  // Download button above.
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.copy,
+                                          size: 17,
+                                          color: _Palette.milanoRedDeep,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Copy Link',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                            color: _Palette.milanoRedDeep,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.close,
-                      size: 20,
-                      color: _Palette.textMuted,
-                    ),
-                    onPressed: () => Navigator.pop(ctx),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: _Palette.cardWhite,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: _Palette.milanoRed.withValues(alpha: 0.3),
-                    width: 2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
                   ],
                 ),
-                child: QrImageView(
-                  data: qrData,
-                  version: QrVersions.auto,
-                  size: 220,
-                  eyeStyle: const QrEyeStyle(
-                    eyeShape: QrEyeShape.square,
-                    color: _Palette.milanoRedDeep,
-                  ),
-                  dataModuleStyle: const QrDataModuleStyle(
-                    dataModuleShape: QrDataModuleShape.square,
-                    color: _Palette.milanoRedDeep,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _Palette.lemonChiffon.withValues(alpha: 0.35),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: SelectableText(
-                  qrData,
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    color: _Palette.textMuted,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        _downloadQR(t, qrData);
-                      },
-                      icon: const Icon(
-                        Icons.download_rounded,
-                        size: 16,
-                        color: Colors.white,
-                      ),
-                      label: const Text(
-                        'Download PNG',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _Palette.milanoRed,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Clipboard.setData(ClipboardData(text: qrData));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Link copied to clipboard'),
-                          ),
-                        );
-                      },
-                      icon: const Icon(
-                        Icons.copy,
-                        size: 16,
-                        color: Colors.white,
-                      ),
-                      label: const Text(
-                        'Copy Link',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _Palette.info,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
               ),
             ],
           ),

@@ -28,7 +28,7 @@ class MenuProvider extends ChangeNotifier {
     }
 
     try {
-            // Treat a blank/empty authToken the same as "not provided" — some
+      // Treat a blank/empty authToken the same as "not provided" — some
       // call sites pass `token ?? ''` for null-safety, which previously
       // defeated the SharedPreferences fallback below (since `?? ''` is
       // not null, the old check `authToken ?? ...` never fell through).

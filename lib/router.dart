@@ -1,0 +1,187 @@
+import 'package:go_router/go_router.dart';
+import 'package:restaurant_unified_app/core/auth_provider.dart';
+import 'package:restaurant_unified_app/core/constants.dart';
+import 'shared/login_screen.dart';
+import 'shared/forgot_password_screen.dart';
+import 'shared/reset_password_screen.dart';
+
+// Admin Imports
+// Admin Imports
+import 'admin/screens/dashboard/admin_main_scaffold.dart';
+import 'admin/screens/dashboard/staff/staff_screen.dart';
+// Staff Imports
+import 'staff/screens/main_scaffold.dart';
+import 'staff/screens/new_orders_screen.dart';
+import 'staff/screens/create_order_screen.dart';
+import 'staff/screens/order_details_screen.dart';
+import 'staff/screens/payment_screen.dart';
+import 'staff/screens/bill_screen.dart';
+import 'customer/screens/welcome_screen.dart';
+import 'customer/screens/menu_screen.dart';
+
+GoRouter createRouter(AuthProvider authProvider) {
+  return GoRouter(
+    initialLocation: '/login',
+    refreshListenable: authProvider,
+    redirect: (context, state) {
+      final isLoggedIn = authProvider.isAuthenticated;
+      final isLoggingIn = state.matchedLocation == '/login';
+      final isForgotPassword = state.matchedLocation == '/forgot-password';
+      final isResetPassword = state.matchedLocation.startsWith(
+        '/reset-password',
+      );
+      final isCustomerScan = state.matchedLocation == '/customer/scan-qr';
+      final isCustomerMenu = state.matchedLocation == '/customer/menu';
+      final isAuthRoute = isLoggingIn ||
+          isForgotPassword ||
+          isResetPassword ||
+          isCustomerScan ||
+          isCustomerMenu;
+      final isRoot = state.matchedLocation == '/';
+
+      if (!isLoggedIn) {
+        if (isAuthRoute) return null;
+        return '/login';
+      }
+
+      if (isAuthRoute || isRoot) {
+        final role = authProvider.role;
+        if (role == UserRole.admin) {
+          return '/admin/menu';
+        } else if (role == UserRole.billingStaff ||
+            role == UserRole.servingStaff) {
+          return role == UserRole.billingStaff
+              ? '/staff/billing'
+              : '/staff/dashboard';
+        } else {
+          // If logged in but no role (shouldn't happen with fixed loadAuth), go to login
+          return '/login';
+        }
+      }
+
+      return null;
+    },
+    routes: [
+      GoRoute(
+        path: '/login',
+        builder: (context, state) => const UnifiedLoginScreen(),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/reset-password/:token',
+        builder: (context, state) {
+          final token = state.pathParameters['token'] ?? '';
+          return ResetPasswordScreen(token: token);
+        },
+      ),
+
+      // Admin Routes
+      // Admin Routes — all wrapped in AdminMainScaffold so a persistent
+      // bottom nav bar (like the staff module's MainScaffold) lets the
+      // admin jump between Dashboard/Menu/Staff/Tables/Orders without
+      // needing to hit back each time.
+      GoRoute(
+        path: '/admin/dashboard',
+        builder: (context, state) => const AdminMainScaffold(initialTab: 0),
+      ),
+      GoRoute(
+        path: '/admin/menu',
+        builder: (context, state) => const AdminMainScaffold(initialTab: 0),
+      ),
+      GoRoute(
+        path: '/admin/staff',
+        builder: (context, state) => const AdminMainScaffold(initialTab: 1),
+      ),
+      GoRoute(
+        path: '/admin/staff/:role',
+        builder: (context, state) {
+          final role = state.pathParameters['role'] ?? 'server';
+          return StaffScreen(role: role);
+        },
+      ),
+      GoRoute(
+        path: '/admin/tables',
+        builder: (context, state) => const AdminMainScaffold(initialTab: 2),
+      ),
+      GoRoute(
+        path: '/admin/orders',
+        builder: (context, state) => const AdminMainScaffold(initialTab: 3),
+      ),
+      GoRoute(
+        path: '/admin/profile',
+        builder: (context, state) => const AdminMainScaffold(initialTab: 4),
+      ),
+
+      // Staff Routes
+      GoRoute(
+        path: '/staff/dashboard',
+        builder: (context, state) => const MainScaffold(initialTab: 0),
+      ),
+      GoRoute(
+        path: '/staff/orders',
+        builder: (context, state) => const MainScaffold(initialTab: 1),
+      ),
+      GoRoute(
+        path: '/staff/tables',
+        builder: (context, state) => const MainScaffold(initialTab: 2),
+      ),
+      GoRoute(
+        path: '/staff/profile',
+        builder: (context, state) => const MainScaffold(initialTab: 3),
+      ),
+      GoRoute(
+        path: '/staff/billing',
+        builder: (context, state) => const MainScaffold(initialTab: 0),
+      ),
+      GoRoute(
+        path: '/staff/new-orders',
+        builder: (context, state) => const NewOrdersScreen(),
+      ),
+      GoRoute(
+        path: '/staff/create-order',
+        builder: (context, state) => const CreateOrderScreen(),
+      ),
+      GoRoute(
+        path: '/staff/order-details/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          final from = state.uri.queryParameters['from'];
+          return OrderDetailsScreen(orderId: id, from: from);
+        },
+      ),
+      GoRoute(
+        path: '/staff/payment/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          return PaymentScreen(orderId: id);
+        },
+      ),
+      GoRoute(
+        path: '/staff/bill',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return BillScreen(
+            orderId: extra['orderId'] as String? ?? '',
+            finalTotal: extra['finalTotal'] as int? ?? 0,
+            paymentMethod: extra['paymentMethod'] as String? ?? 'cash',
+          );
+        },
+      ),
+      GoRoute(
+        path: '/customer/scan-qr',
+        builder: (context, state) {
+          final table = state.uri.queryParameters['table'];
+          final token = state.uri.queryParameters['token'];
+          return WelcomeScreen(tableNumber: table ?? token);
+        },
+      ),
+      GoRoute(
+        path: '/customer/menu',
+        builder: (context, state) => const CustomerMenuScreen(),
+      ),
+    ],
+  );
+}

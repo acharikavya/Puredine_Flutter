@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
 import '../../core/constants.dart';
 import '../../utils/session_manager.dart';
+
 class StaffAuthProvider extends ChangeNotifier {
   StaffUser? _user;
   StaffRole? _role;

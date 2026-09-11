@@ -28,7 +28,13 @@ class MenuProvider extends ChangeNotifier {
     }
 
     try {
-      final String? token = authToken ??
+            // Treat a blank/empty authToken the same as "not provided" — some
+      // call sites pass `token ?? ''` for null-safety, which previously
+      // defeated the SharedPreferences fallback below (since `?? ''` is
+      // not null, the old check `authToken ?? ...` never fell through).
+      final String? providedToken =
+          (authToken != null && authToken.isNotEmpty) ? authToken : null;
+      final String? token = providedToken ??
           (await SharedPreferences.getInstance()).getString('auth_token');
 
       // If no token, we still proceed to try public endpoints

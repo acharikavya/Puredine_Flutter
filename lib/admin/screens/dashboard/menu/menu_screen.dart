@@ -1216,204 +1216,207 @@ class _MenuScreenState extends State<MenuScreen> {
             ),
           ),
           SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            isMobile ? 18 : 32,
-            isMobile ? 14 : 22,
-            isMobile ? 18 : 32,
-            isMobile ? 16 : 22,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // PASS 15: small gold accent-dot row above the title —
-              // the same "dotted texture accent" language used on the
-              // login screen's header, purely decorative.
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: List.generate(
-                    5,
-                    (i) => Container(
-                      margin: const EdgeInsets.only(right: 5),
-                      width: 4,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _Palette.lemonChiffon.withValues(
-                          alpha: i == 2 ? 0.9 : 0.32,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+            bottom: false,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                isMobile ? 18 : 32,
+                isMobile ? 14 : 22,
+                isMobile ? 18 : 32,
+                isMobile ? 16 : 22,
               ),
-              // Title row — same spot the old date/bell row occupied,
-              // now on a plain light background instead of a dark
-              // gradient band.
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    // PASS 15: two-tone green→gold ShaderMask on the
-                    // title, echoing the login screen's brand-title
-                    // treatment — same text, same font/size/weight.
-                    child: ShaderMask(
-                      shaderCallback: (bounds) => LinearGradient(
-                        colors: [_Palette.milanoRedDeep, _Palette.lemonChiffon],
-                      ).createShader(bounds),
-                      child: Text(
-                        'Menu Management',
-                        style: GoogleFonts.playfairDisplay(
-                          color: Colors.white,
-                          fontSize: isMobile ? 21 : 28,
-                          fontWeight: FontWeight.bold,
+                  // PASS 15: small gold accent-dot row above the title —
+                  // the same "dotted texture accent" language used on the
+                  // login screen's header, purely decorative.
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: List.generate(
+                        5,
+                        (i) => Container(
+                          margin: const EdgeInsets.only(right: 5),
+                          width: 4,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _Palette.lemonChiffon.withValues(
+                              alpha: i == 2 ? 0.9 : 0.32,
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                  if (!isMobile) ...[
-                    Text(
-                      _todayLabel(),
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.3,
-                        color: _Palette.textMuted,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                  ],
-                  const _MenuNotificationBell(),
-                ],
-              ),
-              SizedBox(height: isMobile ? 4 : 6),
-              Text(
-                'Manage your restaurant menu items and categories',
-                style: GoogleFonts.inter(
-                  color: _Palette.textMuted,
-                  fontSize: isMobile ? 12.5 : 14,
-                ),
-              ),
-              SizedBox(height: isMobile ? 16 : 20),
-              // Standard-mobile-app rounded pill search bar — replaces
-              // the old header's action-button row as the primary
-              // element up top. Same `_searchQuery` state and the exact
-              // same `onChanged` handler the previous inline search box
-              // (now removed from `_buildMainContent`) used to have, so
-              // search behaves identically to before.
-              Container(
-                height: 54,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(27),
-                  border: Border.all(
-                    color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
-                  ),
-                  boxShadow: _Palette.softShadow,
-                ),
-                child: Row(
-                  children: [
-                    const SizedBox(width: 18),
-                    Icon(
-                      Icons.search_rounded,
-                      color: _Palette.milanoRedDeep.withValues(alpha: 0.55),
-                      size: 22,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextField(
-                        onChanged: (value) =>
-                            setState(() => _searchQuery = value),
-                        style: GoogleFonts.inter(
-                          color: _Palette.textDark,
-                          fontWeight: FontWeight.w500,
+                  // Title row — same spot the old date/bell row occupied,
+                  // now on a plain light background instead of a dark
+                  // gradient band.
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        // PASS 15: two-tone green→gold ShaderMask on the
+                        // title, echoing the login screen's brand-title
+                        // treatment — same text, same font/size/weight.
+                        child: ShaderMask(
+                          shaderCallback: (bounds) => LinearGradient(
+                            colors: [
+                              _Palette.milanoRedDeep,
+                              _Palette.lemonChiffon
+                            ],
+                          ).createShader(bounds),
+                          child: Text(
+                            'Menu Management',
+                            style: GoogleFonts.playfairDisplay(
+                              color: Colors.white,
+                              fontSize: isMobile ? 21 : 28,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                        cursorColor: _Palette.milanoRedDeep,
-                        decoration: InputDecoration(
-                          hintText: 'Search menu items...',
-                          border: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          fillColor: Colors.transparent,
-                          filled: false,
-                          hintStyle: GoogleFonts.inter(
+                      ),
+                      if (!isMobile) ...[
+                        Text(
+                          _todayLabel(),
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.3,
                             color: _Palette.textMuted,
                           ),
                         ),
-                      ),
+                        const SizedBox(width: 16),
+                      ],
+                      const _MenuNotificationBell(),
+                    ],
+                  ),
+                  SizedBox(height: isMobile ? 4 : 6),
+                  Text(
+                    'Manage your restaurant menu items and categories',
+                    style: GoogleFonts.inter(
+                      color: _Palette.textMuted,
+                      fontSize: isMobile ? 12.5 : 14,
                     ),
-                    // Same "X found" chip the old search box showed —
-                    // moved here so the feature isn't lost, just
-                    // relocated along with the search field itself.
-                    if (_searchQuery.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 14),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _Palette.lemonChiffon.withValues(
-                              alpha: 0.5,
-                            ),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            '${_filteredItems.length} found',
+                  ),
+                  SizedBox(height: isMobile ? 16 : 20),
+                  // Standard-mobile-app rounded pill search bar — replaces
+                  // the old header's action-button row as the primary
+                  // element up top. Same `_searchQuery` state and the exact
+                  // same `onChanged` handler the previous inline search box
+                  // (now removed from `_buildMainContent`) used to have, so
+                  // search behaves identically to before.
+                  Container(
+                    height: 54,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(27),
+                      border: Border.all(
+                        color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
+                      ),
+                      boxShadow: _Palette.softShadow,
+                    ),
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 18),
+                        Icon(
+                          Icons.search_rounded,
+                          color: _Palette.milanoRedDeep.withValues(alpha: 0.55),
+                          size: 22,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextField(
+                            onChanged: (value) =>
+                                setState(() => _searchQuery = value),
                             style: GoogleFonts.inter(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: _Palette.milanoRedDeep,
+                              color: _Palette.textDark,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            cursorColor: _Palette.milanoRedDeep,
+                            decoration: InputDecoration(
+                              hintText: 'Search menu items...',
+                              border: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              fillColor: Colors.transparent,
+                              filled: false,
+                              hintStyle: GoogleFonts.inter(
+                                color: _Palette.textMuted,
+                              ),
                             ),
                           ),
                         ),
-                      )
-                    else
-                      const SizedBox(width: 14),
-                  ],
-                ),
-              ),
-              SizedBox(height: isMobile ? 18 : 22),
-              // Icon-tile quick actions — same three callbacks the old
-              // header's Order/Specials/Add Item (mobile) and Create
-              // Order/Today's Special/Add Menu Item (desktop) buttons
-              // called, just restyled as a standard mobile-app quick
-              // action row.
-              Row(
-                children: [
-                  Expanded(
-                    child: _QuickActionTile(
-                      icon: Icons.add_circle_rounded,
-                      label: 'Add Item',
-                      onTap: () => _showItemForm(),
+                        // Same "X found" chip the old search box showed —
+                        // moved here so the feature isn't lost, just
+                        // relocated along with the search field itself.
+                        if (_searchQuery.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 14),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _Palette.lemonChiffon.withValues(
+                                  alpha: 0.5,
+                                ),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                '${_filteredItems.length} found',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: _Palette.milanoRedDeep,
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          const SizedBox(width: 14),
+                      ],
                     ),
                   ),
-                  SizedBox(width: isMobile ? 10 : 16),
-                  Expanded(
-                    child: _QuickActionTile(
-                      icon: Icons.receipt_long_rounded,
-                      label: 'Create Order',
-                      onTap: _showManualOrderForm,
-                    ),
-                  ),
-                  SizedBox(width: isMobile ? 10 : 16),
-                  Expanded(
-                    child: _QuickActionTile(
-                      icon: Icons.star_rounded,
-                      label: "Today's Special",
-                      onTap: _showTodaySpecialDialog,
-                    ),
+                  SizedBox(height: isMobile ? 18 : 22),
+                  // Icon-tile quick actions — same three callbacks the old
+                  // header's Order/Specials/Add Item (mobile) and Create
+                  // Order/Today's Special/Add Menu Item (desktop) buttons
+                  // called, just restyled as a standard mobile-app quick
+                  // action row.
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _QuickActionTile(
+                          icon: Icons.add_circle_rounded,
+                          label: 'Add Item',
+                          onTap: () => _showItemForm(),
+                        ),
+                      ),
+                      SizedBox(width: isMobile ? 10 : 16),
+                      Expanded(
+                        child: _QuickActionTile(
+                          icon: Icons.receipt_long_rounded,
+                          label: 'Create Order',
+                          onTap: _showManualOrderForm,
+                        ),
+                      ),
+                      SizedBox(width: isMobile ? 10 : 16),
+                      Expanded(
+                        child: _QuickActionTile(
+                          icon: Icons.star_rounded,
+                          label: "Today's Special",
+                          onTap: _showTodaySpecialDialog,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
         ],
       ),
     );

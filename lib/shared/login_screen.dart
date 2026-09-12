@@ -400,9 +400,9 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
                                   horizontal: isTinyScreen ? 8 : 0,
                                 ),
                                 child: ShaderMask(
-                                  shaderCallback: (bounds) =>
-                                      _LoginPalette.titleShaderGradient
-                                          .createShader(bounds),
+                                  shaderCallback: (bounds) => _LoginPalette
+                                      .titleShaderGradient
+                                      .createShader(bounds),
                                   child: Text(
                                     _restaurantName,
                                     textAlign: TextAlign.center,
@@ -775,7 +775,8 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
                                                 key: ValueKey('loading'),
                                                 width: 22,
                                                 height: 22,
-                                                child: CircularProgressIndicator(
+                                                child:
+                                                    CircularProgressIndicator(
                                                   color: Colors.white,
                                                   strokeWidth: 2.5,
                                                 ),

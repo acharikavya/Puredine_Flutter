@@ -448,9 +448,8 @@ class _RoleAwareBottomNav extends StatelessWidget {
                             width: isActive ? 12 : 0,
                             height: 2.5,
                             decoration: BoxDecoration(
-                              color: isActive
-                                  ? _Palette.gold
-                                  : Colors.transparent,
+                              color:
+                                  isActive ? _Palette.gold : Colors.transparent,
                               borderRadius: BorderRadius.circular(4),
                               boxShadow: isActive
                                   ? [

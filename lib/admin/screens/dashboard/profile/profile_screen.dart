@@ -729,8 +729,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color:
-                                      _Palette.milanoRedDeep.withValues(
+                                  color: _Palette.milanoRedDeep.withValues(
                                     alpha: 0.25,
                                   ),
                                   blurRadius: 8,

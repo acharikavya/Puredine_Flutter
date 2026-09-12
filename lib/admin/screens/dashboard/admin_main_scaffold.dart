@@ -389,8 +389,7 @@ class _AdminBottomNav extends StatelessWidget {
                                 color: isActive ? null : Colors.white,
                                 border: Border.all(
                                   color: isActive
-                                      ? _NavPalette.gold
-                                          .withValues(alpha: 0.85)
+                                      ? _NavPalette.gold.withValues(alpha: 0.85)
                                       : _NavPalette.maroonDeep.withValues(
                                           alpha: 0.12,
                                         ),
@@ -419,9 +418,8 @@ class _AdminBottomNav extends StatelessWidget {
                             duration: const Duration(milliseconds: 220),
                             style: GoogleFonts.inter(
                               fontSize: 8.5,
-                              fontWeight: isActive
-                                  ? FontWeight.w800
-                                  : FontWeight.w600,
+                              fontWeight:
+                                  isActive ? FontWeight.w800 : FontWeight.w600,
                               color: isActive
                                   ? _NavPalette.maroon
                                   : _NavPalette.muted,

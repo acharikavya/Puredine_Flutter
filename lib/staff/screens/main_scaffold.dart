@@ -35,6 +35,25 @@ import 'package:go_router/go_router.dart';
 /// order_details_screen.dart / new_orders_screen.dart / menu_screen.dart /
 /// orders_screen.dart (private classes can't be shared across files without
 /// a new shared import, which would go beyond a pure UI-only change here).
+///
+/// BOTTOM-NAV COLOR-THEME SYNC PASS: `_RoleAwareBottomNav` below has been
+/// restyled to match `admin_main_scaffold.dart`'s `_AdminBottomNav` exactly
+/// — same badge sizes (40/34), same icon sizes (20/17), same top indicator
+/// dot (14×3), same gap under the badge (4), same label size (9.5), same
+/// outer/inner padding (vertical 6 / vertical 4), and the active badge now
+/// always uses the fixed Theme-1 maroon gradient + solid gold ring/glow
+/// (instead of the previous role-tinted accentColor treatment) so the two
+/// bottom bars are visually identical in construction. No nav items,
+/// routes, role logic (isBilling), or tap behavior were changed — only the
+/// bottom bar's own color/sizing values.
+///
+/// BOTTOM-NAV SIZE-REDUCTION PASS 2: `_RoleAwareBottomNav` has since been
+/// shrunk further to match `_AdminBottomNav`'s latest size-reduction pass —
+/// same badge sizes (34/28), same icon sizes (17/14), same top indicator
+/// dot (12×2.5), same gap under the badge (3), same label size (8.5), same
+/// outer/inner padding (vertical 3 / vertical 2) — so both bottom bars stay
+/// visually identical in construction. Purely dimensional; no structure,
+/// palette, animation curves, nav items, or tap behavior were touched.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
@@ -331,16 +350,30 @@ class _MainScaffoldState extends State<MainScaffold>
 }
 
 // ─── Role-Aware Bottom Navigation Bar ─────────────────────────────────────
-// Chrome (background, corners, shadow, resting label/icon color) uses the
-// Dark Maroon × Soft Cream × Gold Glow theme so it matches every other
-// staff screen. Icons sit inside an always-visible circular badge — a soft
-// white/cream chip at rest, a bold role-tinted gradient disc with an
-// ambient halo when active — plus a small top indicator dot and a subtle
-// "lift" scale so the active tab is unmistakable. Billing gets a slightly
-// richer gold-ring treatment to feel like a dedicated finance/payments
-// dock. The role-based active-state tinting (accentColor / accentLightColor
-// / isBilling) is untouched — same variables, same conditionals as before —
-// this is a pure presentational wrapper around it.
+// Color theme now mirrors `admin_main_scaffold.dart`'s `_AdminBottomNav`
+// exactly: cream→gold-capped dock (same gradient, corners, gold top
+// border, floatUpShadow), an always-visible circular icon badge — a soft
+// white chip at rest, a fixed Theme-1 maroon gradient disc with a solid
+// gold ring + ambient glow when active (previously role-tinted via
+// accentColor; now the same fixed maroon/gold treatment as the admin bar
+// so both bottom bars are visually identical in construction. No nav
+// items, [currentIndex] semantics, or tap behavior were changed — tapping
+// an item still calls [onTap] with its index exactly as before.
+//
+// The `accentColor` / `accentLightColor` / `isBilling` parameters are still
+// accepted and passed through unchanged from `MainScaffold.build()` (no
+// call-site or role logic was touched) — they're simply no longer used to
+// tint the badge/indicator color, since the goal of this pass is for the
+// bar's color theme to match the admin bar's fixed palette exactly.
+//
+// SIZE-REDUCTION PASS 2: further height reduction on top of the sync pass
+// above, with icons/badges/dot/label shrunk proportionally to match the
+// shorter bar — mirrors `_AdminBottomNav`'s latest sizing exactly. No
+// structure, palette, animation curves, nav items, or tap behavior were
+// touched. Changed values: outer vertical padding 6→3, per-tab inner
+// vertical padding 4→2, badge diameter 40/34→34/28, icon glyph size
+// 20/17→17/14, top indicator dot 14×3→12×2.5, the gap under the badge
+// 4→3, and the label font size 9.5→8.5.
 class _RoleAwareBottomNav extends StatelessWidget {
   final List<_NavItem> navItems;
   final int currentIndex;
@@ -371,9 +404,8 @@ class _RoleAwareBottomNav extends StatelessWidget {
           topLeft: Radius.circular(28),
           topRight: Radius.circular(28),
         ),
-        // Thin gold cap line across the top of the dock, echoing the
-        // lemon-chiffon border used on every screen header. Slightly
-        // richer / more visible than before for a more "premium" dock.
+        // Thin gold cap line across the top of the dock, matching the
+        // admin bottom nav's gold cap exactly.
         border: Border(
           top: BorderSide(
             color: _Palette.lemonChiffon.withValues(alpha: 0.65),
@@ -385,7 +417,7 @@ class _RoleAwareBottomNav extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
           child: Row(
             children: navItems.asMap().entries.map((e) {
               final idx = e.key;
@@ -393,112 +425,117 @@ class _RoleAwareBottomNav extends StatelessWidget {
               final isActive = currentIndex == idx;
 
               return Expanded(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => onTap(idx),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 240),
-                    curve: Curves.easeOutCubic,
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // ── Top indicator dot — a tiny gold-rimmed accent
-                        // dot that fades/pops in above the active badge,
-                        // giving a second, unmistakable "you are here"
-                        // signal beyond just the badge color change. ────
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 220),
-                          curve: Curves.easeOutCubic,
-                          margin: const EdgeInsets.only(bottom: 4),
-                          width: isActive ? 18 : 0,
-                          height: 3.5,
-                          decoration: BoxDecoration(
-                            color: isActive
-                                ? (isBilling ? _Palette.gold : accentColor)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(4),
-                            boxShadow: isActive
-                                ? [
-                                    BoxShadow(
-                                      color: (isBilling
-                                              ? _Palette.gold
-                                              : accentColor)
-                                          .withValues(alpha: 0.5),
-                                      blurRadius: 6,
-                                      offset: const Offset(0, 1),
-                                    ),
-                                  ]
-                                : null,
-                          ),
-                        ),
-                        // ── Always-visible circular icon badge — a soft
-                        // white/cream chip at rest so the glyph stays
-                        // crisp against the bar, and a bold role-tinted
-                        // gradient disc with a gold-flecked ambient halo
-                        // when active. Billing gets an extra-thick gold
-                        // ring so payments feel distinctly "premium". ──
-                        AnimatedScale(
-                          duration: const Duration(milliseconds: 220),
-                          curve: Curves.easeOutBack,
-                          scale: isActive ? 1.0 : 0.94,
-                          child: AnimatedContainer(
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => onTap(idx),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 240),
+                      curve: Curves.easeOutCubic,
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // ── Top indicator dot — same fixed gold dot
+                          // used by the admin bottom nav, giving a
+                          // second, unmistakable "you are here" signal
+                          // beyond just the badge color change. ────────
+                          AnimatedContainer(
                             duration: const Duration(milliseconds: 220),
                             curve: Curves.easeOutCubic,
-                            width: isActive ? 50 : 44,
-                            height: isActive ? 50 : 44,
-                            alignment: Alignment.center,
+                            margin: const EdgeInsets.only(bottom: 2.5),
+                            width: isActive ? 12 : 0,
+                            height: 2.5,
                             decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: isActive
-                                  ? LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        accentColor,
-                                        accentColor.withValues(alpha: 0.78),
-                                      ],
-                                    )
-                                  : null,
-                              color: isActive ? null : Colors.white,
-                              border: Border.all(
-                                color: isActive
-                                    ? _Palette.gold.withValues(
-                                        alpha: isBilling ? 0.85 : 0.7,
-                                      )
-                                    : _Palette.milanoRedDeep.withValues(
-                                        alpha: 0.12,
-                                      ),
-                                width: isActive ? (isBilling ? 2.0 : 1.6) : 1.2,
-                              ),
-                              boxShadow: isActive
-                                  ? _Palette.accentGlow(accentColor)
-                                  : _Palette.chipShadow,
-                            ),
-                            child: Icon(
-                              isActive ? item.activeIcon : item.icon,
                               color: isActive
-                                  ? Colors.white
-                                  : _Palette.milanoRedDeep.withValues(
-                                      alpha: 0.68,
-                                    ),
-                              size: isActive ? 26 : 22,
+                                  ? _Palette.gold
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(4),
+                              boxShadow: isActive
+                                  ? [
+                                      BoxShadow(
+                                        color: _Palette.gold
+                                            .withValues(alpha: 0.5),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 1),
+                                      ),
+                                    ]
+                                  : null,
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 6),
-                        // Label
-                        AnimatedDefaultTextStyle(
-                          duration: const Duration(milliseconds: 220),
-                          style: AppTheme.sans(
-                            size: 10.5,
-                            weight:
-                                isActive ? FontWeight.w800 : FontWeight.w600,
-                            color: isActive ? accentColor : _Palette.textDark,
+                          // ── Always-visible circular icon badge — a
+                          // soft white chip at rest so the glyph stays
+                          // crisp against the bar, and a fixed Theme-1
+                          // maroon gradient disc with a solid gold ring
+                          // + ambient glow when active — same treatment
+                          // and sizing as the admin bottom nav badge. ──
+                          AnimatedScale(
+                            duration: const Duration(milliseconds: 220),
+                            curve: Curves.easeOutBack,
+                            scale: isActive ? 1.0 : 0.94,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 220),
+                              curve: Curves.easeOutCubic,
+                              width: isActive ? 34 : 28,
+                              height: isActive ? 34 : 28,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: isActive
+                                    ? const LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [
+                                          _Palette.milanoRedLight,
+                                          _Palette.milanoRedDeep,
+                                        ],
+                                      )
+                                    : null,
+                                color: isActive ? null : Colors.white,
+                                border: Border.all(
+                                  color: isActive
+                                      ? _Palette.gold.withValues(alpha: 0.85)
+                                      : _Palette.milanoRedDeep.withValues(
+                                          alpha: 0.12,
+                                        ),
+                                  width: isActive ? 1.8 : 1.2,
+                                ),
+                                boxShadow: isActive
+                                    ? _Palette.accentGlow(_Palette.milanoRed)
+                                    : _Palette.chipShadow,
+                              ),
+                              child: Icon(
+                                isActive ? item.activeIcon : item.icon,
+                                color: isActive
+                                    ? Colors.white
+                                    : _Palette.milanoRedDeep.withValues(
+                                        alpha: 0.68,
+                                      ),
+                                size: isActive ? 17 : 14,
+                              ),
+                            ),
                           ),
-                          child: Text(item.label),
-                        ),
-                      ],
+                          const SizedBox(height: 3),
+                          // Label
+                          AnimatedDefaultTextStyle(
+                            duration: const Duration(milliseconds: 220),
+                            style: AppTheme.sans(
+                              size: 8.5,
+                              weight:
+                                  isActive ? FontWeight.w800 : FontWeight.w600,
+                              color: isActive
+                                  ? _Palette.milanoRed
+                                  : _Palette.textMuted,
+                            ),
+                            child: Text(
+                              item.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

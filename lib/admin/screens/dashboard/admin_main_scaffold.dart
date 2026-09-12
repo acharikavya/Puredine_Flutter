@@ -253,6 +253,27 @@ class _AdminMainScaffoldState extends State<AdminMainScaffold> {
 // with a gold ring + ambient glow when active — plus a bold gold label
 // underneath. Behavior is unchanged: exactly the same [items] list, same
 // [currentIndex], and tapping an item calls [onSelect] with its index.
+//
+// SIZE-REDUCTION PASS: purely dimensional trims to make the bar shorter
+// overall and shrink the icon badges/icons/label/dot to match — no
+// structure, palette, animation curves, or tap behavior were touched.
+// Changed values: outer vertical padding 12→6, badge diameter 50/44→40/34,
+// icon glyph size 26/22→20/17, top indicator dot 18×3.5→14×3, the gap
+// under the badge 6→4, and the label font size 10.5→9.5.
+//
+// SIZE-REDUCTION PASS 2: further height reduction on top of the pass
+// above, with icons/badges/dot/label shrunk proportionally to match the
+// shorter bar — no structure, palette, animation curves, or tap behavior
+// were touched. Changed values: outer vertical padding 6→3, badge
+// diameter 40/34→34/28, icon glyph size 20/17→17/14, top indicator dot
+// 14×3→12×2.5, the gap under the badge 4→3, inner column vertical padding
+// 4→2, and the label font size 9.5→8.5.
+//
+// CURSOR PASS: each tab is now wrapped in a MouseRegion with
+// SystemMouseCursors.click so hovering over any nav icon on web/desktop
+// shows a hand/pointer cursor instead of the default arrow. Purely a
+// pointer-affordance change — no layout, palette, animation, or tap
+// behavior was touched.
 class _AdminBottomNav extends StatelessWidget {
   final List<_AdminNavItem> items;
   final int currentIndex;
@@ -291,7 +312,7 @@ class _AdminBottomNav extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
           child: Row(
             children: items.asMap().entries.map((e) {
               final idx = e.key;
@@ -299,113 +320,120 @@ class _AdminBottomNav extends StatelessWidget {
               final isActive = currentIndex == idx;
 
               return Expanded(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => onSelect(idx),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 240),
-                    curve: Curves.easeOutCubic,
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // ── Top indicator dot — a tiny gold-rimmed accent
-                        // dot that fades/pops in above the active badge,
-                        // giving a second, unmistakable "you are here"
-                        // signal beyond just the badge color change. ────
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 220),
-                          curve: Curves.easeOutCubic,
-                          margin: const EdgeInsets.only(bottom: 4),
-                          width: isActive ? 18 : 0,
-                          height: 3.5,
-                          decoration: BoxDecoration(
-                            color: isActive
-                                ? _NavPalette.gold
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(4),
-                            boxShadow: isActive
-                                ? [
-                                    BoxShadow(
-                                      color: _NavPalette.gold
-                                          .withValues(alpha: 0.5),
-                                      blurRadius: 6,
-                                      offset: const Offset(0, 1),
-                                    ),
-                                  ]
-                                : null,
-                          ),
-                        ),
-                        // ── Always-visible circular icon badge — a soft
-                        // white chip at rest so the glyph stays crisp
-                        // against the bar, and a bold maroon gradient
-                        // disc with a gold ring + ambient glow when
-                        // active. ─────────────────────────────────────
-                        AnimatedScale(
-                          duration: const Duration(milliseconds: 220),
-                          curve: Curves.easeOutBack,
-                          scale: isActive ? 1.0 : 0.94,
-                          child: AnimatedContainer(
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => onSelect(idx),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 240),
+                      curve: Curves.easeOutCubic,
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // ── Top indicator dot — a tiny gold-rimmed accent
+                          // dot that fades/pops in above the active badge,
+                          // giving a second, unmistakable "you are here"
+                          // signal beyond just the badge color change. ────
+                          AnimatedContainer(
                             duration: const Duration(milliseconds: 220),
                             curve: Curves.easeOutCubic,
-                            width: isActive ? 50 : 44,
-                            height: isActive ? 50 : 44,
-                            alignment: Alignment.center,
+                            margin: const EdgeInsets.only(bottom: 2.5),
+                            width: isActive ? 12 : 0,
+                            height: 2.5,
                             decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: isActive
-                                  ? const LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        _NavPalette.maroonLight,
-                                        _NavPalette.maroonDeep,
-                                      ],
-                                    )
-                                  : null,
-                              color: isActive ? null : Colors.white,
-                              border: Border.all(
-                                color: isActive
-                                    ? _NavPalette.gold.withValues(alpha: 0.85)
-                                    : _NavPalette.maroonDeep.withValues(
-                                        alpha: 0.12,
-                                      ),
-                                width: isActive ? 1.8 : 1.2,
-                              ),
-                              boxShadow: isActive
-                                  ? _NavPalette.accentGlow(_NavPalette.maroon)
-                                  : _NavPalette.chipShadow,
-                            ),
-                            child: Icon(
-                              item.icon,
                               color: isActive
-                                  ? Colors.white
-                                  : _NavPalette.maroonDeep.withValues(
-                                      alpha: 0.68,
-                                    ),
-                              size: isActive ? 26 : 22,
+                                  ? _NavPalette.gold
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(4),
+                              boxShadow: isActive
+                                  ? [
+                                      BoxShadow(
+                                        color: _NavPalette.gold
+                                            .withValues(alpha: 0.5),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 1),
+                                      ),
+                                    ]
+                                  : null,
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 6),
-                        // Label
-                        AnimatedDefaultTextStyle(
-                          duration: const Duration(milliseconds: 220),
-                          style: GoogleFonts.inter(
-                            fontSize: 10.5,
-                            fontWeight:
-                                isActive ? FontWeight.w800 : FontWeight.w600,
-                            color: isActive
-                                ? _NavPalette.maroon
-                                : _NavPalette.muted,
+                          // ── Always-visible circular icon badge — a soft
+                          // white chip at rest so the glyph stays crisp
+                          // against the bar, and a bold maroon gradient
+                          // disc with a gold ring + ambient glow when
+                          // active. ─────────────────────────────────────
+                          AnimatedScale(
+                            duration: const Duration(milliseconds: 220),
+                            curve: Curves.easeOutBack,
+                            scale: isActive ? 1.0 : 0.94,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 220),
+                              curve: Curves.easeOutCubic,
+                              width: isActive ? 34 : 28,
+                              height: isActive ? 34 : 28,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: isActive
+                                    ? const LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [
+                                          _NavPalette.maroonLight,
+                                          _NavPalette.maroonDeep,
+                                        ],
+                                      )
+                                    : null,
+                                color: isActive ? null : Colors.white,
+                                border: Border.all(
+                                  color: isActive
+                                      ? _NavPalette.gold
+                                          .withValues(alpha: 0.85)
+                                      : _NavPalette.maroonDeep.withValues(
+                                          alpha: 0.12,
+                                        ),
+                                  width: isActive ? 1.8 : 1.2,
+                                ),
+                                boxShadow: isActive
+                                    ? _NavPalette.accentGlow(
+                                        _NavPalette.maroon,
+                                      )
+                                    : _NavPalette.chipShadow,
+                              ),
+                              child: Icon(
+                                item.icon,
+                                color: isActive
+                                    ? Colors.white
+                                    : _NavPalette.maroonDeep.withValues(
+                                        alpha: 0.68,
+                                      ),
+                                size: isActive ? 17 : 14,
+                              ),
+                            ),
                           ),
-                          child: Text(
-                            item.label,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          const SizedBox(height: 3),
+                          // Label
+                          AnimatedDefaultTextStyle(
+                            duration: const Duration(milliseconds: 220),
+                            style: GoogleFonts.inter(
+                              fontSize: 8.5,
+                              fontWeight: isActive
+                                  ? FontWeight.w800
+                                  : FontWeight.w600,
+                              color: isActive
+                                  ? _NavPalette.maroon
+                                  : _NavPalette.muted,
+                            ),
+                            child: Text(
+                              item.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -427,7 +455,9 @@ class _AdminBottomNav extends StatelessWidget {
 /// no navigation logic is duplicated or diverges between layouts.
 ///
 /// Unchanged in this pass — only the mobile bottom nav above was
-/// restyled.
+/// restyled. The nav rows below already show a hand/pointer cursor on
+/// hover by default (InkWell's default `mouseCursor` resolves to
+/// `SystemMouseCursors.click`), so no cursor change was needed here.
 class _AdminSideNavRail extends StatelessWidget {
   final List<_AdminNavItem> items;
   final int currentIndex;

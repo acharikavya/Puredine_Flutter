@@ -36,6 +36,7 @@ flutter:
 
   assets:
     - assets/icon/pure_dine_icon.png
+    - assets/images/login_background.png
 
 flutter_launcher_icons:
   android: true

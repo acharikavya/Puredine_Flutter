@@ -112,7 +112,7 @@ import 'package:restaurant_unified_app/admin/core/providers/notification_provide
 /// block. The header's top/bottom padding and the gap beneath the
 /// date/bell row were both tightened.
 ///
-/// UI-ENHANCEMENT PASS 10 (this pass): a second, more aggressive spacing
+/// UI-ENHANCEMENT PASS 10: a second, more aggressive spacing
 /// pass to close the gap that was still visible between the header's top
 /// edge (dotted accent) and the "Menu Management" title. The header's
 /// top padding is now asymmetric — a minimal `top: 4` instead of a
@@ -121,20 +121,110 @@ import 'package:restaurant_unified_app/admin/core/providers/notification_provide
 /// at `12` so the action buttons on desktop keep their breathing room.
 /// No data, callback, layout structure, or navigation logic was touched
 /// anywhere in this pass — spacing values only.
+///
+/// UI-ENHANCEMENT PASS 11: the mobile header's "Order" /
+/// "Specials" / "Add Item" buttons previously sat in a horizontally
+/// scrolling `Row` where each `_HeaderButton` sized itself to its own
+/// icon+label content — so the three buttons ended up with visibly
+/// different widths and didn't line up cleanly across the header. The
+/// scrolling wrapper is now a plain `Row` where each button is wrapped
+/// in `Expanded`, so all three buttons always share the available width
+/// equally and their edges align, and `_HeaderButton`'s own content is
+/// now centered within that equal-width slot instead of hugging the
+/// left edge. No callback, route, or any other logic was touched — only
+/// how these three buttons size and align relative to each other.
+///
+/// UI-ENHANCEMENT PASS 12: the "Menu Management" title
+/// previously sat on its own line below the date/notification-bell row
+/// (which used a `Spacer()` to push the date+bell to the right with
+/// nothing on the left). The title text now sits on that same top row —
+/// replacing the `Spacer()` — so the title, the date (desktop only), and
+/// the notification bell all share one line, with the title taking the
+/// remaining space via `Expanded`. The divider, subtitle ("Manage your
+/// restaurant menu items and categories" on desktop), and the
+/// Order/Specials/Add Item action buttons stay exactly where they were,
+/// directly beneath that row — only the title's position moved up. No
+/// data, callback, route, or any other logic was touched anywhere in
+/// this pass — layout only.
+///
+/// UI-ENHANCEMENT PASS 13: two changes, both purely
+/// presentational — no data loading, filtering, mutation, dialog,
+/// navigation, or callback logic anywhere in this file was touched.
+///   1. COLOR THEME: every `_Palette` value below now points at the same
+///      green / warm-gold / soft-ivory identity used on the login
+///      screen, instead of the old dark-maroon / gold theme. The field
+///      names (`milanoRed`, `milanoRedDeep`, `lemonChiffon`, `canvas`,
+///      etc.) are unchanged on purpose — every other widget in this file
+///      already reads from these exact fields, so leaving the names
+///      alone and only swapping the underlying `Color` values re-skins
+///      the entire screen (header, sidebar, cards, badges, dialogs,
+///      toast) without touching a single reference to `_Palette`
+///      anywhere else.
+///   2. HEADER: `_buildCustomHeader()` is rebuilt from the old dark
+///      gradient "command bar" into a lighter, standard-mobile-app
+///      layout in the spirit of a payments-app home screen — a plain
+///      title row with the notification bell, a large rounded pill
+///      search bar (same `_searchQuery` state and `onChanged` handler as
+///      before), and a row of icon-tile quick actions beneath it for
+///      "Add Item", "Create Order", and "Today's Special" (the exact
+///      same three callbacks — `_showItemForm`, `_showManualOrderForm`,
+///      `_showTodaySpecialDialog` — as the old header's buttons). The
+///      old inline search box inside `_buildMainContent()` was removed
+///      since the header now owns search; the "X found" count chip that
+///      used to sit next to it moved into the new header search bar so
+///      that feature is preserved, not dropped. The sidebar, the item
+///      grid, the "Showing N items" row, dialogs, and every data/mutation
+///      method below are completely untouched.
+///
+/// UI-ENHANCEMENT PASS 14: the color theme was already the
+/// green/gold/ivory identity requested (Pass 13); this pass only
+/// tightens the "standard mobile screen" feel a bit further — a
+/// hairline bottom border under the header for cleaner separation from
+/// the scrollable body, and a touch more depth (subtle shadow + hover
+/// lift) on the quick-action tiles so they read as proper tappable
+/// cards. No color values, data loading, filtering, mutation, dialog,
+/// navigation, or callback logic was touched anywhere in this pass —
+/// spacing/elevation only.
+///
+/// UI-ENHANCEMENT PASS 15 (this pass — "more attractive", same theme):
+/// still the exact same green/gold/ivory `_Palette` values from Pass 13
+/// — nothing about the color theme changed. This pass adds a few extra
+/// decorative touches, in the same botanical/brand spirit as the login
+/// screen, so the screen feels more lively and polished rather than
+/// flat:
+///   1. The "Menu Management" title is now rendered with a two-tone
+///      green→gold `ShaderMask`, echoing the login screen's brand-title
+///      treatment, and a small row of gold accent dots sits above it —
+///      the same "dotted texture accent" language used on the login
+///      header.
+///   2. A large, very faint leaf watermark now sits behind the header
+///      copy (bottom-right), matching the login screen's soft botanical
+///      backdrop touches.
+///   3. The three quick-action tiles now have a soft green→gold gradient
+///      icon circle with a thin gold ring, instead of a flat cream
+///      circle, so they read as more inviting brand-colored buttons.
+///   4. Menu items marked "Today's Special" now get a thin gold left
+///      accent bar down the edge of the card, so specials visually pop
+///      out from the grid at a glance.
+/// No data loading, filtering, mutation, dialog, navigation, or callback
+/// logic was touched anywhere in this pass — purely decorative.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
-  static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
-  static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
-  static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
+  // NOTE: field names are unchanged from the previous maroon theme on
+  // purpose (see Pass 13 above) — every other widget in this file reads
+  // from these exact names, so only the underlying Color values change.
+  static const Color milanoRed = Color(0xFF1E4A34); // Deep Green (Primary)
+  static const Color milanoRedDeep = Color(0xFF163A29); // Deeper green
+  static const Color milanoRedLight = Color(0xFF2F6B4A); // Lighter green
   static const Color milanoRedDarkest =
-      Color(0xFF2E0909); // Fourth gradient stop
-  static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow (Accent)
-  static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
-  static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
-  static const Color canvasDeep = Color(0xFFF5E9D6); // Deeper cream
+      Color(0xFF0F2A1C); // Fourth gradient stop
+  static const Color lemonChiffon = Color(0xFFC99A3D); // Warm Gold (Accent)
+  static const Color lemonChiffonDeep = Color(0xFFAD7F2A); // Deeper gold
+  static const Color canvas = Color(0xFFFAF7EF); // Soft Ivory background
+  static const Color canvasDeep = Color(0xFFF3E7CC); // Deeper cream/gold tint
   static const Color cardWhite = Colors.white;
-  static const Color textDark = Color(0xFF3A1608);
-  static const Color textMuted = Color(0xFF8A6F5E);
+  static const Color textDark = Color(0xFF20301F);
+  static const Color textMuted = Color(0xFF708070);
   static const Color success = Color(0xFF2E9E5B);
   static const Color danger = Color(0xFFC62828);
 
@@ -871,7 +961,7 @@ class _MenuScreenState extends State<MenuScreen> {
             child: Stack(
               children: [
                 // ── Ambient background dressing ─────────────────────────
-                // Purely decorative — soft gold/maroon glows plus a faint
+                // Purely decorative — soft gold/green glows plus a faint
                 // textured photograph, matching the dashboard's "foggy"
                 // backdrop so the whole admin experience feels like one
                 // cohesive brand. A couple of extra glows/vignette layers
@@ -936,7 +1026,7 @@ class _MenuScreenState extends State<MenuScreen> {
                             ),
                           ),
                         ),
-                        // Extra soft maroon glow, lower-center — adds a
+                        // Extra soft green glow, lower-center — adds a
                         // touch more richness to the full-screen backdrop.
                         Positioned(
                           bottom: 120,
@@ -1077,150 +1167,77 @@ class _MenuScreenState extends State<MenuScreen> {
     ).animate().fadeIn();
   }
 
+  /// PASS 13: rebuilt from the old dark-maroon gradient "command bar"
+  /// into a lighter, standard-mobile-app header laid directly on the
+  /// screen's own ivory canvas (no separate colored panel) — a title +
+  /// notification-bell row, a large rounded pill search bar underneath
+  /// (same `_searchQuery` state / `onChanged` handler the old inline
+  /// search box used), and a row of icon-tile quick actions beneath
+  /// that. All three actions call the exact same methods the old
+  /// header's buttons did — `_showItemForm`, `_showManualOrderForm`,
+  /// `_showTodaySpecialDialog` — only their look changed. The sidebar,
+  /// item grid, and every data/mutation method elsewhere in this file
+  /// are untouched.
+  ///
+  /// PASS 14: added a hairline bottom border so the header reads as a
+  /// clearly separated surface above the scrollable body, matching a
+  /// standard mobile app's header/content split — a spacing/elevation
+  /// tweak only, no structural or logic change.
   Widget _buildCustomHeader() {
     final isMobile = MediaQuery.of(context).size.width < 800;
-    return ClipRect(
-      child: Container(
-        decoration: BoxDecoration(
-          // UI-ENHANCEMENT PASS 2: richer four-stop diagonal maroon
-          // gradient — deeper and more dimensional than the previous
-          // three-stop wash, matching the Orders screen's Pass-2
-          // "faceted" surface language.
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              _Palette.milanoRedLight,
-              _Palette.milanoRed,
-              _Palette.milanoRedDeep,
-              _Palette.milanoRedDarkest,
-            ],
-            stops: [0.0, 0.38, 0.72, 1.0],
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: _Palette.canvas,
+        border: Border(
+          bottom: BorderSide(
+            color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+            width: 1,
           ),
-          // Softly rounded bottom corners give the header a modern,
-          // "floating navbar" feel that matches the dashboard exactly,
-          // instead of a flat hard-edged band.
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(isMobile ? 28 : 38),
-            bottomRight: Radius.circular(isMobile ? 28 : 38),
-          ),
-          border: const Border(
-            bottom: BorderSide(color: _Palette.lemonChiffon, width: 4),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: _Palette.milanoRed.withValues(alpha: 0.36),
-              blurRadius: 38,
-              offset: const Offset(0, 16),
-            ),
-            BoxShadow(
-              color: _Palette.lemonChiffon.withValues(alpha: 0.12),
-              blurRadius: 18,
-              offset: const Offset(0, 4),
-            ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
         ),
-        child: Stack(
-          children: [
-            // Subtle decorative diagonal ribbon accents (purely cosmetic,
-            // matches the dashboard header for a consistent brand feel)
-            Positioned(
-              top: -60,
-              right: -40,
-              child: Transform.rotate(
-                angle: -0.5,
-                child: Container(
-                  width: 260,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        _Palette.lemonChiffon.withValues(alpha: 0.18),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
+      ),
+      child: Stack(
+        children: [
+          // PASS 15: a large, very faint leaf watermark tucked behind
+          // the header copy — purely decorative, echoes the same
+          // botanical brand touch used on the login screen's header.
+          Positioned(
+            right: isMobile ? -20 : -10,
+            bottom: isMobile ? -18 : -12,
+            child: IgnorePointer(
+              child: Opacity(
+                opacity: 0.05,
+                child: Icon(
+                  Icons.eco_rounded,
+                  size: isMobile ? 110 : 150,
+                  color: _Palette.milanoRed,
                 ),
               ),
             ),
-            Positioned(
-              bottom: -50,
-              left: -60,
-              child: Transform.rotate(
-                angle: 0.4,
-                child: Container(
-                  width: 230,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.white.withValues(alpha: 0.07),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            // Soft radial glow behind the title block, adding depth without
-            // affecting any layout or logic.
-            Positioned(
-              top: 10,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Container(
-                  width: 260,
-                  height: 130,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        _Palette.lemonChiffon.withValues(alpha: 0.10),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            // UI-ENHANCEMENT PASS 2: large faint watermark emblem — a
-            // unique signature touch this header didn't previously have,
-            // sitting low-opacity and large behind the copy, never
-            // competing with the title or controls. Matches the Orders
-            // screen header's Pass-2 watermark treatment.
-            Positioned(
-              right: isMobile ? -18 : -8,
-              bottom: isMobile ? -16 : -12,
-              child: IgnorePointer(
-                child: Opacity(
-                  opacity: 0.06,
-                  child: Icon(
-                    Icons.restaurant_menu_rounded,
-                    size: isMobile ? 110 : 160,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-            // Fine dotted texture accent, matching the app's refined
-            // decorative language used on the dashboard/login headers.
-            Positioned(
-              top: 8,
-              left: 0,
-              right: 0,
-              child: Center(
+          ),
+          SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            isMobile ? 18 : 32,
+            isMobile ? 14 : 22,
+            isMobile ? 18 : 32,
+            isMobile ? 16 : 22,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // PASS 15: small gold accent-dot row above the title —
+              // the same "dotted texture accent" language used on the
+              // login screen's header, purely decorative.
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: List.generate(
                     5,
                     (i) => Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      margin: const EdgeInsets.only(right: 5),
                       width: 4,
                       height: 4,
                       decoration: BoxDecoration(
@@ -1233,285 +1250,171 @@ class _MenuScreenState extends State<MenuScreen> {
                   ),
                 ),
               ),
-            ),
-
-            // Fine glass highlight line along the very top edge of the
-            // header — purely cosmetic, gives the full-width bar a more
-            // polished, "premium panel" finish (matches the dashboard).
-            Positioned(
-              top: 0,
-              left: 24,
-              right: 24,
-              child: Container(
-                height: 1,
+              // Title row — same spot the old date/bell row occupied,
+              // now on a plain light background instead of a dark
+              // gradient band.
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    // PASS 15: two-tone green→gold ShaderMask on the
+                    // title, echoing the login screen's brand-title
+                    // treatment — same text, same font/size/weight.
+                    child: ShaderMask(
+                      shaderCallback: (bounds) => LinearGradient(
+                        colors: [_Palette.milanoRedDeep, _Palette.lemonChiffon],
+                      ).createShader(bounds),
+                      child: Text(
+                        'Menu Management',
+                        style: GoogleFonts.playfairDisplay(
+                          color: Colors.white,
+                          fontSize: isMobile ? 21 : 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (!isMobile) ...[
+                    Text(
+                      _todayLabel(),
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.3,
+                        color: _Palette.textMuted,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                  ],
+                  const _MenuNotificationBell(),
+                ],
+              ),
+              SizedBox(height: isMobile ? 4 : 6),
+              Text(
+                'Manage your restaurant menu items and categories',
+                style: GoogleFonts.inter(
+                  color: _Palette.textMuted,
+                  fontSize: isMobile ? 12.5 : 14,
+                ),
+              ),
+              SizedBox(height: isMobile ? 16 : 20),
+              // Standard-mobile-app rounded pill search bar — replaces
+              // the old header's action-button row as the primary
+              // element up top. Same `_searchQuery` state and the exact
+              // same `onChanged` handler the previous inline search box
+              // (now removed from `_buildMainContent`) used to have, so
+              // search behaves identically to before.
+              Container(
+                height: 54,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.transparent,
-                      Colors.white.withValues(alpha: 0.35),
-                      Colors.transparent,
-                    ],
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(27),
+                  border: Border.all(
+                    color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
                   ),
+                  boxShadow: _Palette.softShadow,
                 ),
-              ),
-            ),
-
-            // Extra soft corner glows tucked behind each top corner,
-            // framing the header's full width with a touch more depth.
-            Positioned(
-              top: -20,
-              left: -20,
-              child: IgnorePointer(
-                child: Container(
-                  width: 110,
-                  height: 110,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        Colors.white.withValues(alpha: 0.10),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              top: -20,
-              right: -20,
-              child: IgnorePointer(
-                child: Container(
-                  width: 110,
-                  height: 110,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        _Palette.lemonChiffon.withValues(alpha: 0.16),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            Padding(
-              // PASS 10: asymmetric padding — a minimal `top: 4` (down
-              // from Pass 9's uniform `12`) closes the remaining gap
-              // between the header's top edge and the "Menu Management"
-              // title; `bottom: 12` is kept so the action buttons below
-              // the title still have breathing room.
-              padding: EdgeInsets.fromLTRB(
-                isMobile ? 16 : 32,
-                4,
-                isMobile ? 16 : 32,
-                12,
-              ),
-              child: SafeArea(
-                bottom: false,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Row(
-                      children: [
-                        const Spacer(),
-                        if (!isMobile) ...[
-                          Text(
-                            _todayLabel(),
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.3,
-                              color: Colors.white.withValues(alpha: 0.65),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                        ],
-                        // The old dashboard ("Home") screen previously
-                        // held this bell — since Home was removed from
-                        // the bottom nav, it now lives here instead,
-                        // wired to the exact same NotificationProvider.
-                        const _MenuNotificationBell(),
-                      ],
+                    const SizedBox(width: 18),
+                    Icon(
+                      Icons.search_rounded,
+                      color: _Palette.milanoRedDeep.withValues(alpha: 0.55),
+                      size: 22,
                     ),
-                    // PASS 10: tightened from `height: 8` to `height: 4` —
-                    // the last bit of dead space between the date/bell
-                    // row and the title block is now gone.
-                    const SizedBox(height: 4),
-                    if (isMobile)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Menu Management',
-                            style: GoogleFonts.playfairDisplay(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              height: 1.1,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        onChanged: (value) =>
+                            setState(() => _searchQuery = value),
+                        style: GoogleFonts.inter(
+                          color: _Palette.textDark,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        cursorColor: _Palette.milanoRedDeep,
+                        decoration: InputDecoration(
+                          hintText: 'Search menu items...',
+                          border: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          fillColor: Colors.transparent,
+                          filled: false,
+                          hintStyle: GoogleFonts.inter(
+                            color: _Palette.textMuted,
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Same "X found" chip the old search box showed —
+                    // moved here so the feature isn't lost, just
+                    // relocated along with the search field itself.
+                    if (_searchQuery.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 14),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _Palette.lemonChiffon.withValues(
+                              alpha: 0.5,
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '${_filteredItems.length} found',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: _Palette.milanoRedDeep,
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          const _TitleDivider(),
-                          const SizedBox(height: 16),
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: [
-                                _HeaderButton(
-                                  onTap: _showManualOrderForm,
-                                  icon: Icons.receipt_long,
-                                  label: 'Order',
-                                  isPrimary: false,
-                                ),
-                                const SizedBox(width: 8),
-                                _HeaderButton(
-                                  onTap: _showTodaySpecialDialog,
-                                  icon: Icons.star_border_rounded,
-                                  label: 'Specials',
-                                  isPrimary: false,
-                                ),
-                                const SizedBox(width: 8),
-                                _HeaderButton(
-                                  onTap: () => _showItemForm(),
-                                  icon: Icons.add,
-                                  label: 'Add Item',
-                                  isPrimary: true,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                        ),
                       )
                     else
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Menu Management',
-                                  style: GoogleFonts.playfairDisplay(
-                                    color: Colors.white,
-                                    fontSize: 34,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.6,
-                                    height: 1.1,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                const _TitleDivider(),
-                                const SizedBox(height: 10),
-                                Text(
-                                  'Manage your restaurant menu items and categories',
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white70,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              OutlinedButton.icon(
-                                onPressed: () => _showManualOrderForm(),
-                                icon: const Icon(
-                                  Icons.receipt_long,
-                                  color: Colors.white,
-                                ),
-                                label: Text(
-                                  'Create Order',
-                                  style: GoogleFonts.inter(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(
-                                    color: _Palette.lemonChiffon,
-                                    width: 2,
-                                  ),
-                                  backgroundColor:
-                                      Colors.white.withValues(alpha: 0.06),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 12,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              OutlinedButton.icon(
-                                onPressed: () => _showTodaySpecialDialog(),
-                                icon: const Text('⭐',
-                                    style: TextStyle(fontSize: 16)),
-                                label: Text(
-                                  "Today's Special",
-                                  style: GoogleFonts.inter(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(
-                                    color: Colors.white.withValues(alpha: 0.5),
-                                    width: 1.5,
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 12,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              ElevatedButton.icon(
-                                onPressed: () => _showItemForm(),
-                                icon: const Icon(
-                                  Icons.add,
-                                  color: _Palette.milanoRedDeep,
-                                ),
-                                label: Text(
-                                  'Add Menu Item',
-                                  style: GoogleFonts.inter(
-                                    fontWeight: FontWeight.bold,
-                                    color: _Palette.milanoRedDeep,
-                                  ),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: _Palette.lemonChiffon,
-                                  elevation: 4,
-                                  shadowColor: Colors.black.withValues(
-                                    alpha: 0.2,
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 12,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                      const SizedBox(width: 14),
                   ],
                 ),
               ),
-            ),
-          ],
+              SizedBox(height: isMobile ? 18 : 22),
+              // Icon-tile quick actions — same three callbacks the old
+              // header's Order/Specials/Add Item (mobile) and Create
+              // Order/Today's Special/Add Menu Item (desktop) buttons
+              // called, just restyled as a standard mobile-app quick
+              // action row.
+              Row(
+                children: [
+                  Expanded(
+                    child: _QuickActionTile(
+                      icon: Icons.add_circle_rounded,
+                      label: 'Add Item',
+                      onTap: () => _showItemForm(),
+                    ),
+                  ),
+                  SizedBox(width: isMobile ? 10 : 16),
+                  Expanded(
+                    child: _QuickActionTile(
+                      icon: Icons.receipt_long_rounded,
+                      label: 'Create Order',
+                      onTap: _showManualOrderForm,
+                    ),
+                  ),
+                  SizedBox(width: isMobile ? 10 : 16),
+                  Expanded(
+                    child: _QuickActionTile(
+                      icon: Icons.star_rounded,
+                      label: "Today's Special",
+                      onTap: _showTodaySpecialDialog,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
+      ),
+        ],
       ),
     );
   }
@@ -1700,73 +1603,6 @@ class _MenuScreenState extends State<MenuScreen> {
   Widget _buildMainContent() {
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
-            ),
-            boxShadow: _Palette.softShadow,
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.search,
-                  color: _Palette.milanoRedDeep,
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextField(
-                  onChanged: (value) => setState(() => _searchQuery = value),
-                  style: GoogleFonts.inter(
-                    color: _Palette.textDark,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  cursorColor: _Palette.milanoRedDeep,
-                  decoration: InputDecoration(
-                    hintText: 'Search menu items...',
-                    border: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    fillColor: Colors.transparent,
-                    filled: false,
-                    hintStyle: GoogleFonts.inter(color: _Palette.textMuted),
-                  ),
-                ),
-              ),
-              if (_searchQuery.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _Palette.lemonChiffon.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '${_filteredItems.length} found',
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: _Palette.milanoRedDeep,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 18),
         Align(
           alignment: Alignment.centerLeft,
           child: Row(
@@ -2608,7 +2444,12 @@ class _MenuItemCardBodyState extends State<_MenuItemCardBody> {
     // description expands, so the "Edit Item" button always stays
     // visible below it rather than being confined to a small scroll
     // area. See the class doc comment above for the full rationale.
-    return Column(
+    //
+    // PASS 15: "Today's Special" items now get a thin gold accent bar
+    // down the left edge of the card (purely decorative, driven by the
+    // same `item.isSpecial` flag already used everywhere else on this
+    // card) so specials visually pop out from the grid at a glance.
+    final Widget cardBody = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -2907,9 +2748,41 @@ class _MenuItemCardBodyState extends State<_MenuItemCardBody> {
         ),
       ],
     );
+
+    if (!item.isSpecial) {
+      return cardBody;
+    }
+
+    // PASS 15: thin gold accent bar down the left edge for specials —
+    // purely decorative, wraps the exact same `cardBody` built above
+    // with no change to its content, callbacks, or sizing behaviour.
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 4,
+          margin: const EdgeInsets.only(top: 8, bottom: 8),
+          decoration: BoxDecoration(
+            color: _Palette.lemonChiffon,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+        Expanded(child: cardBody),
+      ],
+    );
   }
 }
 
+/// PASS 11: previously sized itself purely to its own icon+label content
+/// (via `mainAxisSize: MainAxisSize.min` on the inner `Row`, with no
+/// alignment set on the outer `Container`), which is exactly why the
+/// three mobile header buttons ended up with different widths — each one
+/// only ever took up as much space as its own text needed. Left in place,
+/// unused, after Pass 13 replaced the header's buttons with
+/// `_QuickActionTile` — kept so nothing else that might reference it
+/// elsewhere is affected, and because an unused private class causes no
+/// compile error.
 class _HeaderButton extends StatelessWidget {
   final VoidCallback onTap;
   final IconData icon;
@@ -2929,7 +2802,8 @@ class _HeaderButton extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: isPrimary
               ? _Palette.lemonChiffon
@@ -2952,6 +2826,7 @@ class _HeaderButton extends StatelessWidget {
               : null,
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
@@ -2960,15 +2835,127 @@ class _HeaderButton extends StatelessWidget {
               color: isPrimary ? _Palette.milanoRedDeep : Colors.white,
             ),
             const SizedBox(width: 8),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: isPrimary ? _Palette.milanoRedDeep : Colors.white,
+            Flexible(
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: isPrimary ? _Palette.milanoRedDeep : Colors.white,
+                ),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// PASS 13: standard-mobile-app "quick action" icon tile — an icon in a
+/// soft rounded square above a short label, in the spirit of a payments
+/// app's Scan/Pay/Bank-transfer row. Used for the header's three quick
+/// actions in place of the old `_HeaderButton` pill row. Purely
+/// presentational: the `onTap` passed in is whatever callback the caller
+/// gives it (in `_buildCustomHeader`, the same `_showItemForm` /
+/// `_showManualOrderForm` / `_showTodaySpecialDialog` methods the old
+/// header buttons called).
+///
+/// PASS 14: the tile itself now carries a subtle resting shadow (in
+/// addition to the icon circle's existing `softShadow`) and a slightly
+/// stronger hover/press tint, so each tile reads as a distinct tappable
+/// card rather than a flat tinted rectangle — a depth/elevation tweak
+/// only, the `onTap` wiring is unchanged.
+class _QuickActionTile extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _QuickActionTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  State<_QuickActionTile> createState() => _QuickActionTileState();
+}
+
+class _QuickActionTileState extends State<_QuickActionTile> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
+          decoration: BoxDecoration(
+            color: _isHovered
+                ? _Palette.milanoRedDeep.withValues(alpha: 0.12)
+                : Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: _isHovered
+                  ? _Palette.milanoRedDeep.withValues(alpha: 0.25)
+                  : _Palette.milanoRedDeep.withValues(alpha: 0.08),
+            ),
+            boxShadow: _isHovered ? _Palette.softShadow : null,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // PASS 15: soft green→gold gradient fill + thin gold ring
+              // instead of a flat cream circle, so each quick-action
+              // icon reads as a more inviting, on-brand button.
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      _Palette.canvasDeep,
+                      _Palette.lemonChiffon.withValues(alpha: 0.22),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: _Palette.lemonChiffon.withValues(alpha: 0.55),
+                    width: 1,
+                  ),
+                  boxShadow: _Palette.softShadow,
+                ),
+                child: Icon(
+                  widget.icon,
+                  color: _Palette.milanoRedDeep,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                widget.label,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  color: _Palette.textDark,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -3067,6 +3054,13 @@ class _CategoryPill extends StatelessWidget {
 /// only lived on the dashboard ("Home") screen; since Home was removed
 /// from the bottom nav, it moved here — same NotificationProvider, same
 /// unread badge, same tap-to-view-notifications behavior as before.
+///
+/// PASS 13: restyled for the header's new light ivory background —
+/// previously a translucent-white circle with a white icon (designed for
+/// the old dark maroon gradient header), now a white circle with a soft
+/// shadow and a deep-green icon, matching the rest of the new light
+/// header. Same `NotificationProvider`, same unread badge, same
+/// tap-to-view-notifications behavior as before.
 class _MenuNotificationBell extends StatefulWidget {
   const _MenuNotificationBell();
 
@@ -3090,27 +3084,26 @@ class _MenuNotificationBellState extends State<_MenuNotificationBell> {
         onTap: () => _showNotificationOverlay(context),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          width: 40,
-          height: 40,
+          width: 42,
+          height: 42,
           decoration: BoxDecoration(
-            color: _isHovered
-                ? Colors.white.withValues(alpha: 0.20)
-                : Colors.white.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(12),
+            color: Colors.white,
+            shape: BoxShape.circle,
             border: Border.all(
               color: _isHovered
-                  ? _Palette.lemonChiffon.withValues(alpha: 0.7)
-                  : Colors.white.withValues(alpha: 0.15),
+                  ? _Palette.lemonChiffon.withValues(alpha: 0.8)
+                  : _Palette.milanoRedDeep.withValues(alpha: 0.10),
             ),
+            boxShadow: _Palette.softShadow,
           ),
           child: Center(
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                const Icon(
+                Icon(
                   Icons.notifications_outlined,
-                  color: Colors.white,
-                  size: 22,
+                  color: _Palette.milanoRedDeep,
+                  size: 21,
                 ),
                 if (unread > 0)
                   Positioned(
@@ -3123,7 +3116,7 @@ class _MenuNotificationBellState extends State<_MenuNotificationBell> {
                         color: _Palette.lemonChiffon,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: _Palette.milanoRedDeep,
+                          color: Colors.white,
                           width: 1.5,
                         ),
                       ),

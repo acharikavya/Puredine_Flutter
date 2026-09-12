@@ -23,6 +23,12 @@ import 'package:restaurant_unified_app/admin/core/models/restaurant_model.dart';
 /// gained an extra diagonal sheen plus a secondary ambient glow for more
 /// depth. No provider, form, save, contact, or logout logic was touched
 /// anywhere in this pass — only presentation changed.
+///
+/// UI-ENHANCEMENT PASS 3: the Logout action was relocated from a bottom
+/// full-width pill button to a compact circular icon button living inside
+/// the top navbar/header (top-right corner), matching common "navbar
+/// action" placement. The onPressed logic (logout + navigate) is byte-for-
+/// byte identical to before — only its position/presentation changed.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   _Palette._();
@@ -439,61 +445,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ),
                                 ]),
                                 const SizedBox(height: 40),
-                                // Medium-big, more prominent pill-style
-                                // logout button — same filled danger-red
-                                // background and centered layout as before,
-                                // just sized up (padding, icon, and label
-                                // all increased) so it reads as a proper
-                                // medium-sized call-to-action instead of a
-                                // compact/small button. The onPressed logic
-                                // (logout + navigate) is completely
-                                // unchanged, only the visual sizing.
-                                Center(
-                                  child: ElevatedButton.icon(
-                                    onPressed: () async {
-                                      await context
-                                          .read<AuthProvider>()
-                                          .logout();
-                                      if (context.mounted) {
-                                        context.go('/admin/login');
-                                      }
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: _Palette.danger,
-                                      foregroundColor: Colors.white,
-                                      elevation: 5,
-                                      shadowColor: _Palette.danger.withValues(
-                                        alpha: 0.35,
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 40,
-                                        vertical: 18,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(100),
-                                        side: BorderSide(
-                                          color: _Palette.dangerDeep
-                                              .withValues(alpha: 0.4),
-                                          width: 1,
-                                        ),
-                                      ),
-                                    ),
-                                    icon: const Icon(
-                                      Icons.logout_rounded,
-                                      size: 22,
-                                    ),
-                                    label: Text(
-                                      'Logout',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 0.3,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 40),
                               ],
                             ),
                           ),
@@ -515,6 +466,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /// very top edge, and a fine dotted texture strip. The back control has
   /// been removed per request — the header now opens directly with the
   /// date (desktop) and the title block, no left-side back button.
+  ///
+  /// UI-ENHANCEMENT PASS 3: a compact circular Logout icon button now lives
+  /// in the top-right corner of this navbar. Its onPressed logic (logout +
+  /// navigate) is unchanged from the previous bottom button — only its
+  /// location and visual treatment moved.
   Widget _buildCustomHeader(bool isMobile) {
     return ClipRect(
       child: Container(
@@ -731,6 +687,66 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                     ],
+                  ),
+                ),
+              ),
+
+              // ── Logout — moved here from the bottom of the page. Same
+              // exact onPressed logic (logout + navigate to /admin/login),
+              // now presented as a compact circular icon button anchored to
+              // the top-right corner of the navbar, above the date/title
+              // content so it's always reachable.
+              Positioned(
+                top: 0,
+                right: 0,
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      top: isMobile ? 14 : 20,
+                      right: isMobile ? 14 : 28,
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: Tooltip(
+                        message: 'Logout',
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(100),
+                          onTap: () async {
+                            await context.read<AuthProvider>().logout();
+                            if (context.mounted) {
+                              context.go('/admin/login');
+                            }
+                          },
+                          child: Container(
+                            padding: EdgeInsets.all(isMobile ? 9 : 10),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.14),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.30),
+                                width: 1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      _Palette.milanoRedDeep.withValues(
+                                    alpha: 0.25,
+                                  ),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.logout_rounded,
+                              color: Colors.white,
+                              size: isMobile ? 18 : 20,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),

@@ -4,25 +4,27 @@ import 'package:restaurant_unified_app/admin/core/models/restaurant_model.dart';
 import 'package:restaurant_unified_app/admin/services/menu_service.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────
-/// THEME 1 — Dark Maroon × Soft Cream × Gold Glow
+/// THEME — PUREDINE Maroon + Cream
 /// Purely a UI palette used inside this file. No business logic depends on
 /// these — they only drive colors/gradients/shadows for a premium,
 /// restaurant-friendly look.
 ///
 /// These values are intentionally identical to the `_Palette` class used in
-/// MenuScreen (menu_screen.dart) so this dialog reads as part of the exact
-/// same brand instead of a separately-themed surface:
-///   maroonLight  == MenuScreen's _Palette.milanoRedLight
-///   maroon       == MenuScreen's _Palette.milanoRed
-///   maroonDeep   == MenuScreen's _Palette.milanoRedDeep
-///   cream        == MenuScreen's _Palette.canvas
-///   creamLighter == MenuScreen's _Palette.cardWhite
-///   gold         == MenuScreen's _Palette.lemonChiffon
-///   goldDark     == MenuScreen's _Palette.lemonChiffonDeep
-///   textDark     == MenuScreen's _Palette.textDark
-///   textMuted    == MenuScreen's _Palette.textMuted
-///   success      == MenuScreen's _Palette.success
-///   danger       == MenuScreen's _Palette.danger
+/// StaffScreen (staff_screen.dart) / MenuScreen, so this dialog reads as
+/// part of the exact same brand instead of a separately-themed surface:
+///   maroonLight  == StaffScreen's _Palette.milanoRedLight
+///   maroon       == StaffScreen's _Palette.milanoRed
+///   maroonDeep   == StaffScreen's _Palette.milanoRedDeep
+///   maroonDarkest== StaffScreen's _Palette.milanoRedDarkest
+///   cream        == StaffScreen's _Palette.canvas
+///   creamLighter == StaffScreen's _Palette.cardWhite
+///   gold         == StaffScreen's _Palette.lemonChiffon
+///   goldDark     == StaffScreen's _Palette.lemonChiffonDeep
+///   textDark     == StaffScreen's _Palette.textDark
+///   textMuted    == StaffScreen's _Palette.textMuted
+///   success      == StaffScreen's _Palette.success
+///   danger is kept as a clear alert red (not part of the supplied
+///   palette) so error states stay legible.
 ///
 /// UI-ENHANCEMENT PASS 2: the header was pushed further into its own
 /// distinctive "command bar" identity — a richer four-stop diagonal
@@ -32,21 +34,111 @@ import 'package:restaurant_unified_app/admin/services/menu_service.dart';
 /// treatment. No selection logic, save/API calls, search filtering, or
 /// item-payload logic was touched anywhere in this pass — only the
 /// header's presentation changed.
+///
+/// UI-ENHANCEMENT PASS 3: re-balanced the same Milano Red/Wine + Gold
+/// Chiffon identity so the dialog read as "majorly white" overall, with
+/// maroon and gold used only as accents rather than a solid header fill.
+///
+/// UI-ENHANCEMENT PASS 4 (this pass): presentation-only, exactly like
+/// every pass above — no selection logic, save/API calls, search
+/// filtering, or item-payload logic was touched anywhere in this file,
+/// and no field, callback, or keyword was renamed.
+///   1. PALETTE — full PUREDINE mapping, mirroring the exact swap already
+///      done on StaffScreen/ManualOrderDialog. Every field name inside
+///      `_SpecialTheme` is unchanged on purpose (every widget in this
+///      file already reads from these exact names, so swapping only the
+///      underlying `Color` values re-skins the whole dialog with no
+///      other code touched):
+///        • `maroon`        → Deep Wine Maroon `#742A3C` (primary / topbar)
+///        • `maroonLight`   → Wine `#813244` (topbar lighter gradient)
+///        • `maroonDeep`    → Burgundy `#8A183F` (primary accent)
+///        • `maroonDarkest` → Deep Brown/Black `#2E0D16`
+///        • `cream`         → Warm Off-White `#FBF8F5` (main background)
+///        • `creamLighter`  → kept as pure white (card surface)
+///        • `gold`          → Warm Gold `#F3C564` (gold accent)
+///        • `goldDark`      → deeper gold `#D9A421` (derived companion)
+///        • `textDark`      → Deep Brown/Black `#2E0D16`
+///        • `textMuted`     → Muted Taupe `#9B707A`
+///        • `success`       → Fresh Green `#44AF70`
+///        • `danger` is kept as a clear alert red (not part of the
+///          supplied palette) so error states stay legible.
+///      Four supporting PUREDINE tones were ADDED as new fields — nothing
+///      existing was removed — `dustyBlush` (`#F3D9DC`, icon backgrounds),
+///      `paleRose` (`#EFD7DA`, card borders), `softYellow` (`#FCE1AB`,
+///      gold highlight) and `paleMint` (`#EAF6EF`, success backgrounds).
+///      `headerGradient` now holds the supplied header gradient exactly
+///      (`#742A3C → #813244`), and `ctaGradient` holds the supplied CTA
+///      gradient exactly (`#6E1832 → #9B3E4E → #F3C564`).
+///   2. HEADER: rebuilt to match StaffScreen's header treatment exactly —
+///      the flat white Pass-3 bar is replaced with the PUREDINE Deep Wine
+///      Maroon → Wine diagonal gradient (a medium-depth, not near-black,
+///      maroon band). It carries the same ambient dressing used on the
+///      other admin headers: a soft warm-gold corner glow, a large very
+///      faint watermark emblem (the same star glyph already used in this
+///      dialog's icon chip) sitting low-opacity behind the copy, a
+///      subtle diagonal glass sheen, and a warm-gold hairline along the
+///      bottom edge. Structurally nothing changed: the same star icon
+///      chip, the same title copy ("Today's Special"), the same subtitle
+///      copy ("Curate the featured menu highlights"), the same gold glow
+///      "navbar" rail underneath, the same dotted texture row, and the
+///      exact same `_isSubmitting ? null : () => Navigator.pop(context)`
+///      close callback (still correctly disabled while saving). Only the
+///      copy's colors changed (white / soft-gold instead of maroon /
+///      taupe) and the icon chip + close button were restyled from
+///      Pass-3's maroon-on-white / cream-on-white "glass" look to a light
+///      glass-on-wine treatment so both read clearly against the new
+///      dark backdrop — their callbacks/behavior are unchanged.
+///   3. TOP-TO-BOTTOM CONSISTENCY: so the whole dialog reads as one brand
+///      rather than just a re-colored header, the outer dialog frame,
+///      search bar, and item-card borders now use Pale Rose, the no-image
+///      / broken-image item placeholders use the Dusty Blush icon-BG, and
+///      the "Save Specials" CTA button now carries the supplied CTA
+///      gradient (`#6E1832 → #9B3E4E → #F3C564`) instead of a flat
+///      maroon fill — matching the "Login / CTA buttons" spec exactly.
+///      No button's `onPressed` callback was touched.
 /// ─────────────────────────────────────────────────────────────────────────
 class _SpecialTheme {
-  static const Color maroonLight = Color(0xFFA83030); // Lighter maroon
-  static const Color maroon = Color(0xFF8B1D1D); // Dark Maroon (Primary)
-  static const Color maroonDeep = Color(0xFF4E0F0F); // Deepest maroon
-  static const Color maroonDarkest = Color(0xFF320A0A); // Fourth gradient stop
-  static const Color cream = Color(0xFFFFF8F0); // Soft Cream background
+  // PUREDINE Maroon + Cream — field names unchanged on purpose (see the
+  // PASS 4 note above); only the underlying Color values changed.
+  static const Color maroonLight =
+      Color(0xFF813244); // Wine (Topbar lighter gradient)
+  static const Color maroon =
+      Color(0xFF742A3C); // Deep Wine Maroon (Primary / Topbar)
+  static const Color maroonDeep = Color(0xFF8A183F); // Burgundy (accent)
+  static const Color maroonDarkest = Color(0xFF2E0D16); // Deep Brown/Black
+  static const Color cream =
+      Color(0xFFFBF8F5); // Warm Off-White (Main background)
   static const Color creamLighter = Colors.white; // Card white
-  static const Color gold = Color(0xFFF4C430); // Gold Glow (Accent)
-  static const Color goldDark = Color(0xFFD9A62A); // Deeper gold
+  static const Color gold = Color(0xFFF3C564); // Warm Gold (Accent)
+  static const Color goldDark = Color(0xFFD9A421); // Deeper Warm Gold
   static const Color textOnMaroon = Colors.white;
-  static const Color textDark = Color(0xFF3A1608);
-  static const Color textMuted = Color(0xFF8A6F5E);
-  static const Color success = Color(0xFF2E9E5B);
-  static const Color danger = Color(0xFFC62828);
+  static const Color textDark = Color(0xFF2E0D16); // Deep Brown/Black text
+  static const Color textMuted = Color(0xFF9B707A); // Muted Taupe
+  static const Color success = Color(0xFF44AF70); // Fresh Green
+  static const Color danger = Color(0xFFE0323F); // Clear alert red
+
+  // PASS 4: four supporting PUREDINE tones added — nothing above this
+  // line was removed; these are new fields only.
+  static const Color dustyBlush =
+      Color(0xFFF3D9DC); // Dusty Blush — icon backgrounds
+  static const Color paleRose = Color(0xFFEFD7DA); // Pale Rose — card borders
+  static const Color softYellow = Color(0xFFFCE1AB); // Soft Yellow highlight
+  static const Color paleMint = Color(0xFFEAF6EF); // Pale Mint background
+
+  /// The supplied top-header gradient, exactly: `#742A3C → #813244`.
+  static const LinearGradient headerGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [maroon, maroonLight],
+  );
+
+  /// The supplied CTA gradient, exactly: `#6E1832 → #9B3E4E → #F3C564`.
+  /// Used for the primary "Save Specials" action button below.
+  static const LinearGradient ctaGradient = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [Color(0xFF6E1832), Color(0xFF9B3E4E), gold],
+  );
 }
 
 /// Dialog that lets the admin pick any existing menu items and
@@ -205,15 +297,13 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
     }
   }
 
-  // ── UI: "Command bar" style header — UI-ENHANCEMENT PASS 2 pushes this
-  // further into the same distinctive identity used on the Admin Orders /
-  // Dashboard / staff-side screens' Pass-2 headers: a richer four-stop
-  // diagonal gradient (maroonLight → maroon → maroonDeep → maroonDarkest),
-  // a large faint watermark emblem sitting low-opacity behind the title, a
-  // fine glass highlight line along the very top edge, and a dotted
-  // texture accent. The gold glow rail underneath, the star icon chip, and
-  // the close button are all unchanged — same onPressed/Navigator.pop
-  // behavior as before. Purely presentational; no logic touched. ────────
+  // ── UI: header — UI-ENHANCEMENT PASS 4 rebuilds this to match
+  // StaffScreen's header treatment: the PUREDINE Deep Wine Maroon → Wine
+  // diagonal gradient, dressed with the same ambient touches (corner
+  // glow, watermark emblem, glass sheen, gold hairline). The star icon
+  // chip, gold glow rail, dotted texture row, title/subtitle copy, and
+  // the close button's `_isSubmitting ? null : () => Navigator.pop(...)`
+  // behavior are all unchanged — presentation only. ─────────────────────
   Widget _buildHeader() {
     return ClipRRect(
       borderRadius: const BorderRadius.only(
@@ -223,30 +313,20 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 20),
         decoration: BoxDecoration(
-          // Richer four-stop diagonal maroon gradient — deeper and more
-          // dimensional than the previous flat three-stop wash, matching
-          // the Admin Orders screen's Pass-2 "faceted" surface language.
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              _SpecialTheme.maroonLight,
-              _SpecialTheme.maroon,
-              _SpecialTheme.maroonDeep,
-              _SpecialTheme.maroonDarkest,
-            ],
-            stops: [0.0, 0.38, 0.72, 1.0],
+          // PUREDINE Deep Wine Maroon → Wine diagonal gradient — a
+          // medium-depth maroon band, not near-black and not white.
+          gradient: _SpecialTheme.headerGradient,
+          border: Border(
+            bottom: BorderSide(
+              color: _SpecialTheme.gold.withValues(alpha: 0.30),
+              width: 1,
+            ),
           ),
           boxShadow: [
             BoxShadow(
-              color: _SpecialTheme.maroonDeep.withValues(alpha: 0.45),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-            BoxShadow(
-              color: _SpecialTheme.gold.withValues(alpha: 0.10),
-              blurRadius: 20,
-              offset: const Offset(0, 4),
+              color: _SpecialTheme.maroonDarkest.withValues(alpha: 0.22),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
@@ -254,49 +334,67 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
           clipBehavior: Clip.none,
           children: [
             // ── Large faint watermark emblem — a unique signature touch
-            // this header didn't previously have, sitting low-opacity and
-            // large behind the copy, never competing with the title or
-            // controls. Matches the Admin Orders / Dashboard screens'
-            // Pass-2 watermark treatment.
-            const Positioned(
+            // sitting low-opacity and large behind the copy, never
+            // competing with the title or controls. Rendered in white so
+            // it reads on the new dark wine backdrop.
+            Positioned(
               right: -14,
               bottom: -18,
               child: IgnorePointer(
                 child: Opacity(
-                  opacity: 0.08,
+                  opacity: 0.06,
                   child: Icon(
                     Icons.star_rounded,
-                    size: 96,
+                    size: 108,
                     color: Colors.white,
                   ),
                 ),
               ),
             ),
 
-            // Subtle decorative diagonal ribbon accent — purely cosmetic,
-            // matches the header language used elsewhere in the admin app.
+            // Soft warm-gold corner glow — purely decorative.
             Positioned(
-              top: -30,
-              right: -20,
-              child: Transform.rotate(
-                angle: -0.5,
-                child: Container(
-                  width: 140,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        _SpecialTheme.gold.withValues(alpha: 0.14),
-                        Colors.transparent,
-                      ],
-                    ),
+              top: -50,
+              right: -30,
+              child: Container(
+                width: 190,
+                height: 190,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      _SpecialTheme.gold.withValues(alpha: 0.18),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // A subtle secondary highlight low-left, echoing the ambient
+            // dressing used on the other admin headers — a soft
+            // warm-white tint so it still reads on the dark backdrop.
+            Positioned(
+              bottom: -40,
+              left: -36,
+              child: Container(
+                width: 140,
+                height: 140,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      Colors.white.withValues(alpha: 0.05),
+                      Colors.transparent,
+                    ],
                   ),
                 ),
               ),
             ),
 
             // Fine dotted texture accent, matching the refined decorative
-            // language used on the Admin Orders / Dashboard headers.
+            // language used on the Admin Orders / Dashboard / Staff
+            // headers.
             Positioned(
               top: 4,
               left: 0,
@@ -312,9 +410,9 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                       height: 4,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: _SpecialTheme.gold.withValues(
-                          alpha: i == 2 ? 0.85 : 0.3,
-                        ),
+                        color: i == 2
+                            ? Colors.white.withValues(alpha: 0.85)
+                            : _SpecialTheme.gold.withValues(alpha: 0.45),
                       ),
                     ),
                   ),
@@ -322,9 +420,29 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
               ),
             ),
 
-            // Fine glass highlight line along the very top edge, giving
-            // the panel a polished, "premium glass" finish — matches the
-            // Admin Orders / Dashboard headers' top edge treatment.
+            // Subtle diagonal glass sheen — a fine extra layer of depth
+            // across the whole header.
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.white.withValues(alpha: 0.07),
+                        Colors.transparent,
+                        Colors.transparent,
+                      ],
+                      stops: const [0.0, 0.4, 1.0],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Fine glass highlight line along the very top edge, kept as
+            // a subtle accent.
             Positioned(
               top: 0,
               left: 16,
@@ -335,7 +453,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                   gradient: LinearGradient(
                     colors: [
                       Colors.transparent,
-                      Colors.white.withValues(alpha: 0.35),
+                      _SpecialTheme.gold.withValues(alpha: 0.6),
                       Colors.transparent,
                     ],
                   ),
@@ -349,18 +467,21 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
               children: [
                 Row(
                   children: [
+                    // Icon chip — a light glass-on-wine treatment so it
+                    // reads clearly against the new dark backdrop.
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: _SpecialTheme.gold.withValues(alpha: 0.16),
+                        color: Colors.white.withValues(alpha: 0.14),
                         border: Border.all(
-                          color: _SpecialTheme.gold.withValues(alpha: 0.55),
+                          color: _SpecialTheme.gold.withValues(alpha: 0.6),
                           width: 1.2,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: _SpecialTheme.gold.withValues(alpha: 0.35),
+                            color: _SpecialTheme.maroonDarkest
+                                .withValues(alpha: 0.25),
                             blurRadius: 14,
                             spreadRadius: 1,
                           ),
@@ -374,20 +495,28 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            "Today's Special",
-                            style: GoogleFonts.playfairDisplay(
-                              color: _SpecialTheme.textOnMaroon,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.2,
+                          ShaderMask(
+                            shaderCallback: (bounds) => const LinearGradient(
+                              colors: [
+                                Colors.white,
+                                _SpecialTheme.gold,
+                              ],
+                            ).createShader(bounds),
+                            child: Text(
+                              "Today's Special",
+                              style: GoogleFonts.playfairDisplay(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.2,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             'Curate the featured menu highlights',
                             style: GoogleFonts.inter(
-                              color: _SpecialTheme.gold.withValues(alpha: 0.9),
+                              color: Colors.white.withValues(alpha: 0.75),
                               fontSize: 12.5,
                               fontWeight: FontWeight.w500,
                               letterSpacing: 0.15,
@@ -396,16 +525,10 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                         ],
                       ),
                     ),
-                    Material(
-                      color: Colors.white.withValues(alpha: 0.08),
-                      shape: const CircleBorder(),
-                      child: IconButton(
-                        icon: const Icon(Icons.close_rounded,
-                            color: _SpecialTheme.textOnMaroon),
-                        splashRadius: 22,
-                        onPressed:
-                            _isSubmitting ? null : () => Navigator.pop(context),
-                      ),
+                    const SizedBox(width: 10),
+                    _HeaderCloseButton(
+                      onTap:
+                          _isSubmitting ? null : () => Navigator.pop(context),
                     ),
                   ],
                 ),
@@ -444,7 +567,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
       margin: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: _SpecialTheme.gold.withValues(alpha: 0.12),
+        color: _SpecialTheme.softYellow.withValues(alpha: 0.45),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: _SpecialTheme.gold.withValues(alpha: 0.35)),
       ),
@@ -509,8 +632,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                  color: _SpecialTheme.maroon.withValues(alpha: 0.12)),
+              borderSide: BorderSide(color: _SpecialTheme.paleRose),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -588,9 +710,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                   : _SpecialTheme.creamLighter,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isSelected
-                    ? _SpecialTheme.gold
-                    : Colors.black.withValues(alpha: 0.06),
+                color: isSelected ? _SpecialTheme.gold : _SpecialTheme.paleRose,
                 width: isSelected ? 1.5 : 1,
               ),
               boxShadow: isSelected
@@ -663,7 +783,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: _SpecialTheme.cream,
+                            color: _SpecialTheme.dustyBlush,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(Icons.broken_image_rounded,
@@ -677,11 +797,9 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: _SpecialTheme.cream,
+                        color: _SpecialTheme.dustyBlush,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                            color:
-                                _SpecialTheme.maroon.withValues(alpha: 0.12)),
+                        border: Border.all(color: _SpecialTheme.paleRose),
                       ),
                       child: Icon(Icons.fastfood_rounded,
                           size: 20,
@@ -701,9 +819,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
       decoration: BoxDecoration(
-        border: Border(
-            top:
-                BorderSide(color: _SpecialTheme.maroon.withValues(alpha: 0.1))),
+        border: Border(top: BorderSide(color: _SpecialTheme.paleRose)),
         color: _SpecialTheme.creamLighter,
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(22),
@@ -758,9 +874,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
-                  gradient: const LinearGradient(
-                    colors: [_SpecialTheme.maroon, _SpecialTheme.maroonDeep],
-                  ),
+                  gradient: _SpecialTheme.ctaGradient,
                   boxShadow: [
                     BoxShadow(
                       color: _SpecialTheme.gold.withValues(alpha: 0.35),
@@ -777,7 +891,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                           width: 14,
                           height: 14,
                           child: CircularProgressIndicator(
-                            color: _SpecialTheme.gold,
+                            color: Colors.white,
                             strokeWidth: 2,
                           ),
                         )
@@ -831,11 +945,10 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
         decoration: BoxDecoration(
           color: _SpecialTheme.cream,
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-              color: _SpecialTheme.gold.withValues(alpha: 0.25), width: 1.2),
+          border: Border.all(color: _SpecialTheme.paleRose, width: 1.2),
           boxShadow: [
             BoxShadow(
-              color: _SpecialTheme.maroonDeep.withValues(alpha: 0.35),
+              color: _SpecialTheme.maroonDarkest.withValues(alpha: 0.35),
               blurRadius: 30,
               offset: const Offset(0, 12),
             ),
@@ -850,6 +963,78 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
             Expanded(child: _buildBody()),
             _buildFooter(),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Compact icon-only "close" control for the header — a circular glass
+/// button showing only an "×" glyph. Mirrors the `_BackChevronButton` /
+/// `_HeaderCloseButton` treatment used on StaffScreen/ManualOrderDialog's
+/// headers for a consistent brand feel across the admin app: a
+/// translucent white circle with a white "×" and a warm-gold ring, so it
+/// reads clearly against the wine header backdrop.
+///
+/// `onTap` is nullable so it can carry through the exact same disabled
+/// behavior the old `IconButton(onPressed: ...)` had — passing `null`
+/// (while `_isSubmitting` is true) renders the button visibly dimmed and
+/// ignores taps, exactly like a disabled `IconButton` did before.
+class _HeaderCloseButton extends StatefulWidget {
+  final VoidCallback? onTap;
+  const _HeaderCloseButton({required this.onTap});
+
+  @override
+  State<_HeaderCloseButton> createState() => _HeaderCloseButtonState();
+}
+
+class _HeaderCloseButtonState extends State<_HeaderCloseButton> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool enabled = widget.onTap != null;
+    return Opacity(
+      opacity: enabled ? 1.0 : 0.45,
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        cursor:
+            enabled ? SystemMouseCursors.click : SystemMouseCursors.forbidden,
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: (enabled && _isHovered)
+                  ? Colors.white.withValues(alpha: 0.20)
+                  : Colors.white.withValues(alpha: 0.10),
+              border: Border.all(
+                color: (enabled && _isHovered)
+                    ? _SpecialTheme.gold.withValues(alpha: 0.7)
+                    : _SpecialTheme.gold.withValues(alpha: 0.4),
+                width: 1.2,
+              ),
+              boxShadow: (enabled && _isHovered)
+                  ? [
+                      BoxShadow(
+                        color: _SpecialTheme.gold.withValues(alpha: 0.25),
+                        blurRadius: 10,
+                        spreadRadius: 1,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: const Icon(
+              Icons.close_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
         ),
       ),
     );

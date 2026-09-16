@@ -150,9 +150,8 @@ import 'package:restaurant_unified_app/admin/core/providers/notification_provide
 /// UI-ENHANCEMENT PASS 13: two changes, both purely
 /// presentational — no data loading, filtering, mutation, dialog,
 /// navigation, or callback logic anywhere in this file was touched.
-///   1. COLOR THEME: every `_Palette` value below now points at the same
-///      green / warm-gold / soft-ivory identity used on the login
-///      screen, instead of the old dark-maroon / gold theme. The field
+///   1. COLOR THEME: every `_Palette` value below now points at a single
+///      consistent brand identity, instead of any prior theme. The field
 ///      names (`milanoRed`, `milanoRedDeep`, `lemonChiffon`, `canvas`,
 ///      etc.) are unchanged on purpose — every other widget in this file
 ///      already reads from these exact fields, so leaving the names
@@ -176,69 +175,253 @@ import 'package:restaurant_unified_app/admin/core/providers/notification_provide
 ///      grid, the "Showing N items" row, dialogs, and every data/mutation
 ///      method below are completely untouched.
 ///
-/// UI-ENHANCEMENT PASS 14: the color theme was already the
-/// green/gold/ivory identity requested (Pass 13); this pass only
-/// tightens the "standard mobile screen" feel a bit further — a
-/// hairline bottom border under the header for cleaner separation from
-/// the scrollable body, and a touch more depth (subtle shadow + hover
-/// lift) on the quick-action tiles so they read as proper tappable
-/// cards. No color values, data loading, filtering, mutation, dialog,
-/// navigation, or callback logic was touched anywhere in this pass —
-/// spacing/elevation only.
+/// UI-ENHANCEMENT PASS 14: this pass only tightens the "standard
+/// mobile screen" feel a bit further — a hairline bottom border under
+/// the header for cleaner separation from the scrollable body, and a
+/// touch more depth (subtle shadow + hover lift) on the quick-action
+/// tiles so they read as proper tappable cards. No color values, data
+/// loading, filtering, mutation, dialog, navigation, or callback logic
+/// was touched anywhere in this pass — spacing/elevation only.
 ///
-/// UI-ENHANCEMENT PASS 15 (this pass — "more attractive", same theme):
-/// still the exact same green/gold/ivory `_Palette` values from Pass 13
-/// — nothing about the color theme changed. This pass adds a few extra
-/// decorative touches, in the same botanical/brand spirit as the login
-/// screen, so the screen feels more lively and polished rather than
+/// UI-ENHANCEMENT PASS 15: added a few extra decorative
+/// touches so the screen feels more lively and polished rather than
 /// flat:
-///   1. The "Menu Management" title is now rendered with a two-tone
-///      green→gold `ShaderMask`, echoing the login screen's brand-title
-///      treatment, and a small row of gold accent dots sits above it —
-///      the same "dotted texture accent" language used on the login
-///      header.
-///   2. A large, very faint leaf watermark now sits behind the header
-///      copy (bottom-right), matching the login screen's soft botanical
-///      backdrop touches.
-///   3. The three quick-action tiles now have a soft green→gold gradient
-///      icon circle with a thin gold ring, instead of a flat cream
-///      circle, so they read as more inviting brand-colored buttons.
-///   4. Menu items marked "Today's Special" now get a thin gold left
-///      accent bar down the edge of the card, so specials visually pop
-///      out from the grid at a glance.
-/// No data loading, filtering, mutation, dialog, navigation, or callback
-/// logic was touched anywhere in this pass — purely decorative.
+///   1. The "Menu Management" title is rendered with a two-tone
+///      `ShaderMask`, and a small row of accent dots sits above it — a
+///      "dotted texture accent" language.
+///   2. A large, very faint leaf watermark sits behind the header copy
+///      (bottom-right), a soft botanical backdrop touch.
+///   3. The three quick-action tiles have a soft gradient icon circle
+///      with a thin accent ring, instead of a flat cream circle, so
+///      they read as more inviting brand-colored buttons.
+///   4. Menu items marked "Today's Special" get a thin accent left bar
+///      down the edge of the card, so specials visually pop out from
+///      the grid at a glance.
+///
+/// UI-ENHANCEMENT PASS 16: palette fine-tuned plus a few more
+/// "premium" decorative touches — still zero changes to data loading,
+/// filtering, mutation, dialog, navigation, or callback logic anywhere
+/// in this file — presentation only.
+///   1. PALETTE: values nudged for a more refined, premium tone.
+///   2. CARDS: corner radius increased slightly (20→22) and the resting
+///      shadow warmed to match the accent tint used elsewhere, for a
+///      softer, more premium card feel.
+///   3. RATING + PREP-TIME: now sit inside a small soft pill chip
+///      instead of bare text/icons, echoing the pill language used
+///      throughout the app.
+///   4. PRICE: now rendered as a soft tinted pill badge instead of
+///      plain text, so it reads as a clear price tag against the card.
+///   5. "TODAY'S SPECIAL" label: now sits inside a small accent-tinted
+///      pill instead of bare text, so specials pop even more clearly.
+///   6. HEADER: a thin gradient hairline now sits under the subtitle,
+///      above the search bar — a soft divider language.
+///   7. SIDEBAR "All Items" tile and selected category pills: selected
+///      state now carries a slightly warmer accent-tinted ring to match
+///      the richer accent language elsewhere on the screen.
+///
+/// UI-ENHANCEMENT PASS 17-19: intermediate client-supplied brand
+/// palette experiments — zero changes to data loading, filtering,
+/// mutation, dialog, navigation, or callback logic anywhere in this
+/// file — palette only.
+///
+/// UI-ENHANCEMENT PASS 20: a prior refinement pass, palette
+/// only, no structural changes.
+///
+/// UI-ENHANCEMENT PASS 21: re-themed the screen to a Milano
+/// Red/Wine + Golden Chiffon identity, with white/near-white kept as
+/// the dominant surface color throughout — zero changes to data
+/// loading, filtering, mutation, dialog, navigation, or callback logic
+/// anywhere in this file — palette only.
+///
+/// UI-ENHANCEMENT PASS 22: restructured the header to match a
+/// GPay-style top bar (search pill + circular icon top row, promo-style
+/// banner beneath it, icon-tile quick actions) — zero changes to data
+/// loading, filtering, mutation, dialog, navigation, or callback logic
+/// anywhere in this file — layout/presentation only.
+///
+/// UI-ENHANCEMENT PASS 23 (swaps in the "PUREDINE Maroon +
+/// Cream" brand palette): zero changes to data loading, filtering,
+/// mutation, dialog, navigation, or callback logic anywhere in this
+/// file — only the underlying `Color` values inside `_Palette` below
+/// were swapped. Every field name is exactly the same as before, so
+/// every widget already reading from `_Palette.milanoRed`,
+/// `_Palette.lemonChiffon`, `_Palette.canvas`, etc. is automatically
+/// re-skinned with no other code touched:
+///   • `milanoRed` (primary accent) → Burgundy `#8A183F` — used for the
+///     header title, buttons, sidebar "All Items" tile gradient, price
+///     pill, and "Edit Item" CTA gradient start stop.
+///   • `milanoRedDeep` (primary / topbar) → Deep Wine Maroon `#742A3C` —
+///     used as the dominant "deep" brand tone across icons, borders,
+///     shadows, and text accents.
+///   • `milanoRedLight` (topbar lighter gradient) → Wine `#813244`.
+///   • `milanoRedDarkest` (fourth gradient stop) → Deep Brown/Black
+///     `#2E0D16`.
+///   • `lemonChiffon` / `lemonChiffonDeep` (gold accent family) → Warm
+///     Gold `#F3C564` and a deeper, more saturated gold derived from the
+///     same family for contrast — used for the accent dots, dividers,
+///     selected pill rings, quick-action icon rings, and the "Today's
+///     Special" badge/accent bar.
+///   • `canvas` (main background) → Warm Off-White `#FBF8F5`, so the
+///     warm cream reads as the dominant surface color across the whole
+///     screen.
+///   • `canvasDeep` (card/secondary surface tint) → Soft Cream
+///     `#F7F1ED` — used for the rating/prep-time pill chip and the
+///     quick-action icon fill.
+///   • `cardWhite` → Soft Cream `#F7F1ED` (card background per the
+///     palette).
+///   • `success` → Fresh Green `#44AF70`, used for the "available"
+///     checkmark badge.
+///   • `danger` kept as a clear, distinct alert red (not part of the
+///     supplied palette) so delete/error states stay legible against
+///     the new warm palette.
+///   • `textDark` / `textMuted` → Deep Brown/Black `#2E0D16` and Muted
+///     Taupe `#9B707A`, so body copy reads warmly against the new
+///     cream canvas.
+///   This single swap re-tunes every surface in the file (header,
+///   sidebar, search bar, cards, badges, dialogs, toast, buttons) to the
+///   new PUREDINE brand identity with no structural changes anywhere.
+///
+/// UI-ENHANCEMENT PASS 24: wine topbar + full PUREDINE
+/// palette pass — zero changes to data loading, filtering, mutation,
+/// dialog, navigation, or callback logic anywhere in this file —
+/// palette/presentation only.
+///   1. PALETTE: four supporting PUREDINE tones that weren't wired up
+///      yet were added to `_Palette` — `dustyBlush` (`#F3D9DC`),
+///      `paleRose` (`#EFD7DA`), `softYellow` (`#FCE1AB`) and `paleMint`
+///      (`#EAF6EF`). Every field already in `_Palette` keeps the exact
+///      same hex value it had after Pass 23 — this only adds new
+///      fields, nothing existing was changed.
+///   2. HEADER: `_buildCustomHeader()`'s outer panel is no longer a
+///      light cream surface — it's now a medium-depth wine/maroon
+///      gradient (`milanoRedDeep` → `milanoRedLight`, the exact
+///      "`#742A3C` → `#813244`" combination called out for the top
+///      header), plus a soft ambient glow and a large, very faint
+///      watermark emblem for depth, and a thin warm-gold hairline along
+///      the bottom edge instead of the old faint maroon-on-cream one.
+///      Every element inside the header — the search pill (with the
+///      exact same `_searchQuery` state/`onChanged` handler and "X
+///      found" chip it always had), the promo-style title/subtitle
+///      banner, and the notification bell — is completely unchanged in
+///      structure and behaviour; only the backdrop behind them, plus a
+///      couple of shadow/border tints so they still read clearly
+///      against the new deeper backdrop, changed.
+///   3. CARDS: `HoverableCard`'s resting border and the header banner's
+///      border now use the palette's own `paleRose` (`#EFD7DA`) — the
+///      exact card-border tone called out in the PUREDINE spec — instead
+///      of a translucent wine tint.
+///   4. ICON CHIPS: a handful of small, purely neutral icon-container
+///      backgrounds (the sidebar's folder icon, each category's icon
+///      tile, the category bottom-sheet's icon tile and its "Edit
+///      Category" icon) now use the palette's `dustyBlush` (`#F3D9DC`)
+///      "Icon BG" tone instead of a translucent wine tint — every icon,
+///      label, and tap target inside them is unchanged.
+///   No data loading, filtering, mutation, dialog, navigation, or
+///   callback logic anywhere in this file was touched in this pass.
+///
+/// UI-ENHANCEMENT PASS 25: the three quick-action tiles ("Add Item",
+/// "Create Order", "Today's Special") previously
+/// lived inside the header's wine-gradient panel, below the promo
+/// banner. They now sit outside/below the header panel entirely, as
+/// their own row directly on the screen's canvas background — still the
+/// very first thing above the sidebar/item-grid content, just no longer
+/// inside the header's colored backdrop. This is a pure layout move: the
+/// row is now built by its own `_buildQuickActionsRow()` method and
+/// inserted into the outer body `Column` right after `_buildCustomHeader()`
+/// or; the three tiles themselves (`_QuickActionTile`), their icons,
+/// labels, and — most importantly — their exact same callbacks
+/// (`_showItemForm`, `_showManualOrderForm`, `_showTodaySpecialDialog`)
+/// are completely untouched. No data loading, filtering, mutation,
+/// dialog, navigation, or callback logic anywhere in this file was
+/// touched in this pass — only where this one row sits on the screen.
+///
+/// UI-ENHANCEMENT PASS 26: even after Pass 25 moved the
+/// quick-action tiles out from inside the header panel, the header
+/// `Container`'s own `boxShadow` (a wide, heavily blurred wine-tinted
+/// shadow with a `blurRadius` of 24 and a downward `Offset(0, 10)`) was
+/// still bleeding a soft colored tint down past the header's bottom
+/// edge and across the space where the three quick-action cards sit —
+/// making that area read as if it had its own colored "topbar"
+/// background behind the cards. That `boxShadow` has been removed from
+/// `_buildCustomHeader()`'s outer `Container` decoration, so the header
+/// still keeps its own gradient background and bottom hairline border,
+/// but no shadow spills down into the quick-action tiles' area beneath
+/// it. Nothing else — the header's gradient, its search pill, its promo
+/// banner, the quick-action tiles themselves, their icons, labels, or
+/// callbacks — was touched. No data loading, filtering, mutation,
+/// dialog, navigation, or callback logic anywhere in this file was
+/// touched in this pass — this single decorative shadow was removed.
+///
+/// UI-ENHANCEMENT PASS 27 (this pass): two purely structural/decorative
+/// changes — no data loading, filtering, mutation, dialog, navigation,
+/// or callback logic anywhere in this file was touched, and no widget,
+/// callback, field, or keyword was renamed.
+///   1. SCROLL STARTS AT THE QUICK-ACTION CARDS: the "Add Item" /
+///      "Create Order" / "Today's Special" row (still built by the exact
+///      same `_buildQuickActionsRow()` method, with the exact same three
+///      `_QuickActionTile`s and the exact same three callbacks) used to
+///      sit in the outer, non-scrolling body `Column` — pinned in place
+///      directly under the fixed header, so only the sidebar/item grid
+///      beneath it actually scrolled. It has now been moved INSIDE the
+///      body's `SingleChildScrollView`, as the very first child of the
+///      scrollable content, so scrolling now begins right at those three
+///      cards: they scroll away together with the categories row and the
+///      item grid. The header itself stays fixed at the top exactly as
+///      before.
+///   2. NO TOPBAR BACKGROUND BEHIND THE CARDS: because that row is now
+///      part of the scrollable body, it renders directly on the screen's
+///      own canvas/ambient backdrop — there is no separate colored
+///      "topbar" strip or panel behind it at all. The header's bottom
+///      hairline `border` (the thin gold line that used to sit right
+///      above the cards and read like the bottom edge of a topbar band)
+///      has also been removed from `_buildCustomHeader()`'s decoration,
+///      so nothing colored sits between the header and the cards. The
+///      header's own gradient background is unchanged; the scroll view's
+///      former top padding (`28`) was folded into the quick-action row's
+///      own padding so spacing stays visually the same.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
-  // NOTE: field names are unchanged from the previous maroon theme on
-  // purpose (see Pass 13 above) — every other widget in this file reads
-  // from these exact names, so only the underlying Color values change.
-  static const Color milanoRed = Color(0xFF1E4A34); // Deep Green (Primary)
-  static const Color milanoRedDeep = Color(0xFF163A29); // Deeper green
-  static const Color milanoRedLight = Color(0xFF2F6B4A); // Lighter green
+  // NOTE: field names are unchanged from the previous theme on purpose
+  // (see Pass 23 above) — every other widget in this file reads from
+  // these exact names, so only the underlying Color values change.
+  static const Color milanoRed = Color(0xFF8A183F); // Burgundy (Primary accent)
+  static const Color milanoRedDeep =
+      Color(0xFF742A3C); // Deep Wine Maroon (Primary / Topbar)
+  static const Color milanoRedLight =
+      Color(0xFF813244); // Wine (Topbar lighter gradient)
   static const Color milanoRedDarkest =
-      Color(0xFF0F2A1C); // Fourth gradient stop
-  static const Color lemonChiffon = Color(0xFFC99A3D); // Warm Gold (Accent)
-  static const Color lemonChiffonDeep = Color(0xFFAD7F2A); // Deeper gold
-  static const Color canvas = Color(0xFFFAF7EF); // Soft Ivory background
-  static const Color canvasDeep = Color(0xFFF3E7CC); // Deeper cream/gold tint
-  static const Color cardWhite = Colors.white;
-  static const Color textDark = Color(0xFF20301F);
-  static const Color textMuted = Color(0xFF708070);
-  static const Color success = Color(0xFF2E9E5B);
-  static const Color danger = Color(0xFFC62828);
+      Color(0xFF2E0D16); // Deep Brown/Black (fourth gradient stop)
+  static const Color lemonChiffon = Color(0xFFF3C564); // Warm Gold (Accent)
+  static const Color lemonChiffonDeep =
+      Color(0xFFD9A421); // Deeper, more saturated Warm Gold
+  static const Color canvas =
+      Color(0xFFFBF8F5); // Warm Off-White (Main background)
+  static const Color canvasDeep =
+      Color(0xFFF7F1ED); // Soft Cream (Card background / secondary tint)
+  static const Color cardWhite = Color(0xFFF7F1ED); // Soft Cream (Card bg)
+  static const Color textDark = Color(0xFF2E0D16); // Deep Brown/Black text
+  static const Color textMuted = Color(0xFF9B707A); // Muted Taupe
+  static const Color success = Color(0xFF44AF70); // Fresh Green
+  static const Color danger = Color(0xFFE0323F); // Clear alert red
+
+  // PASS 24: four supporting PUREDINE tones added — nothing above this
+  // line was changed; these are new fields only.
+  static const Color dustyBlush =
+      Color(0xFFF3D9DC); // Blush/Pink tint (Icon BG)
+  static const Color paleRose = Color(0xFFEFD7DA); // Light pink (Card border)
+  static const Color softYellow = Color(0xFFFCE1AB); // Gold highlight
+  static const Color paleMint = Color(0xFFEAF6EF); // Mint background
 
   /// Themed soft shadow for resting cards/panels — replaces the generic
   /// AppShadows.card so every surface shares the same warm, branded tint.
   static List<BoxShadow> get softShadow => [
         BoxShadow(
-          color: milanoRedDeep.withValues(alpha: 0.06),
-          blurRadius: 18,
+          color: milanoRedDeep.withValues(alpha: 0.07),
+          blurRadius: 20,
           offset: const Offset(0, 8),
         ),
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.03),
-          blurRadius: 4,
+          color: lemonChiffon.withValues(alpha: 0.05),
+          blurRadius: 6,
           offset: const Offset(0, 2),
         ),
       ];
@@ -251,7 +434,7 @@ class _Palette {
           offset: const Offset(0, 14),
         ),
         BoxShadow(
-          color: lemonChiffon.withValues(alpha: 0.10),
+          color: lemonChiffon.withValues(alpha: 0.12),
           blurRadius: 10,
           offset: const Offset(0, 3),
         ),
@@ -604,7 +787,7 @@ class _MenuScreenState extends State<MenuScreen> {
                       width: 34,
                       height: 34,
                       decoration: BoxDecoration(
-                        color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+                        color: _Palette.dustyBlush.withValues(alpha: 0.6),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
@@ -634,7 +817,7 @@ class _MenuScreenState extends State<MenuScreen> {
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+                    color: _Palette.dustyBlush.withValues(alpha: 0.6),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -956,12 +1139,22 @@ class _MenuScreenState extends State<MenuScreen> {
           // longer scrolls away with the content beneath it.
           _buildCustomHeader(),
 
+          // PASS 27: `_buildQuickActionsRow()` is NO LONGER called here in
+          // the outer, non-scrolling Column. It has moved down into the
+          // body's SingleChildScrollView (below) as the very first item of
+          // the scrollable content, so scrolling now starts right at the
+          // "Add Item" / "Create Order" / "Today's Special" cards, and
+          // nothing colored (no topbar strip / no header shadow / no
+          // header bottom hairline) sits behind that row anymore. The
+          // method itself, the three tiles, and their three callbacks are
+          // completely unchanged.
+
           // ── Main Body Section ────────────────────────────────────────────
           Expanded(
             child: Stack(
               children: [
                 // ── Ambient background dressing ─────────────────────────
-                // Purely decorative — soft gold/green glows plus a faint
+                // Purely decorative — soft gold/wine glows plus a faint
                 // textured photograph, matching the dashboard's "foggy"
                 // backdrop so the whole admin experience feels like one
                 // cohesive brand. A couple of extra glows/vignette layers
@@ -1026,8 +1219,8 @@ class _MenuScreenState extends State<MenuScreen> {
                             ),
                           ),
                         ),
-                        // Extra soft green glow, lower-center — adds a
-                        // touch more richness to the full-screen backdrop.
+                        // Extra soft glow, lower-center — adds a touch
+                        // more richness to the full-screen backdrop.
                         Positioned(
                           bottom: 120,
                           left: 0,
@@ -1090,9 +1283,10 @@ class _MenuScreenState extends State<MenuScreen> {
 
                 // UI-ENHANCEMENT PASS 2: faint diagonal sheen sweeping
                 // across the body — a subtle extra layer of depth so the
-                // cream backdrop doesn't read as flat behind the header,
-                // echoing the glass-highlight language used in the header
-                // itself. Matches the Orders screen's Pass-2 treatment.
+                // white/cream backdrop doesn't read as flat behind the
+                // header, echoing the glass-highlight language used in the
+                // header itself. Matches the Orders screen's Pass-2
+                // treatment.
                 Positioned.fill(
                   child: IgnorePointer(
                     child: DecoratedBox(
@@ -1116,6 +1310,13 @@ class _MenuScreenState extends State<MenuScreen> {
                 // AdminDashboardScreen: a SingleChildScrollView centered
                 // with a max width, instead of the header scrolling away
                 // inside a CustomScrollView.
+                //
+                // PASS 27: the scroll view's own horizontal/top padding was
+                // moved onto the inner blocks so the quick-action row can
+                // be the very first scrollable child and keep its own
+                // padding. Everything below it (the sidebar/categories row
+                // and the item grid) still sits inside the exact same
+                // 24px horizontal / max-width 1360 layout it always had.
                 _isLoading
                     ? const Center(
                         child: CircularProgressIndicator(
@@ -1123,39 +1324,55 @@ class _MenuScreenState extends State<MenuScreen> {
                         ),
                       )
                     : SingleChildScrollView(
-                        padding: EdgeInsets.fromLTRB(
-                          24,
-                          28,
-                          24,
-                          100 + bottomSafePad, // Extra bottom padding
+                        padding: EdgeInsets.only(
+                          bottom: 100 + bottomSafePad, // Extra bottom padding
                         ),
                         child: Center(
                           child: ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 1360),
-                            child: _error != null
-                                ? _buildError()
-                                : isDesktop
-                                    ? Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          SizedBox(
-                                            width: 300,
-                                            child: _buildSidebar(),
-                                          ),
-                                          const SizedBox(width: 32),
-                                          Expanded(child: _buildMainContent()),
-                                        ],
-                                      )
-                                    : Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.stretch,
-                                        children: [
-                                          _buildSidebar(),
-                                          const SizedBox(height: 32),
-                                          _buildMainContent(),
-                                        ],
-                                      ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                // PASS 27: the "Add Item" / "Create Order" /
+                                // "Today's Special" tiles — same method,
+                                // same tiles, same callbacks as before —
+                                // are now the first thing inside the
+                                // scrollable area, so the scroll begins
+                                // right here, on the plain canvas
+                                // background with no topbar behind it.
+                                _buildQuickActionsRow(),
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                                  child: _error != null
+                                      ? _buildError()
+                                      : isDesktop
+                                          ? Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                SizedBox(
+                                                  width: 300,
+                                                  child: _buildSidebar(),
+                                                ),
+                                                const SizedBox(width: 32),
+                                                Expanded(
+                                                  child: _buildMainContent(),
+                                                ),
+                                              ],
+                                            )
+                                          : Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.stretch,
+                                              children: [
+                                                _buildSidebar(),
+                                                const SizedBox(height: 32),
+                                                _buildMainContent(),
+                                              ],
+                                            ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -1169,48 +1386,163 @@ class _MenuScreenState extends State<MenuScreen> {
 
   /// PASS 13: rebuilt from the old dark-maroon gradient "command bar"
   /// into a lighter, standard-mobile-app header laid directly on the
-  /// screen's own ivory canvas (no separate colored panel) — a title +
+  /// screen's own canvas (no separate colored panel) — a title +
   /// notification-bell row, a large rounded pill search bar underneath
   /// (same `_searchQuery` state / `onChanged` handler the old inline
-  /// search box used), and a row of icon-tile quick actions beneath
-  /// that. All three actions call the exact same methods the old
-  /// header's buttons did — `_showItemForm`, `_showManualOrderForm`,
-  /// `_showTodaySpecialDialog` — only their look changed. The sidebar,
-  /// item grid, and every data/mutation method elsewhere in this file
-  /// are untouched.
+  /// search box used). All callbacks referenced from the header are the
+  /// exact same methods used elsewhere — only their look changed. The
+  /// sidebar, item grid, and every data/mutation method elsewhere in this
+  /// file are untouched.
   ///
   /// PASS 14: added a hairline bottom border so the header reads as a
   /// clearly separated surface above the scrollable body, matching a
   /// standard mobile app's header/content split — a spacing/elevation
   /// tweak only, no structural or logic change.
+  ///
+  /// PASS 16: a thin gold gradient hairline now sits between the
+  /// subtitle and the search bar (a soft divider language) — spacing/
+  /// decoration only, no structural or logic change.
+  ///
+  /// PASS 22: restructures the header to match a GPay-style top bar:
+  /// zero changes to data loading, filtering, mutation, dialog,
+  /// navigation, or callback logic anywhere in this file — layout/
+  /// presentation only.
+  ///   1. TOP ROW: the very first row in the header is now a large
+  ///      rounded search pill next to a circular icon on the right —
+  ///      mirroring the GPay home screen's very top row ("Pay anyone on
+  ///      UPI" search bar + round profile photo). The search pill uses
+  ///      the exact same `_searchQuery` state, the exact same
+  ///      `onChanged` handler, and the exact same "X found" chip the
+  ///      search bar always had — only its position (now the first
+  ///      element in the header) changed. The circular icon on the
+  ///      right is the exact same `_MenuNotificationBell` widget/
+  ///      callback as before, simply moved up into this top row instead
+  ///      of sitting next to the title.
+  ///   2. PROMO-STYLE BANNER: directly beneath the top row sits a
+  ///      soft rounded panel that mirrors the shape of the GPay home
+  ///      screen's banner ("No more QR approvals" card) — the screen
+  ///      title/subtitle/accent-dots/divider on the left (all the exact
+  ///      same text and elements the header already had) and, on the
+  ///      right, a circular glowing badge holding a restaurant/food
+  ///      photo — standing in for the illustration GPay shows in that
+  ///      same spot. This image is purely decorative (an `errorBuilder`
+  ///      falls back to a plain restaurant icon if it can't load) and
+  ///      is not tied to any data, callback, or navigation logic.
+  ///
+  /// PASS 23: the header (and every surface beneath it) now pulls its
+  /// colors from the re-themed `_Palette` (PUREDINE Maroon + Cream) —
+  /// no structure, spacing, or logic in this method was touched.
+  ///
+  /// PASS 24: the header's outer panel is now a medium-depth wine/
+  /// maroon gradient backdrop (`milanoRedDeep` → `milanoRedLight`)
+  /// instead of the flat light-cream panel from Pass 22/23, with a
+  /// soft ambient glow + a large, very faint watermark emblem behind
+  /// it for depth, and a warm-gold hairline along the bottom edge. The
+  /// search pill, the promo-style title/subtitle banner (now bordered
+  /// in `paleRose` per the PUREDINE card spec), and the notification
+  /// bell are all completely unchanged in structure/behaviour — same
+  /// `_searchQuery` state, same "X found" chip — only a couple of
+  /// shadow/border tints were adjusted so they read clearly against the
+  /// new deeper backdrop.
+  ///
+  /// PASS 25: the icon-tile quick actions ("Add Item", "Create Order",
+  /// "Today's Special") that used to be the last element inside this
+  /// header's Column have been moved OUT of this widget entirely — they
+  /// now live in the standalone `_buildQuickActionsRow()` method. This
+  /// method's Column now ends right after the promo-style
+  /// title/subtitle banner. Nothing else in this header — the search
+  /// pill, the banner, the notification bell — changed in any way.
+  ///
+  /// PASS 26: the outer `Container`'s `boxShadow` has been removed. It
+  /// previously cast a wide, blurred wine-tinted shadow (`blurRadius:
+  /// 24`, `offset: Offset(0, 10)`) below the header that was visibly
+  /// bleeding a colored tint down into the quick-action tiles' row
+  /// beneath it.
+  ///
+  /// PASS 27: the outer `Container`'s bottom hairline `border` has also
+  /// been removed. With the quick-action row now scrolling underneath
+  /// the header (see `build()`), that thin gold line was the last piece
+  /// of colored "topbar" chrome sitting directly above the three cards.
+  /// The header keeps its wine gradient background, its ambient
+  /// dressing, its search pill, its promo banner, and its notification
+  /// bell exactly as before — only the `border` entry was dropped from
+  /// this decoration.
   Widget _buildCustomHeader() {
     final isMobile = MediaQuery.of(context).size.width < 800;
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: _Palette.canvas,
-        border: Border(
-          bottom: BorderSide(
-            color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
-            width: 1,
-          ),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _Palette.milanoRedDeep,
+            _Palette.milanoRedLight,
+          ],
         ),
+        // PASS 26: boxShadow removed — it was bleeding a colored tint
+        // down into the quick-action tiles' row directly beneath the
+        // header.
+        // PASS 27: the bottom hairline border was removed too, so no
+        // colored strip sits between the header and the now-scrollable
+        // quick-action cards.
       ),
       child: Stack(
         children: [
-          // PASS 15: a large, very faint leaf watermark tucked behind
-          // the header copy — purely decorative, echoes the same
-          // botanical brand touch used on the login screen's header.
-          Positioned(
-            right: isMobile ? -20 : -10,
-            bottom: isMobile ? -18 : -12,
+          // PASS 24: decorative ambient dressing for the new wine
+          // backdrop — a soft gold glow near the top-right corner and a
+          // large, very faint watermark emblem low behind the header
+          // copy, plus a subtle diagonal glass sheen. Purely
+          // presentational, clipped to the header's own bounds; no
+          // data, callback, or navigation logic lives in this Stack.
+          Positioned.fill(
             child: IgnorePointer(
-              child: Opacity(
-                opacity: 0.05,
-                child: Icon(
-                  Icons.eco_rounded,
-                  size: isMobile ? 110 : 150,
-                  color: _Palette.milanoRed,
+              child: ClipRect(
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: -60,
+                      right: -40,
+                      child: Container(
+                        width: 220,
+                        height: 220,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              _Palette.lemonChiffon.withValues(alpha: 0.16),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      right: -30,
+                      bottom: -55,
+                      child: Icon(
+                        Icons.restaurant_menu_rounded,
+                        size: 180,
+                        color: Colors.white.withValues(alpha: 0.05),
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.06),
+                              Colors.transparent,
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.4, 1.0],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -1220,201 +1552,366 @@ class _MenuScreenState extends State<MenuScreen> {
             child: Padding(
               padding: EdgeInsets.fromLTRB(
                 isMobile ? 18 : 32,
-                isMobile ? 14 : 22,
+                isMobile ? 14 : 20,
                 isMobile ? 18 : 32,
                 isMobile ? 16 : 22,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // PASS 15: small gold accent-dot row above the title —
-                  // the same "dotted texture accent" language used on the
-                  // login screen's header, purely decorative.
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: List.generate(
-                        5,
-                        (i) => Container(
-                          margin: const EdgeInsets.only(right: 5),
-                          width: 4,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: _Palette.lemonChiffon.withValues(
-                              alpha: i == 2 ? 0.9 : 0.32,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Title row — same spot the old date/bell row occupied,
-                  // now on a plain light background instead of a dark
-                  // gradient band.
+                  // PASS 22: GPay-style top row — a large rounded pill
+                  // search bar paired with a circular icon on the right,
+                  // matching the reference GPay home screen's very top row.
+                  // Same `_searchQuery` state, the exact same `onChanged`
+                  // handler, and the exact same "X found" chip the search
+                  // bar has always had — only its position changed. The
+                  // circular icon is the exact same `_MenuNotificationBell`
+                  // widget/callback as before, just moved up to this row.
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Expanded(
-                        // PASS 15: two-tone green→gold ShaderMask on the
-                        // title, echoing the login screen's brand-title
-                        // treatment — same text, same font/size/weight.
-                        child: ShaderMask(
-                          shaderCallback: (bounds) => LinearGradient(
-                            colors: [
-                              _Palette.milanoRedDeep,
-                              _Palette.lemonChiffon
-                            ],
-                          ).createShader(bounds),
-                          child: Text(
-                            'Menu Management',
-                            style: GoogleFonts.playfairDisplay(
-                              color: Colors.white,
-                              fontSize: isMobile ? 21 : 28,
-                              fontWeight: FontWeight.bold,
+                        child: Container(
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(25),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.5),
                             ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: _Palette.milanoRedDarkest.withValues(
+                                  alpha: 0.25,
+                                ),
+                                blurRadius: 16,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              const SizedBox(width: 16),
+                              Icon(
+                                Icons.search_rounded,
+                                color: _Palette.milanoRedDeep
+                                    .withValues(alpha: 0.55),
+                                size: 21,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: TextField(
+                                  onChanged: (value) =>
+                                      setState(() => _searchQuery = value),
+                                  style: GoogleFonts.inter(
+                                    color: _Palette.textDark,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 13.5,
+                                  ),
+                                  cursorColor: _Palette.milanoRedDeep,
+                                  decoration: InputDecoration(
+                                    hintText: 'Search menu items...',
+                                    border: InputBorder.none,
+                                    focusedBorder: InputBorder.none,
+                                    enabledBorder: InputBorder.none,
+                                    fillColor: Colors.transparent,
+                                    filled: false,
+                                    hintStyle: GoogleFonts.inter(
+                                      color: _Palette.textMuted,
+                                      fontSize: 13.5,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // Same "X found" chip the search box has
+                              // always shown — relocated along with the
+                              // search field itself, nothing else changed.
+                              if (_searchQuery.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 12),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 9,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _Palette.lemonChiffon.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      '${_filteredItems.length} found',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: _Palette.milanoRedDeep,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              else
+                                const SizedBox(width: 12),
+                            ],
                           ),
                         ),
                       ),
-                      if (!isMobile) ...[
-                        Text(
-                          _todayLabel(),
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.3,
-                            color: _Palette.textMuted,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                      ],
+                      const SizedBox(width: 12),
                       const _MenuNotificationBell(),
                     ],
                   ),
-                  SizedBox(height: isMobile ? 4 : 6),
-                  Text(
-                    'Manage your restaurant menu items and categories',
-                    style: GoogleFonts.inter(
-                      color: _Palette.textMuted,
-                      fontSize: isMobile ? 12.5 : 14,
-                    ),
-                  ),
-                  SizedBox(height: isMobile ? 16 : 20),
-                  // Standard-mobile-app rounded pill search bar — replaces
-                  // the old header's action-button row as the primary
-                  // element up top. Same `_searchQuery` state and the exact
-                  // same `onChanged` handler the previous inline search box
-                  // (now removed from `_buildMainContent`) used to have, so
-                  // search behaves identically to before.
+                  SizedBox(height: isMobile ? 14 : 18),
+                  // PASS 22: GPay-style promo banner — a soft rounded panel
+                  // holding the screen title/subtitle on the left and a
+                  // circular glowing badge with a restaurant photo on the
+                  // right, mirroring the reference GPay home screen's
+                  // banner layout (headline + subtext on the left,
+                  // illustration on the right). Purely decorative/layout —
+                  // every piece of text/element here already existed in the
+                  // header before; no data, callback, or navigation logic
+                  // lives in this panel.
+                  //
+                  // PASS 24: this panel's border now uses the PUREDINE
+                  // spec's own `paleRose` card-border tone instead of a
+                  // translucent wine tint, and its drop shadow is tuned
+                  // for the new dark backdrop behind it. Nothing inside —
+                  // text, accent dots, divider, photo — was touched.
                   Container(
-                    height: 54,
+                    width: double.infinity,
+                    padding: EdgeInsets.all(isMobile ? 16 : 22),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(27),
-                      border: Border.all(
-                        color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          _Palette.canvasDeep,
+                          _Palette.canvas,
+                        ],
                       ),
-                      boxShadow: _Palette.softShadow,
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(
+                        color: _Palette.paleRose,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _Palette.milanoRedDarkest.withValues(
+                            alpha: 0.18,
+                          ),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
                     ),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        const SizedBox(width: 18),
-                        Icon(
-                          Icons.search_rounded,
-                          color: _Palette.milanoRedDeep.withValues(alpha: 0.55),
-                          size: 22,
-                        ),
-                        const SizedBox(width: 10),
                         Expanded(
-                          child: TextField(
-                            onChanged: (value) =>
-                                setState(() => _searchQuery = value),
-                            style: GoogleFonts.inter(
-                              color: _Palette.textDark,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            cursorColor: _Palette.milanoRedDeep,
-                            decoration: InputDecoration(
-                              hintText: 'Search menu items...',
-                              border: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              fillColor: Colors.transparent,
-                              filled: false,
-                              hintStyle: GoogleFonts.inter(
-                                color: _Palette.textMuted,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Small gold accent-dot row above the title —
+                              // a "dotted texture accent" language, purely
+                              // decorative.
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 6),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: List.generate(
+                                    5,
+                                    (i) => Container(
+                                      margin: const EdgeInsets.only(right: 5),
+                                      width: 4,
+                                      height: 4,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: _Palette.lemonChiffon.withValues(
+                                          alpha: i == 2 ? 0.9 : 0.32,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
+                              // Two-tone ShaderMask on the title — same
+                              // text, same font/weight as before.
+                              ShaderMask(
+                                shaderCallback: (bounds) =>
+                                    const LinearGradient(
+                                  colors: [
+                                    _Palette.milanoRedDeep,
+                                    _Palette.lemonChiffon,
+                                  ],
+                                ).createShader(bounds),
+                                child: Text(
+                                  'Menu Management',
+                                  style: GoogleFonts.playfairDisplay(
+                                    color: Colors.white,
+                                    fontSize: isMobile ? 20 : 27,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: isMobile ? 4 : 6),
+                              Text(
+                                'Manage your restaurant menu items and categories',
+                                style: GoogleFonts.inter(
+                                  color: _Palette.textMuted,
+                                  fontSize: isMobile ? 12 : 13.5,
+                                ),
+                              ),
+                              if (!isMobile) ...[
+                                const SizedBox(height: 6),
+                                Text(
+                                  _todayLabel(),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.3,
+                                    color: _Palette.textMuted,
+                                  ),
+                                ),
+                              ],
+                              SizedBox(height: isMobile ? 10 : 12),
+                              // Thin gold gradient hairline — a soft divider
+                              // language. Purely decorative.
+                              Container(
+                                width: 46,
+                                height: 3,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(4),
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      _Palette.lemonChiffon
+                                          .withValues(alpha: 0.9),
+                                      _Palette.lemonChiffon
+                                          .withValues(alpha: 0.15),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        // Same "X found" chip the old search box showed —
-                        // moved here so the feature isn't lost, just
-                        // relocated along with the search field itself.
-                        if (_searchQuery.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(right: 14),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 5,
-                              ),
+                        SizedBox(width: isMobile ? 12 : 20),
+                        // GPay-style glowing circular illustration — a
+                        // restaurant/food photo standing in for the
+                        // reference app's illustration on the right side of
+                        // its banner. Purely decorative: if the image can't
+                        // load, `errorBuilder` falls back to a plain
+                        // restaurant icon instead — no logic tied to it.
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              width: isMobile ? 72 : 92,
+                              height: isMobile ? 72 : 92,
                               decoration: BoxDecoration(
-                                color: _Palette.lemonChiffon.withValues(
-                                  alpha: 0.5,
-                                ),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                '${_filteredItems.length} found',
-                                style: GoogleFonts.inter(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: _Palette.milanoRedDeep,
+                                shape: BoxShape.circle,
+                                gradient: RadialGradient(
+                                  colors: [
+                                    _Palette.lemonChiffon
+                                        .withValues(alpha: 0.35),
+                                    Colors.transparent,
+                                  ],
                                 ),
                               ),
                             ),
-                          )
-                        else
-                          const SizedBox(width: 14),
+                            Container(
+                              width: isMobile ? 56 : 72,
+                              height: isMobile ? 56 : 72,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: _Palette.lemonChiffon
+                                      .withValues(alpha: 0.55),
+                                  width: 2,
+                                ),
+                                boxShadow: _Palette.softShadow,
+                              ),
+                              child: ClipOval(
+                                child: Image.network(
+                                  'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=400&auto=format&fit=crop',
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Container(
+                                    color: _Palette.milanoRedDeep,
+                                    child: const Icon(
+                                      Icons.restaurant_menu_rounded,
+                                      color: Colors.white,
+                                      size: 26,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
-                  SizedBox(height: isMobile ? 18 : 22),
-                  // Icon-tile quick actions — same three callbacks the old
-                  // header's Order/Specials/Add Item (mobile) and Create
-                  // Order/Today's Special/Add Menu Item (desktop) buttons
-                  // called, just restyled as a standard mobile-app quick
-                  // action row.
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _QuickActionTile(
-                          icon: Icons.add_circle_rounded,
-                          label: 'Add Item',
-                          onTap: () => _showItemForm(),
-                        ),
-                      ),
-                      SizedBox(width: isMobile ? 10 : 16),
-                      Expanded(
-                        child: _QuickActionTile(
-                          icon: Icons.receipt_long_rounded,
-                          label: 'Create Order',
-                          onTap: _showManualOrderForm,
-                        ),
-                      ),
-                      SizedBox(width: isMobile ? 10 : 16),
-                      Expanded(
-                        child: _QuickActionTile(
-                          icon: Icons.star_rounded,
-                          label: "Today's Special",
-                          onTap: _showTodaySpecialDialog,
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// PASS 25 (new method): the "Add Item" / "Create Order" / "Today's
+  /// Special" icon-tile quick actions, living outside of
+  /// `_buildCustomHeader()`'s wine-gradient panel. This is the exact same
+  /// `Row` of three `Expanded`-wrapped `_QuickActionTile` widgets that
+  /// used to sit at the bottom of the header, with the exact same three
+  /// callbacks (`_showItemForm`, `_showManualOrderForm`,
+  /// `_showTodaySpecialDialog`) — only the surrounding container/position
+  /// changed.
+  ///
+  /// PASS 26: no change to this method itself — it never had a background
+  /// of its own. The colored tint that used to appear behind it came from
+  /// the header's `boxShadow`, which was removed in
+  /// `_buildCustomHeader()`.
+  ///
+  /// PASS 27: this row is now called from inside the body's
+  /// `SingleChildScrollView` (see `build()`) instead of from the outer
+  /// fixed `Column`, so it is the first thing that scrolls. Its own top
+  /// padding was raised from `16` to `24` to absorb the top padding the
+  /// scroll view used to apply, so the spacing above the three cards
+  /// looks the same as before. The three tiles, their icons, labels, and
+  /// callbacks are untouched, and it still has no background of its own —
+  /// it renders straight onto the screen's canvas.
+  Widget _buildQuickActionsRow() {
+    final isMobile = MediaQuery.of(context).size.width < 800;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        isMobile ? 18 : 32,
+        24,
+        isMobile ? 18 : 32,
+        4,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _QuickActionTile(
+              icon: Icons.add_circle_rounded,
+              label: 'Add Item',
+              onTap: () => _showItemForm(),
+            ),
+          ),
+          SizedBox(width: isMobile ? 10 : 16),
+          Expanded(
+            child: _QuickActionTile(
+              icon: Icons.receipt_long_rounded,
+              label: 'Create Order',
+              onTap: _showManualOrderForm,
+            ),
+          ),
+          SizedBox(width: isMobile ? 10 : 16),
+          Expanded(
+            child: _QuickActionTile(
+              icon: Icons.star_rounded,
+              label: "Today's Special",
+              onTap: _showTodaySpecialDialog,
             ),
           ),
         ],
@@ -1451,7 +1948,7 @@ class _MenuScreenState extends State<MenuScreen> {
               const Spacer(),
               Container(
                 decoration: BoxDecoration(
-                  color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+                  color: _Palette.dustyBlush.withValues(alpha: 0.6),
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
@@ -1504,7 +2001,7 @@ class _MenuScreenState extends State<MenuScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
+          color: _Palette.paleRose,
         ),
         boxShadow: _Palette.softShadow,
       ),
@@ -1518,7 +2015,7 @@ class _MenuScreenState extends State<MenuScreen> {
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+                  color: _Palette.dustyBlush.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
@@ -1674,7 +2171,7 @@ class _MenuScreenState extends State<MenuScreen> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
+            color: _Palette.paleRose,
           ),
         ),
         child: Column(
@@ -1984,13 +2481,13 @@ class _SidebarItemState extends State<_SidebarItem> {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isAllItems
-                  ? Colors.transparent
+                  ? _Palette.lemonChiffon.withValues(alpha: 0.55)
                   : (widget.isSelected
-                      ? _Palette.milanoRedDeep.withValues(alpha: 0.5)
+                      ? _Palette.lemonChiffon.withValues(alpha: 0.6)
                       : (_isHovered
                           ? _Palette.milanoRedDeep.withValues(alpha: 0.3)
-                          : _Palette.milanoRedDeep.withValues(alpha: 0.1))),
-              width: 1.2,
+                          : _Palette.paleRose)),
+              width: isAllItems || widget.isSelected ? 1.4 : 1.2,
             ),
             boxShadow: isAllItems
                 ? [
@@ -2019,7 +2516,7 @@ class _SidebarItemState extends State<_SidebarItem> {
                 decoration: BoxDecoration(
                   color: isAllItems
                       ? Colors.white.withValues(alpha: 0.18)
-                      : _Palette.milanoRedDeep.withValues(alpha: 0.08),
+                      : _Palette.dustyBlush.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(11),
                 ),
                 child: Icon(
@@ -2127,11 +2624,11 @@ class _HoverableCardState extends State<HoverableCard> {
         curve: Curves.easeOutCubic,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(22),
           border: Border.all(
             color: _isHovered
                 ? _Palette.milanoRedDeep.withValues(alpha: 0.55)
-                : _Palette.milanoRedDeep.withValues(alpha: 0.14),
+                : _Palette.paleRose,
             width: _isHovered ? 1.4 : 1,
           ),
           boxShadow: _isHovered ? _Palette.glowShadow : _Palette.softShadow,
@@ -2202,6 +2699,15 @@ class _HoverableCardState extends State<HoverableCard> {
 /// truncate-and-append-"Read more" logic from Pass 7 kick in, and only
 /// then does tapping become possible. No data, callback, or navigation
 /// logic was touched — only how/when the link itself is shown.
+///
+/// UI-ENHANCEMENT PASS 16/21/23: purely decorative refinements —
+///   • The rating + prep-time row sits inside a small soft pill chip
+///     instead of bare text/icons.
+///   • The price renders as a soft wine-tinted pill badge instead of
+///     plain text.
+///   • The "TODAY'S SPECIAL" label sits inside a small gold-tinted pill
+///     instead of bare text.
+/// No data, callback, or navigation logic was touched.
 /// ─────────────────────────────────────────────────────────────────────────
 class _MenuItemCardBody extends StatefulWidget {
   final MenuItem item;
@@ -2605,26 +3111,40 @@ class _MenuItemCardBodyState extends State<_MenuItemCardBody> {
             children: [
               if (item.isSpecial)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 2),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.flash_on,
-                        size: 10,
-                        color: _Palette.milanoRed,
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _Palette.lemonChiffon.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: _Palette.lemonChiffon.withValues(alpha: 0.45),
+                        width: 0.8,
                       ),
-                      const SizedBox(width: 3),
-                      Text(
-                        "TODAY'S SPECIAL",
-                        style: GoogleFonts.inter(
-                          fontSize: 8.5,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.flash_on,
+                          size: 10,
                           color: _Palette.milanoRed,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.3,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 3),
+                        Text(
+                          "TODAY'S SPECIAL",
+                          style: GoogleFonts.inter(
+                            fontSize: 8.5,
+                            color: _Palette.milanoRed,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               Text(
@@ -2645,50 +3165,76 @@ class _MenuItemCardBodyState extends State<_MenuItemCardBody> {
               // card) when tapped, so the "Edit Item" button always
               // stays visible below it.
               _buildDescriptionBlock(),
-              const SizedBox(height: 3),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.star_rounded,
-                    size: 11,
-                    color: _Palette.lemonChiffonDeep,
-                  ),
-                  const SizedBox(width: 3),
-                  Text(
-                    rating.toStringAsFixed(1),
-                    style: GoogleFonts.inter(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: _Palette.textMuted,
-                    ),
-                  ),
-                  if (widget.hasPrepTime) ...[
-                    const SizedBox(width: 8),
+              const SizedBox(height: 5),
+              // PASS 16: rating + prep-time now sit inside a small
+              // soft-cream pill chip instead of bare text/icons —
+              // purely decorative, same values/icons as before.
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 7,
+                  vertical: 3.5,
+                ),
+                decoration: BoxDecoration(
+                  color: _Palette.canvasDeep.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     const Icon(
-                      Icons.timer_outlined,
-                      size: 10,
-                      color: _Palette.textMuted,
+                      Icons.star_rounded,
+                      size: 11,
+                      color: _Palette.lemonChiffonDeep,
                     ),
-                    const SizedBox(width: 2),
+                    const SizedBox(width: 3),
                     Text(
-                      '${item.preparationTime} min',
+                      rating.toStringAsFixed(1),
                       style: GoogleFonts.inter(
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
                         color: _Palette.textMuted,
                       ),
                     ),
+                    if (widget.hasPrepTime) ...[
+                      const SizedBox(width: 8),
+                      const Icon(
+                        Icons.timer_outlined,
+                        size: 10,
+                        color: _Palette.textMuted,
+                      ),
+                      const SizedBox(width: 2),
+                      Text(
+                        '${item.preparationTime} min',
+                        style: GoogleFonts.inter(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w600,
+                          color: _Palette.textMuted,
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
               const SizedBox(height: 8),
-              Text(
-                '₹${item.price.toStringAsFixed(0)}',
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: _Palette.milanoRed,
+              // PASS 16: price now rendered as a soft wine-tinted pill
+              // badge instead of plain text — same value/formatting as
+              // before, purely decorative wrapper.
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: _Palette.milanoRed.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '₹${item.price.toStringAsFixed(0)}',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: _Palette.milanoRed,
+                  ),
                 ),
               ),
               const SizedBox(height: 6),
@@ -2860,18 +3406,29 @@ class _HeaderButton extends StatelessWidget {
 
 /// PASS 13: standard-mobile-app "quick action" icon tile — an icon in a
 /// soft rounded square above a short label, in the spirit of a payments
-/// app's Scan/Pay/Bank-transfer row. Used for the header's three quick
-/// actions in place of the old `_HeaderButton` pill row. Purely
-/// presentational: the `onTap` passed in is whatever callback the caller
-/// gives it (in `_buildCustomHeader`, the same `_showItemForm` /
-/// `_showManualOrderForm` / `_showTodaySpecialDialog` methods the old
-/// header buttons called).
+/// app's Scan/Pay/Bank-transfer row. Used for the screen's three quick
+/// actions. Purely presentational: the `onTap` passed in is whatever
+/// callback the caller gives it (in `_buildQuickActionsRow`, the same
+/// `_showItemForm` / `_showManualOrderForm` / `_showTodaySpecialDialog`
+/// methods the old header buttons called).
 ///
 /// PASS 14: the tile itself now carries a subtle resting shadow (in
 /// addition to the icon circle's existing `softShadow`) and a slightly
 /// stronger hover/press tint, so each tile reads as a distinct tappable
 /// card rather than a flat tinted rectangle — a depth/elevation tweak
 /// only, the `onTap` wiring is unchanged.
+///
+/// PASS 25: this tile renders outside of the header's wine-gradient
+/// panel (on the screen's own canvas background, via
+/// `_buildQuickActionsRow`) instead of inside it — its own styling,
+/// shadow, and border already read fine on a light background, so
+/// nothing inside this widget needed to change to support the move.
+///
+/// PASS 26/27: no change to this widget. The colored bleed that used to
+/// sit behind these tiles came from the header's own `boxShadow` (removed
+/// in Pass 26) and its bottom hairline border (removed in Pass 27), not
+/// from anything in this class. As of Pass 27 these tiles are simply the
+/// first scrollable content in the body.
 class _QuickActionTile extends StatefulWidget {
   final IconData icon;
   final String label;
@@ -2910,16 +3467,16 @@ class _QuickActionTileState extends State<_QuickActionTile> {
             border: Border.all(
               color: _isHovered
                   ? _Palette.milanoRedDeep.withValues(alpha: 0.25)
-                  : _Palette.milanoRedDeep.withValues(alpha: 0.08),
+                  : _Palette.paleRose,
             ),
-            boxShadow: _isHovered ? _Palette.softShadow : null,
+            boxShadow: _isHovered ? _Palette.glowShadow : _Palette.softShadow,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // PASS 15: soft green→gold gradient fill + thin gold ring
-              // instead of a flat cream circle, so each quick-action
-              // icon reads as a more inviting, on-brand button.
+              // PASS 15: soft gradient fill + thin accent ring instead
+              // of a flat cream circle, so each quick-action icon reads
+              // as a more inviting, on-brand button.
               Container(
                 width: 40,
                 height: 40,
@@ -3004,9 +3561,9 @@ class _CategoryPill extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: isSelected
-                ? _Palette.milanoRedDeep
-                : _Palette.milanoRedDeep.withValues(alpha: 0.1),
-            width: 1,
+                ? _Palette.lemonChiffon.withValues(alpha: 0.7)
+                : _Palette.paleRose,
+            width: isSelected ? 1.3 : 1,
           ),
           boxShadow: isSelected
               ? [
@@ -3058,12 +3615,18 @@ class _CategoryPill extends StatelessWidget {
 /// from the bottom nav, it moved here — same NotificationProvider, same
 /// unread badge, same tap-to-view-notifications behavior as before.
 ///
-/// PASS 13: restyled for the header's new light ivory background —
-/// previously a translucent-white circle with a white icon (designed for
-/// the old dark maroon gradient header), now a white circle with a soft
-/// shadow and a deep-green icon, matching the rest of the new light
-/// header. Same `NotificationProvider`, same unread badge, same
+/// PASS 13: restyled for the header's new light background — previously
+/// a translucent-white circle with a white icon (designed for the old
+/// dark maroon gradient header), now a white circle with a soft shadow
+/// and a deep wine icon, matching the rest of the new light header. Same
+/// `NotificationProvider`, same unread badge, same
 /// tap-to-view-notifications behavior as before.
+///
+/// PASS 24: the header behind this bell is a wine/maroon gradient again
+/// (see `_buildCustomHeader`), but the bell itself is unchanged — still
+/// a white circle with a deep-wine icon, same `NotificationProvider`,
+/// same unread badge, same tap behaviour. It already reads clearly
+/// against the new darker backdrop, so nothing here needed to change.
 class _MenuNotificationBell extends StatefulWidget {
   const _MenuNotificationBell();
 
@@ -3095,9 +3658,15 @@ class _MenuNotificationBellState extends State<_MenuNotificationBell> {
             border: Border.all(
               color: _isHovered
                   ? _Palette.lemonChiffon.withValues(alpha: 0.8)
-                  : _Palette.milanoRedDeep.withValues(alpha: 0.10),
+                  : Colors.white.withValues(alpha: 0.9),
             ),
-            boxShadow: _Palette.softShadow,
+            boxShadow: [
+              BoxShadow(
+                color: _Palette.milanoRedDarkest.withValues(alpha: 0.25),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
+              ),
+            ],
           ),
           child: Center(
             child: Stack(

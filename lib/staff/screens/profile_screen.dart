@@ -8,50 +8,78 @@ import '../theme/app_theme.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────
-/// Local "Theme 1 — Dark Maroon × Soft Cream × Gold Glow" palette — matches
-/// the Order Details / Orders / New Orders / Create Order / Menu
-/// Management screens exactly (#8B1D1D primary / #F4C430 gold accent), so
-/// this screen now reads as part of the same cohesive, professional brand
-/// instead of its own one-off theme. Used ONLY for this screen's visual
-/// layer. Nothing here touches AppColors, AppTheme, or any other file —
-/// pure UI enhancement, no logic changed anywhere in this file.
+/// Local "PUREDINE — Maroon × Cream × Gold" palette — matches the brand's
+/// Maroon + Cream palette (#742A3C primary / #F3C564 gold accent), so this
+/// screen reads as part of the same cohesive, professional PUREDINE brand.
+/// Used ONLY for this screen's visual layer. Nothing here touches
+/// AppColors, AppTheme, or any other file — pure UI recolor, no logic
+/// changed anywhere in this file.
 ///
-/// UI-ENHANCEMENT PASS 2: the hero header was pushed further into its own
-/// distinctive "command bar" identity (four-stop gradient, a large faint
-/// watermark emblem, a glass highlight line along the top edge), the
-/// full-screen backdrop gained an extra diagonal sheen + a second ambient
-/// glow lower on the page, the section cards now sit on a very subtle
-/// warm gradient instead of flat white, and the Quick Access links plus
-/// the Sign Out control picked up a soft hover/press lift so the screen
-/// feels like an interactive, considered surface rather than a static
-/// settings page. No provider, controller, route, or logout logic was
-/// touched anywhere in this pass — every onTap/onBack callback is wired
-/// to the exact same function as before; only Container/Decoration/
-/// TextStyle-level presentation changed.
+/// Color mapping (per PUREDINE Maroon + Cream Palette spec):
+///  - milanoRed        -> #742A3C  (Primary / Topbar Deep Wine Maroon)
+///  - milanoRedLight    -> #813244  (Topbar lighter gradient Wine)
+///  - milanoRedDeep     -> derived deep wine tone (kept within the maroon
+///                          family) used only for shadow/gradient depth —
+///                          not a distinct swatch in the given palette.
+///  - lemonChiffon      -> #F3C564  (Gold accent — Warm Gold)
+///  - lemonChiffonDeep   -> derived deeper gold, used only for hover/glow
+///                          shadow depth.
+///  - canvas            -> #FBF8F5  (Main background — Warm Off-White)
+///  - canvasDeep         -> #F7F1ED  (Card background — Soft Cream)
+///  - cardBorder         -> #EFD7DA  (Border — Pale Rose)
+///  - iconChipBg          -> #F3D9DC  (Icon BG — Dusty Blush)
+///  - textDark           -> #2E0D16  (Dark text — Deep Brown/Black)
+///  - textMuted           -> #9B707A  (Secondary text — Muted Taupe)
+///  - gold / goldLight    -> #F3C564 / #FCE1AB (Gold accent / highlight)
+///  - successGreen        -> #44AF70  (Live / Success — Fresh Green)
+///  - danger / dangerBg   -> kept as a distinct alert red (not part of the
+///                          brand palette) so the Sign Out control still
+///                          reads clearly as a destructive action.
 ///
 /// NOTE: this is a private class redeclared identically to the ones in
 /// the other staff screens (private classes can't be shared across files
 /// without a new shared import, which would go beyond a pure UI-only
 /// change here).
+///
+/// UI-ENHANCEMENT PASS (this pass — flat bottom edge to match Tables/
+/// Create Order headers): `_ProfileHeroHeader`'s bottom edge is now a
+/// straight, flat line instead of the previous rounded bottom corners.
+/// The rounded `BorderRadius` on the header `Container`'s decoration was
+/// removed (so the banner is now a plain rectangle) and a thin warm-gold
+/// hairline border was added along the bottom edge, mirroring the same
+/// flat-bottom topbar treatment used on the Tables / Create Order
+/// screens' headers. Everything else in the header — the maroon-to-wine
+/// gradient, the shadow stack, the avatar, name, role/status badges, and
+/// any layout/logic/callback — is completely unchanged, as is every
+/// other part of this file (`_SectionCard`, `_ProfileRow`, `_QuickLink`,
+/// `_SignOutButton`, and all provider/navigation/logout logic in
+/// `ProfileScreen`). Presentation only.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
-  static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
-  static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
-  static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
-  static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow (Accent)
-  static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
-  static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
-  static const Color canvasDeep = Color(0xFFF5E9D6); // Deeper cream
-  static const Color textDark = Color(0xFF3A1608);
-  static const Color textMuted = Color(0xFF8A6F5E);
-  static const Color gold = Color(0xFFF4C430);
-  static const Color goldLight = Color(0xFFF7D66B);
+  static const Color milanoRed =
+      Color(0xFF742A3C); // Deep Wine Maroon (Primary)
+  static const Color milanoRedDeep = Color(0xFF4B1B27); // Derived deepest wine
+  static const Color milanoRedLight =
+      Color(0xFF813244); // Wine (topbar gradient)
+  static const Color burgundy = Color(0xFF8A183F); // Primary accent — Burgundy
+  static const Color lemonChiffon = Color(0xFFF3C564); // Warm Gold (accent)
+  static const Color lemonChiffonDeep =
+      Color(0xFFC29E50); // Derived deeper gold
+  static const Color canvas = Color(0xFFFBF8F5); // Warm Off-White background
+  static const Color canvasDeep = Color(0xFFF7F1ED); // Soft Cream (card bg)
+  static const Color cardBorder = Color(0xFFEFD7DA); // Pale Rose (card border)
+  static const Color iconChipBg = Color(0xFFF3D9DC); // Dusty Blush (icon bg)
+  static const Color textDark = Color(0xFF2E0D16); // Deep Brown/Black
+  static const Color textMuted = Color(0xFF9B707A); // Muted Taupe
+  static const Color gold = Color(0xFFF3C564); // Warm Gold
+  static const Color goldLight =
+      Color(0xFFFCE1AB); // Soft Yellow (gold highlight)
+  static const Color successGreen = Color(0xFF44AF70); // Fresh Green
+  static const Color paleMint = Color(0xFFEAF6EF); // Pale Mint background
   static const Color danger = Color(0xFFB81104);
   static const Color dangerBg = Color(0xFFFBEAE7);
 
-  /// Themed soft shadow for resting cards/panels — matches the exact
-  /// softShadow used on Order Details/Orders/Menu/Create Order so every
-  /// card on this screen carries the same warm, branded elevation.
+  /// Themed soft shadow for resting cards/panels.
   static List<BoxShadow> get softShadow => [
         BoxShadow(
           color: milanoRedDeep.withValues(alpha: 0.07),
@@ -66,8 +94,7 @@ class _Palette {
       ];
 
   /// Elevated/hover glow — a slightly stronger, warmer shadow used for
-  /// interactive/elevated elements, matching the Dashboard's feature
-  /// cards and the Tables floor-plan tiles.
+  /// interactive/elevated elements.
   static List<BoxShadow> get glowShadow => [
         BoxShadow(
           color: lemonChiffonDeep.withValues(alpha: 0.24),
@@ -81,10 +108,8 @@ class _Palette {
         ),
       ];
 
-  /// Richer navbar/header shadow stack — the same three-layer shadow
-  /// language used on the Order Details / Orders / Create Order /
-  /// Dashboard headers (deep maroon drop shadow + soft ambient gold
-  /// bloom + fine black contact shadow).
+  /// Richer navbar/header shadow stack — deep maroon drop shadow + soft
+  /// ambient gold bloom + fine black contact shadow.
   static List<BoxShadow> get heroShadow => [
         BoxShadow(
           color: milanoRedDeep.withValues(alpha: 0.40),
@@ -136,10 +161,7 @@ class ProfileScreen extends StatelessWidget {
         children: [
           // ── Ambient background dressing ─────────────────────────────────
           // Purely decorative — soft gold/maroon glows layered over the
-          // existing canvas wash, matching the Order Details / Menu
-          // Management screens' "foggy" backdrop so the whole admin/staff
-          // experience feels like one cohesive brand. No logic touched —
-          // visuals only.
+          // existing canvas wash. No logic touched — visuals only.
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -234,8 +256,7 @@ class ProfileScreen extends StatelessWidget {
 
           // Faint diagonal sheen sweeping across the whole page — a subtle
           // extra layer of depth so the cream backdrop doesn't read as
-          // flat behind the hero, echoing the glass-highlight language
-          // used in the hero itself.
+          // flat behind the hero.
           Positioned.fill(
             child: IgnorePointer(
               child: DecoratedBox(
@@ -257,11 +278,10 @@ class ProfileScreen extends StatelessWidget {
 
           Column(
             children: [
-              // ── Profile Hero Header — same Dark Maroon gradient + gold
-              // accents + dotted/ribbon decorative language used on the
-              // Order Details / Menu Management navbar, so every staff
-              // screen reads as one cohesive brand. The back control has
-              // been removed from this header per request. ─────────────
+              // ── Profile Hero Header — PUREDINE Deep Wine Maroon gradient
+              // + Gold accents, so every staff screen reads as one
+              // cohesive brand. The back control has been removed from
+              // this header per request. ────────────────────────────────
               _ProfileHeroHeader(
                 name: name,
                 initials: initials,
@@ -481,8 +501,8 @@ class ProfileScreen extends StatelessWidget {
                               ],
                             ),
                             const SizedBox(height: 20),
-                            // Full-width logout button — now with a soft
-                            // hover/press lift, same async onTap logic.
+                            // Full-width logout button — soft hover/press
+                            // lift, same async onTap logic.
                             _SignOutButton(
                               onTap: () async {
                                 final navigator = GoRouter.of(context);
@@ -536,9 +556,7 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
-/// Small decorative gradient divider — purely cosmetic, mirrors the same
-/// accent used beneath section titles on the Order Details / Menu
-/// Management screens.
+/// Small decorative gradient divider — purely cosmetic.
 class _TitleDivider extends StatelessWidget {
   const _TitleDivider();
 
@@ -562,15 +580,10 @@ class _TitleDivider extends StatelessWidget {
 }
 
 // ─── Section Card ───────────────────────────────────────────────────────
-// Same white, softly bordered, softly shadowed card language used by the
-// Order Details / Menu Management screens' panels, plus the same thin
-// gold accent bar used as a section marker and an optional leading icon
-// chip, so every card on this screen reads as part of the same Theme 1
-// brand. UI-ENHANCEMENT PASS 2: the flat white fill became a very subtle
-// warm gradient (white → a whisper of canvas) and the icon chip picked
-// up a soft colored glow, for a touch more depth without changing the
-// card's footprint or its content. Purely presentational — wraps the
-// exact same child content as before.
+// Background now follows the PUREDINE card spec directly: a soft gradient
+// from the warm off-white canvas into the Soft Cream card tone, a solid
+// Pale Rose (#EFD7DA) border, and a Dusty Blush (#F3D9DC) icon chip — same
+// card footprint and content as before, colors only.
 class _SectionCard extends StatelessWidget {
   final String? title;
   final IconData? icon;
@@ -590,12 +603,12 @@ class _SectionCard extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             Colors.white,
-            _Palette.canvasDeep.withValues(alpha: 0.28),
+            _Palette.canvasDeep,
           ],
         ),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
+          color: _Palette.cardBorder,
         ),
         boxShadow: _Palette.softShadow,
       ),
@@ -610,14 +623,7 @@ class _SectionCard extends StatelessWidget {
                     width: 34,
                     height: 34,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          _Palette.milanoRed.withValues(alpha: 0.10),
-                          _Palette.milanoRed.withValues(alpha: 0.04),
-                        ],
-                      ),
+                      color: _Palette.iconChipBg,
                       borderRadius: BorderRadius.circular(11),
                       border: Border.all(
                         color: _Palette.milanoRedDeep.withValues(
@@ -679,21 +685,20 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
-// ─── Profile Hero Header — same Dark Maroon gradient treatment, bigger
-// rounded "floating navbar" corners, a richer 3-layer shadow stack,
-// dotted texture accent, layered ribbon + gold glows used on the Order
-// Details / Menu Management screens' header, plus the same thin-gold-
-// border language as the brand icon chip elsewhere, so this screen and
-// every other staff screen read as one cohesive, unique brand.
-// UI-ENHANCEMENT PASS 2: the gradient is now a richer four-stop diagonal
-// wash, a large faint watermark emblem sits low-opacity behind the
-// avatar/name block, and a fine glass highlight line runs along the very
-// top edge — matching the Dashboard/Orders/Tables headers' "command bar"
-// identity. The back chevron control remains removed from the top of
-// this header per the earlier request — the `onBack` callback is still
-// accepted and passed in unchanged (so the call site in ProfileScreen
-// didn't need to change), it's simply not rendered here. Purely a
-// presentational change — no data changed. ─────────────────────────────
+// ─── Profile Hero Header ────────────────────────────────────────────────
+// Recolored to the PUREDINE topbar spec: a clean two-stop diagonal
+// gradient from Deep Wine Maroon (#742A3C) into Wine (#813244), the
+// avatar, name, and badges — no structural change and no logic/callback
+// signatures touched (onBack is still accepted, still not rendered,
+// exactly as before).
+//
+// UI-ENHANCEMENT PASS (this pass): the bottom edge is now a straight,
+// flat line instead of the previous rounded bottom corners — matching the
+// flat-bottom topbar treatment used on the Tables / Create Order screens'
+// headers. The rounded `BorderRadius` was removed from this Container's
+// decoration and a thin warm-gold hairline border was added along the
+// bottom edge, mirroring those screens' own bottom-edge accent. The
+// gradient, shadow stack, avatar, name, and badges are all unchanged.
 class _ProfileHeroHeader extends StatelessWidget {
   final String name;
   final String initials;
@@ -719,31 +724,21 @@ class _ProfileHeroHeader extends StatelessWidget {
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          // Richer four-stop diagonal maroon gradient — deeper and more
-          // dimensional than a flat three-stop wash, matching the
-          // Dashboard hero's "faceted" surface language.
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              _Palette.milanoRedLight,
               _Palette.milanoRed,
-              _Palette.milanoRedDeep,
-              Color(0xFF320A0A),
+              _Palette.milanoRedLight,
             ],
-            stops: [0.0, 0.38, 0.72, 1.0],
           ),
-          // Softly rounded bottom corners give the header a modern,
-          // "floating navbar" feel that matches the Order Details / Menu
-          // Management screens exactly, instead of a flat hard-edged band.
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(isMobile ? 28 : 38),
-            bottomRight: Radius.circular(isMobile ? 28 : 38),
-          ),
+          // Straight, flat bottom edge — no rounded corners — matching
+          // the Tables / Create Order headers' shape, plus the same thin
+          // warm-gold hairline those screens use along that bottom edge.
           border: Border(
             bottom: BorderSide(
-              color: _Palette.lemonChiffon.withValues(alpha: 0.9),
-              width: 4,
+              color: _Palette.gold.withValues(alpha: 0.30),
+              width: 1,
             ),
           ),
           boxShadow: _Palette.heroShadow,
@@ -751,153 +746,6 @@ class _ProfileHeroHeader extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: Stack(
           children: [
-            // Subtle decorative diagonal ribbon accents (purely cosmetic,
-            // matches the Order Details / Menu Management header for a
-            // consistent brand feel across the whole app).
-            Positioned(
-              top: -60,
-              right: -40,
-              child: Transform.rotate(
-                angle: -0.5,
-                child: Container(
-                  width: 240,
-                  height: 90,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        _Palette.lemonChiffon.withValues(alpha: 0.16),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: -50,
-              left: -60,
-              child: Transform.rotate(
-                angle: 0.4,
-                child: Container(
-                  width: 220,
-                  height: 70,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.white.withValues(alpha: 0.07),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            // Soft gold radial glow behind the avatar, echoing the
-            // Dashboard / Order Details hero treatment.
-            Positioned(
-              top: -50,
-              left: -20,
-              child: Container(
-                width: 160,
-                height: 160,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      _Palette.lemonChiffon.withValues(alpha: 0.16),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            // Extra ambient gold glow, lower-right — matches the fuller
-            // "full-screen backdrop" glow used on the other headers.
-            Positioned(
-              bottom: -70,
-              right: -20,
-              child: Container(
-                width: 180,
-                height: 180,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      _Palette.lemonChiffon.withValues(alpha: 0.08),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // ── Large faint watermark emblem — a unique signature touch,
-            // sits low-opacity and large behind the copy, never competing
-            // with the avatar or name.
-            Positioned(
-              right: isMobile ? -30 : -10,
-              bottom: isMobile ? -26 : -20,
-              child: IgnorePointer(
-                child: Opacity(
-                  opacity: 0.07,
-                  child: Icon(
-                    Icons.badge_rounded,
-                    size: isMobile ? 130 : 175,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-
-            // Fine dotted texture accent, matching the app's refined
-            // decorative language used on the Order Details / Menu
-            // Management header.
-            Positioned(
-              top: 8,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: List.generate(
-                    5,
-                    (i) => Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
-                      width: 4,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _Palette.lemonChiffon.withValues(
-                          alpha: i == 2 ? 0.9 : 0.32,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // Fine glass highlight line along the very top edge, giving
-            // the full-width panel a polished, "premium glass" finish —
-            // matches the Dashboard/Orders/Tables headers' top edge.
-            Positioned(
-              top: 0,
-              left: 24,
-              right: 24,
-              child: Container(
-                height: 1,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.transparent,
-                      Colors.white.withValues(alpha: 0.35),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
             SafeArea(
               bottom: false,
               child: Padding(
@@ -960,7 +808,7 @@ class _ProfileHeroHeader extends StatelessWidget {
                             width: 16,
                             height: 16,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF4ADE80),
+                              color: _Palette.successGreen,
                               shape: BoxShape.circle,
                               border: Border.all(
                                 color: _Palette.milanoRedDeep,
@@ -1053,7 +901,7 @@ class _ProfileHeroHeader extends StatelessWidget {
                                       width: 6,
                                       height: 6,
                                       decoration: const BoxDecoration(
-                                        color: Color(0xFF4ADE80),
+                                        color: _Palette.successGreen,
                                         shape: BoxShape.circle,
                                       ),
                                     ),
@@ -1088,10 +936,7 @@ class _ProfileHeroHeader extends StatelessWidget {
   }
 }
 
-// ─── Profile Row — restyled to sit on the warm canvas background with
-// the same soft rounded icon chips used across the Order Details / Menu
-// Management / New Orders / Create Order screens. Same label/value
-// content, same icon color inputs. ───────────────────────────────────
+// ─── Profile Row ─────────────────────────────────────────────────────────
 class _ProfileRow extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -1163,11 +1008,7 @@ class _ProfileRow extends StatelessWidget {
   }
 }
 
-// ─── Quick Link — same warm rounded icon chip + arrow language as the
-// rest of the screen, now with a soft hover/press lift (a faint tinted
-// background + a slightly bolder arrow chip) in addition to the existing
-// ripple, so each link clearly reads as tappable on both touch and
-// pointer devices. Same label/onTap/accentColor content as before. ────
+// ─── Quick Link ─────────────────────────────────────────────────────────
 class _QuickLink extends StatefulWidget {
   final IconData icon;
   final String label;
@@ -1271,11 +1112,7 @@ class _QuickLinkState extends State<_QuickLink> {
   }
 }
 
-// ─── Sign Out Button — same soft "danger" gradient chip, same icon +
-// label, and the exact same async onTap callback as before, now wrapped
-// in a small stateful shell so it gets a subtle hover/press lift (a
-// touch more shadow + a faint scale) matching the interactive feel of
-// the rest of the redesigned screen.
+// ─── Sign Out Button ────────────────────────────────────────────────────
 class _SignOutButton extends StatefulWidget {
   final Future<void> Function() onTap;
 

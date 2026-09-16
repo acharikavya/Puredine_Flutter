@@ -8,8 +8,8 @@ import 'package:restaurant_unified_app/admin/core/providers/restaurant_provider.
 import 'package:restaurant_unified_app/admin/core/models/restaurant_model.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────
-/// Local "Theme 1 — Dark Maroon × Soft Cream × Gold Glow" palette — matches
-/// AdminDashboardScreen, MenuScreen, and the admin dialogs exactly, so the
+/// Local "PUREDINE Maroon + Cream" palette — matches AdminDashboardScreen,
+/// MenuScreen, OrdersScreen, TablesScreen, and StaffScreen exactly, so the
 /// Profile screen reads as part of the same consistent brand instead of its
 /// own one-off theme. Used ONLY for this screen's restyle. Nothing here
 /// touches AppColors or any other file — pure UI enhancement, no logic
@@ -29,45 +29,133 @@ import 'package:restaurant_unified_app/admin/core/models/restaurant_model.dart';
 /// the top navbar/header (top-right corner), matching common "navbar
 /// action" placement. The onPressed logic (logout + navigate) is byte-for-
 /// byte identical to before — only its position/presentation changed.
+///
+/// UI-ENHANCEMENT PASS 4: a GPay-style light top bar + majority-white
+/// "Milano Red/Wine × Golden Chiffon" re-tune.
+///
+/// UI-ENHANCEMENT PASS 5 (this pass — PUREDINE re-skin + StaffScreen-style
+/// top bar): zero changes to provider, form, save, contact-add/delete, or
+/// logout logic anywhere in this file — palette and presentation only.
+///   1. TOP BAR: `_buildCustomHeader()` is rebuilt again — away from the
+///      Pass-4 light GPay-style pill bar and into the SAME structural
+///      pattern used by `StaffScreen._buildHeader()`: a flat, full-width
+///      bar (no rounded corners) carrying the PUREDINE Deep Wine Maroon →
+///      Wine diagonal gradient (`#742A3C → #813244`), a medium-depth (not
+///      near-black) maroon band, with the same ambient dressing — a soft
+///      warm-gold corner glow, a large very faint watermark emblem, a
+///      subtle diagonal glass sheen, and a warm-gold hairline along the
+///      bottom edge. The title ("Restaurant Profile") is a white → gold
+///      `ShaderMask`, the date text (desktop only) sits in soft gold, the
+///      subtitle ("Manage your business identity") is white at reduced
+///      opacity, and a thin gold underline accent sits beneath it — all
+///      exactly mirroring StaffScreen's header layout. In place of
+///      StaffScreen's back-chevron / "add" icon button, this header keeps
+///      this screen's own single action — Logout — restyled into the same
+///      circular gold icon-button shape StaffScreen uses for its "add"
+///      action. The `onPressed` logic
+///      (`context.read<AuthProvider>().logout()` then
+///      `context.go('/admin/login')`) is completely unchanged — only its
+///      look and position changed.
+///   2. PALETTE: `_Palette` was swapped to the exact PUREDINE Maroon +
+///      Cream palette supplied by the user:
+///        • `milanoRed`        → Deep Wine Maroon `#742A3C` (primary / topbar)
+///        • `milanoRedLight`   → Wine `#813244` (topbar lighter gradient)
+///        • `milanoRedDeep`    → Burgundy `#8A183F` (primary accent)
+///        • `milanoRedDarkest` → Deep Brown/Black `#2E0D16`
+///        • `canvas`           → Warm Off-White `#FBF8F5` (main background)
+///        • `canvasDeep`       → Soft Cream `#F7F1ED` (card background)
+///        • `lemonChiffon`     → Warm Gold `#F3C564` (gold accent)
+///        • `lemonChiffonDeep` → deeper gold `#D9A421` (derived companion)
+///        • `textDark`         → Deep Brown/Black `#2E0D16`
+///        • `textMuted`        → Muted Taupe `#9B707A`
+///        • `success`          → Fresh Green `#44AF70`
+///        • `warning` (inactive-status accent, not part of the original
+///          field list) is mapped onto the supplied deeper gold so it stays
+///          inside the given palette instead of introducing a new hue.
+///        • `danger` is kept as a clear alert red (not part of the
+///          supplied palette) so delete/error states stay legible;
+///          `dangerDeep` kept defined for parity, unused today.
+///      Four supporting PUREDINE tones were added — `dustyBlush`
+///      (`#F3D9DC`, icon backgrounds), `paleRose` (`#EFD7DA`, card
+///      borders), `softYellow` (`#FCE1AB`, gold highlight) and `paleMint`
+///      (`#EAF6EF`, success backgrounds). `headerGradient` now holds the
+///      supplied header gradient exactly (`#742A3C → #813244`), and a new
+///      `ctaGradient` field holds the supplied CTA gradient exactly
+///      (`#6E1832 → #9B3E4E → #F3C564`) — kept for palette-shape parity
+///      with the other admin screens, not referenced elsewhere today.
+///   3. TOP-TO-BOTTOM CONSISTENCY: every card on the screen (the hero
+///      restaurant card, the details grid, the contacts card, the admin
+///      account card, and both dialogs) now uses the PUREDINE card spec —
+///      a white → Soft Cream wash, a Pale Rose border, and Dusty Blush
+///      icon-tile backgrounds — plus the ambient background glows were
+///      re-tinted to the same palette, so the whole screen reads as one
+///      brand from the top bar all the way to the bottom of the scroll.
+///      Every data binding (`r?.name`, `r?.restaurantType`, `r?.isActive`,
+///      controller text, provider calls) is completely untouched.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   _Palette._();
 
-  static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
-  static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
-  static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
-  static const Color milanoRedDarkest =
-      Color(0xFF2E0808); // Fourth gradient stop
-  static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow (Accent)
-  static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
-  static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
-  static const Color canvasDeep = Color(0xFFF5E9D6); // Deeper cream
-  static const Color cardWhite = Colors.white;
-  static const Color textDark = Color(0xFF3A1608);
-  static const Color textMuted = Color(0xFF8A6F5E);
-  static const Color success = Color(0xFF2E9E5B);
-  static const Color warning = Color(0xFFB8860B);
-  static const Color danger = Color(0xFFC62828);
-  static const Color dangerDeep = Color(0xFF8E1D1D);
+  // PUREDINE Maroon + Cream — exact values supplied by the user.
+  static const Color milanoRed =
+      Color(0xFF742A3C); // Deep Wine Maroon (Primary / Topbar)
+  static const Color milanoRedLight =
+      Color(0xFF813244); // Wine (Topbar lighter gradient)
+  static const Color milanoRedDeep =
+      Color(0xFF8A183F); // Burgundy (Primary accent)
+  static const Color milanoRedDarkest = Color(0xFF2E0D16); // Deep Brown/Black
 
-  // UI-ENHANCEMENT PASS 2: promoted from a flat 3-stop wash to a richer
-  // 4-stop diagonal gradient with explicit stops — matches the Orders
-  // screen header's "faceted" surface language exactly.
+  static const Color lemonChiffon = Color(0xFFF3C564); // Warm Gold (Accent)
+  static const Color lemonChiffonDeep =
+      Color(0xFFD9A421); // Deeper Warm Gold (derived)
+
+  static const Color canvas =
+      Color(0xFFFBF8F5); // Warm Off-White (Main background)
+  static const Color canvasDeep = Color(0xFFF7F1ED); // Soft Cream (Card bg)
+  static const Color cardWhite = Colors.white;
+
+  static const Color textDark = Color(0xFF2E0D16); // Deep Brown/Black text
+  static const Color textMuted = Color(0xFF9B707A); // Muted Taupe
+
+  static const Color success = Color(0xFF44AF70); // Fresh Green
+  // Not part of the supplied palette by name — mapped onto the supplied
+  // deeper gold so the "inactive" accent stays inside the given palette.
+  static const Color warning = Color(0xFFD9A421);
+  static const Color danger = Color(0xFFE0323F); // Clear alert red
+  static const Color dangerDeep =
+      Color(0xFFB8232E); // Deeper alert red (kept for parity; unused today)
+
+  // Supporting PUREDINE tones.
+  static const Color dustyBlush =
+      Color(0xFFF3D9DC); // Dusty Blush — icon backgrounds
+  static const Color paleRose = Color(0xFFEFD7DA); // Pale Rose — card borders
+  static const Color softYellow = Color(0xFFFCE1AB); // Soft Yellow highlight
+  static const Color paleMint = Color(0xFFEAF6EF); // Pale Mint background
+
+  /// The supplied top-header gradient, exactly: `#742A3C → #813244`.
   static const LinearGradient headerGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [milanoRedLight, milanoRed, milanoRedDeep, milanoRedDarkest],
-    stops: [0.0, 0.38, 0.72, 1.0],
+    colors: [milanoRed, milanoRedLight],
   );
 
-  /// Themed soft shadow for resting cards/panels — matches MenuScreen's
-  /// softShadow exactly, so every surface across the admin app shares the
-  /// same warm, branded tint.
+  /// The supplied CTA gradient, exactly: `#6E1832 → #9B3E4E → #F3C564`.
+  /// Kept defined for palette-shape parity with the other admin screens;
+  /// not referenced elsewhere in this file today, so an unused private
+  /// static field here causes no compile error.
+  static const LinearGradient ctaGradient = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [Color(0xFF6E1832), Color(0xFF9B3E4E), lemonChiffon],
+  );
+
+  /// Themed soft shadow for resting cards/panels — matches the exact
+  /// softShadow used on MenuScreen/StaffScreen/AdminDashboardScreen.
   static List<BoxShadow> get softShadow => [
         BoxShadow(
-          color: milanoRedDeep.withValues(alpha: 0.06),
-          blurRadius: 18,
-          offset: const Offset(0, 8),
+          color: milanoRed.withValues(alpha: 0.08),
+          blurRadius: 22,
+          offset: const Offset(0, 10),
         ),
         BoxShadow(
           color: Colors.black.withValues(alpha: 0.03),
@@ -79,19 +167,14 @@ class _Palette {
   /// Themed elevated/glow shadow — used on the hero header card.
   static List<BoxShadow> get glowShadow => [
         BoxShadow(
-          color: milanoRedDeep.withValues(alpha: 0.28),
-          blurRadius: 32,
-          offset: const Offset(0, 14),
+          color: lemonChiffonDeep.withValues(alpha: 0.25),
+          blurRadius: 24,
+          offset: const Offset(0, 8),
         ),
         BoxShadow(
-          color: lemonChiffon.withValues(alpha: 0.10),
-          blurRadius: 10,
-          offset: const Offset(0, 3),
-        ),
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.05),
-          blurRadius: 6,
-          offset: const Offset(0, 3),
+          color: milanoRedDeep.withValues(alpha: 0.10),
+          blurRadius: 14,
+          offset: const Offset(0, 6),
         ),
       ];
 }
@@ -188,133 +271,169 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       backgroundColor: _Palette.canvas,
-      body: Stack(
+      body: Column(
         children: [
-          // ── Ambient background dressing ─────────────────────────────────
-          // Purely decorative — soft gold/maroon glows plus a faint textured
-          // photograph, matching MenuScreen's and the dashboard's "foggy"
-          // backdrop so the whole admin experience feels like one brand.
-          Positioned.fill(
-            child: Container(
-              color: _Palette.canvas,
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: -70,
-                    right: -60,
-                    child: Container(
-                      width: 280,
-                      height: 280,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            _Palette.lemonChiffon.withValues(alpha: 0.32),
-                            Colors.transparent,
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: -90,
-                    left: -80,
-                    child: Container(
-                      width: 300,
-                      height: 300,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            _Palette.milanoRed.withValues(alpha: 0.08),
-                            Colors.transparent,
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 240,
-                    right: -110,
-                    child: Container(
-                      width: 220,
-                      height: 220,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            _Palette.lemonChiffonDeep.withValues(alpha: 0.08),
-                            Colors.transparent,
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  // UI-ENHANCEMENT PASS 2: extra low, wide glow further down
-                  // the page — gives the long scrollable form a second soft
-                  // focal point instead of all the ambient light sitting
-                  // only near the header/top. Matches the Orders / Admin
-                  // Dashboard screens' Pass-2 backdrop.
-                  Positioned(
-                    top: 720,
-                    left: -100,
-                    child: Container(
-                      width: 240,
-                      height: 240,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            _Palette.milanoRedLight.withValues(alpha: 0.06),
-                            Colors.transparent,
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Opacity(
-                    opacity: 0.04,
-                    child: Image.network(
-                      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop',
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: double.infinity,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          // ── Header Section ───────────────────────────────────────────────
+          // Fixed at the top, exactly like StaffScreen/MenuScreen — it no
+          // longer scrolls away with the content beneath it.
+          _buildCustomHeader(isMobile),
 
-          // UI-ENHANCEMENT PASS 2: faint diagonal sheen sweeping across the
-          // whole body — a subtle extra layer of depth so the cream backdrop
-          // doesn't read as flat behind the header, echoing the glass-
-          // highlight language used in the header itself. Purely cosmetic,
-          // sits above the ambient blobs and below all real content.
-          Positioned.fill(
-            child: IgnorePointer(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.white.withValues(alpha: 0.26),
-                      Colors.transparent,
-                      Colors.transparent,
-                    ],
-                    stops: const [0.0, 0.35, 1.0],
+          // ── Main Body Section ────────────────────────────────────────────
+          Expanded(
+            child: Stack(
+              children: [
+                // ── Ambient background dressing ─────────────────────────
+                // Purely decorative — soft gold/wine glows plus a faint
+                // textured photograph, matching the rest of the admin app's
+                // "foggy" backdrop so this screen feels like one cohesive
+                // brand.
+                Positioned.fill(
+                  child: Container(
+                    color: _Palette.canvas,
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          top: -70,
+                          right: -60,
+                          child: Container(
+                            width: 280,
+                            height: 280,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  _Palette.lemonChiffon.withValues(
+                                    alpha: 0.30,
+                                  ),
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: -90,
+                          left: -80,
+                          child: Container(
+                            width: 300,
+                            height: 300,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  _Palette.milanoRed.withValues(alpha: 0.08),
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 240,
+                          right: -110,
+                          child: Container(
+                            width: 220,
+                            height: 220,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  _Palette.lemonChiffonDeep.withValues(
+                                    alpha: 0.10,
+                                  ),
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        // UI-ENHANCEMENT PASS 2: extra low, wide glow further
+                        // down the page — gives the long scrollable form a
+                        // second soft focal point instead of all the ambient
+                        // light sitting only near the header/top. Matches
+                        // the Orders / Admin Dashboard / Staff screens'
+                        // Pass-2 backdrop.
+                        Positioned(
+                          top: 720,
+                          left: -100,
+                          child: Container(
+                            width: 240,
+                            height: 240,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  _Palette.milanoRedLight.withValues(
+                                    alpha: 0.06,
+                                  ),
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        // PASS 5: a soft blush glow low on the right, so the
+                        // bottom of a long scroll carries the same warm
+                        // brand tint as the top instead of fading to flat
+                        // white — matches StaffScreen's Pass-4 treatment.
+                        // Purely decorative.
+                        Positioned(
+                          bottom: 40,
+                          right: -70,
+                          child: Container(
+                            width: 220,
+                            height: 220,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  _Palette.dustyBlush.withValues(alpha: 0.4),
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        Opacity(
+                          opacity: 0.04,
+                          child: Image.network(
+                            'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop',
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ),
-          ),
 
-          Column(
-            children: [
-              _buildCustomHeader(isMobile),
-              Expanded(
-                child: restaurantProv.isLoading && r == null
+                // UI-ENHANCEMENT PASS 2: faint diagonal sheen sweeping across
+                // the whole body — a subtle extra layer of depth so the
+                // cream backdrop doesn't read as flat behind the header,
+                // echoing the glass-highlight language used in the header
+                // itself. Purely cosmetic, sits above the ambient blobs and
+                // below all real content.
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.26),
+                            Colors.transparent,
+                            Colors.transparent,
+                          ],
+                          stops: const [0.0, 0.35, 1.0],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                restaurantProv.isLoading && r == null
                     ? const Center(
                         child: CircularProgressIndicator(
                           color: _Palette.milanoRed,
@@ -450,318 +569,243 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                       ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
     ).animate().fadeIn();
   }
 
-  /// Branded "floating navbar" header — mirrors the exact Pass-2 treatment
-  /// used on the Orders / AdminDashboardScreen / MenuScreen headers: a
-  /// richer four-stop diagonal gradient, rounded bottom corners, decorative
-  /// diagonal ribbon accents, a soft radial glow behind the title block, a
-  /// large faint watermark emblem, a fine glass highlight line along the
-  /// very top edge, and a fine dotted texture strip. The back control has
-  /// been removed per request — the header now opens directly with the
-  /// date (desktop) and the title block, no left-side back button.
-  ///
-  /// UI-ENHANCEMENT PASS 3: a compact circular Logout icon button now lives
-  /// in the top-right corner of this navbar. Its onPressed logic (logout +
-  /// navigate) is unchanged from the previous bottom button — only its
-  /// location and visual treatment moved.
+  /// StaffScreen-style top bar — a flat, full-width bar (no rounded
+  /// corners) carrying the PUREDINE Deep Wine Maroon → Wine diagonal
+  /// gradient, with the exact same ambient dressing StaffScreen's header
+  /// uses: a soft warm-gold corner glow, a large very faint watermark
+  /// emblem, a subtle diagonal glass sheen, and a warm-gold hairline along
+  /// the bottom edge. The title is a white → gold `ShaderMask`, the date
+  /// text (desktop only) sits in soft gold, the subtitle sits in reduced-
+  /// opacity white, and a thin gold underline accent sits beneath it — all
+  /// structurally identical to StaffScreen's `_buildHeader()`. In place of
+  /// StaffScreen's back-chevron / add-icon controls, this header keeps this
+  /// screen's own single action (Logout), restyled into the same circular
+  /// gold icon-button shape. The `onPressed` logic — logout then navigate
+  /// to `/admin/login` — is completely unchanged from Pass 3/4, only its
+  /// look and position changed.
   Widget _buildCustomHeader(bool isMobile) {
-    return ClipRect(
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          gradient: _Palette.headerGradient,
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(isMobile ? 28 : 38),
-            bottomRight: Radius.circular(isMobile ? 28 : 38),
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: _Palette.headerGradient,
+        border: Border(
+          bottom: BorderSide(
+            color: _Palette.lemonChiffon.withValues(alpha: 0.30),
+            width: 1,
           ),
-          border: const Border(
-            bottom: BorderSide(color: _Palette.lemonChiffon, width: 4),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: _Palette.milanoRedDeep.withValues(alpha: 0.35),
-              blurRadius: 36,
-              offset: const Offset(0, 16),
-            ),
-            BoxShadow(
-              color: _Palette.lemonChiffon.withValues(alpha: 0.12),
-              blurRadius: 18,
-              offset: const Offset(0, 4),
-            ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
         ),
-        child: ClipRect(
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // Subtle decorative diagonal ribbon accents (purely cosmetic,
-              // matches the dashboard/menu/orders headers for a consistent
-              // brand feel)
-              Positioned(
-                top: -60,
-                right: -40,
-                child: Transform.rotate(
-                  angle: -0.5,
-                  child: Container(
-                    width: 260,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          _Palette.lemonChiffon.withValues(alpha: 0.18),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: -50,
-                left: -60,
-                child: Transform.rotate(
-                  angle: 0.4,
-                  child: Container(
-                    width: 230,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.white.withValues(alpha: 0.07),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              // Soft radial glow behind the title block, adding depth
-              // without affecting any layout or logic.
-              Positioned(
-                top: 6,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Container(
-                    width: 260,
-                    height: 130,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          _Palette.lemonChiffon.withValues(alpha: 0.10),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              // ── Large faint watermark emblem — a unique signature touch
-              // this header didn't previously have, sitting low-opacity and
-              // large behind the copy, never competing with the title.
-              // Matches the Orders / Admin Dashboard hero's Pass-2
-              // watermark treatment.
-              Positioned(
-                right: isMobile ? -22 : -12,
-                bottom: isMobile ? -20 : -16,
-                child: IgnorePointer(
-                  child: Opacity(
-                    opacity: 0.06,
-                    child: Icon(
-                      Icons.storefront_rounded,
-                      size: isMobile ? 120 : 170,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-
-              // Fine dotted texture accent, matching the app's refined
-              // decorative language used across the other admin headers.
-              Positioned(
-                top: 8,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: List.generate(
-                      5,
-                      (i) => Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 3),
-                        width: 4,
-                        height: 4,
+      ),
+      child: Stack(
+        children: [
+          // Ambient dressing for the wine backdrop — a soft warm-gold
+          // corner glow, a large very faint watermark emblem behind the
+          // copy, and a diagonal glass sheen. Purely decorative, clipped
+          // to the header's own bounds.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: ClipRect(
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: -70,
+                      right: -50,
+                      child: Container(
+                        width: 230,
+                        height: 230,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: _Palette.lemonChiffon.withValues(
-                            alpha: i == 2 ? 0.9 : 0.32,
+                          gradient: RadialGradient(
+                            colors: [
+                              _Palette.lemonChiffon.withValues(alpha: 0.16),
+                              Colors.transparent,
+                            ],
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-              ),
-
-              // Fine glass highlight line along the very top edge, giving
-              // the full-width panel a polished, "premium glass" finish —
-              // matches the Orders / Admin Dashboard headers' top edge
-              // treatment.
-              Positioned(
-                top: 0,
-                left: 24,
-                right: 24,
-                child: Container(
-                  height: 1,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.transparent,
-                        Colors.white.withValues(alpha: 0.35),
-                        Colors.transparent,
-                      ],
+                    Positioned(
+                      right: isMobile ? -22 : -14,
+                      bottom: isMobile ? -20 : -16,
+                      child: Icon(
+                        Icons.storefront_rounded,
+                        size: isMobile ? 120 : 160,
+                        color: Colors.white.withValues(alpha: 0.05),
+                      ),
                     ),
-                  ),
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.06),
+                              Colors.transparent,
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.4, 1.0],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  isMobile ? 16 : 32,
-                  20,
-                  isMobile ? 16 : 32,
-                  isMobile ? 20 : 28,
-                ),
-                child: SafeArea(
-                  bottom: false,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                isMobile ? 18 : 32,
+                isMobile ? 16 : 22,
+                isMobile ? 18 : 32,
+                isMobile ? 18 : 24,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Top row — the two-tone title, the date (desktop only),
+                  // and the Logout icon button, all on one line. No search
+                  // bar or back control of any kind here — mirrors
+                  // StaffScreen's top row shape with this screen's own
+                  // single action swapped in.
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      if (!isMobile)
-                        Align(
-                          alignment: Alignment.centerRight,
+                      Expanded(
+                        child: ShaderMask(
+                          shaderCallback: (bounds) => const LinearGradient(
+                            colors: [
+                              Colors.white,
+                              _Palette.lemonChiffon,
+                            ],
+                          ).createShader(bounds),
                           child: Text(
-                            _todayLabel(),
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.3,
-                              color: Colors.white.withValues(alpha: 0.65),
+                            'Restaurant Profile',
+                            style: GoogleFonts.playfairDisplay(
+                              color: Colors.white,
+                              fontSize: isMobile ? 21 : 28,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                      SizedBox(height: isMobile ? 0 : 18),
-                      Text(
-                        'Restaurant Profile',
-                        style: GoogleFonts.playfairDisplay(
-                          color: Colors.white,
-                          fontSize: isMobile ? 26 : 34,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.6,
-                          height: 1.1,
-                        ),
                       ),
-                      const SizedBox(height: 10),
-                      const _TitleDivider(),
-                      const SizedBox(height: 10),
-                      Text(
-                        'Manage your business identity',
-                        style: GoogleFonts.inter(
-                          color: _Palette.lemonChiffon,
-                          fontSize: isMobile ? 12 : 14,
-                          fontWeight: FontWeight.w600,
+                      if (!isMobile) ...[
+                        Text(
+                          _todayLabel(),
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.3,
+                            color: _Palette.softYellow,
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 16),
+                      ],
+                      _logoutIconButton(),
                     ],
                   ),
-                ),
-              ),
-
-              // ── Logout — moved here from the bottom of the page. Same
-              // exact onPressed logic (logout + navigate to /admin/login),
-              // now presented as a compact circular icon button anchored to
-              // the top-right corner of the navbar, above the date/title
-              // content so it's always reachable.
-              Positioned(
-                top: 0,
-                right: 0,
-                child: SafeArea(
-                  bottom: false,
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                      top: isMobile ? 14 : 20,
-                      right: isMobile ? 14 : 28,
+                  SizedBox(height: isMobile ? 4 : 6),
+                  Text(
+                    'Manage your business identity',
+                    style: GoogleFonts.inter(
+                      color: Colors.white.withValues(alpha: 0.75),
+                      fontSize: isMobile ? 12.5 : 14,
                     ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: Tooltip(
-                        message: 'Logout',
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(100),
-                          onTap: () async {
-                            await context.read<AuthProvider>().logout();
-                            if (context.mounted) {
-                              context.go('/admin/login');
-                            }
-                          },
-                          child: Container(
-                            padding: EdgeInsets.all(isMobile ? 9 : 10),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.14),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.30),
-                                width: 1,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: _Palette.milanoRedDeep.withValues(
-                                    alpha: 0.25,
-                                  ),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: Icon(
-                              Icons.logout_rounded,
-                              color: Colors.white,
-                              size: isMobile ? 18 : 20,
-                            ),
-                          ),
-                        ),
+                  ),
+                  SizedBox(height: isMobile ? 12 : 14),
+                  // Thin gold gradient hairline — the same soft divider
+                  // language used across the rest of the app's headers.
+                  // Purely decorative.
+                  Container(
+                    width: 46,
+                    height: 3,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(4),
+                      gradient: LinearGradient(
+                        colors: [
+                          _Palette.lemonChiffon.withValues(alpha: 0.95),
+                          _Palette.lemonChiffon.withValues(alpha: 0.15),
+                        ],
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     ).animate().fade(duration: 450.ms).slideY(begin: -0.1, duration: 450.ms);
   }
 
+  /// Compact circular icon-only "logout" button, tucked into the top right
+  /// corner of the navbar — same visual language as StaffScreen's "add
+  /// staff" icon button (a gold-filled circle with a dark glyph, reading
+  /// clearly against the wine backdrop). The `onPressed` logic here is
+  /// byte-for-byte identical to Pass 3/4: log out via `AuthProvider`, then
+  /// navigate to `/admin/login` once the widget is still mounted — only
+  /// its look/position was ever touched.
+  Widget _logoutIconButton() {
+    return Tooltip(
+      message: 'Logout',
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: () async {
+            await context.read<AuthProvider>().logout();
+            if (context.mounted) {
+              context.go('/admin/login');
+            }
+          },
+          child: Container(
+            width: 46,
+            height: 46,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _Palette.lemonChiffon,
+              boxShadow: [
+                BoxShadow(
+                  color: _Palette.milanoRedDarkest.withValues(alpha: 0.28),
+                  blurRadius: 12,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.5),
+                width: 1.2,
+              ),
+            ),
+            child: const Icon(
+              Icons.logout_rounded,
+              size: 22,
+              color: _Palette.milanoRed,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildHeaderCard(RestaurantProfile? r, bool isMobile) {
-    // UI-ENHANCEMENT PASS 2: wrapped in a clipped Column with a slim gold
-    // top cap, matching the Orders screen's stat-card treatment, so the
-    // hero card carries the same subtle color-coded identity language used
-    // elsewhere in the app. Same inputs/content as before — purely a frame
-    // around the existing card.
+    // Wrapped in a clipped Column with a slim gold top cap, matching the
+    // Orders/Staff screens' stat-card treatment. The card body sits on the
+    // PUREDINE card spec — a white → Soft Cream wash with a Pale Rose
+    // border — so it reads correctly against the (now light) page canvas.
+    // Every data binding (`r?.name`, `r?.restaurantType`, the status
+    // badge) is completely unchanged.
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
@@ -772,16 +816,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-              height: 3, color: _Palette.lemonChiffon.withValues(alpha: 0.85)),
+            height: 3,
+            color: _Palette.lemonChiffon.withValues(alpha: 0.85),
+          ),
           Container(
             width: double.infinity,
             padding: EdgeInsets.all(isMobile ? 20 : 28),
             decoration: BoxDecoration(
-              gradient: _Palette.headerGradient,
-              border: Border.all(
-                color: _Palette.lemonChiffon.withValues(alpha: 0.25),
-                width: 1,
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Colors.white, _Palette.canvasDeep],
               ),
+              border: Border.all(color: _Palette.paleRose, width: 1),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -792,15 +839,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       width: isMobile ? 56 : 72,
                       height: isMobile ? 56 : 72,
                       decoration: BoxDecoration(
-                        color: _Palette.lemonChiffon.withValues(alpha: 0.18),
+                        color: _Palette.dustyBlush,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: _Palette.lemonChiffon.withValues(alpha: 0.35),
+                          color: _Palette.lemonChiffonDeep.withValues(
+                            alpha: 0.45,
+                          ),
                         ),
                       ),
                       child: Icon(
                         Icons.restaurant_rounded,
-                        color: _Palette.lemonChiffon,
+                        color: _Palette.milanoRed,
                         size: isMobile ? 28 : 36,
                       ),
                     ),
@@ -814,7 +863,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             style: GoogleFonts.playfairDisplay(
                               fontSize: isMobile ? 20 : 26,
                               fontWeight: FontWeight.w900,
-                              color: Colors.white,
+                              color: _Palette.milanoRed,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -822,8 +871,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             r?.restaurantType ?? 'Restaurant Type',
                             style: GoogleFonts.inter(
                               fontSize: isMobile ? 12 : 14,
-                              color:
-                                  _Palette.lemonChiffon.withValues(alpha: 0.95),
+                              color: _Palette.lemonChiffonDeep,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -893,9 +941,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         color: _Palette.cardWhite,
         borderRadius: BorderRadius.circular(24),
         boxShadow: _Palette.softShadow,
-        border: Border.all(
-          color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
-        ),
+        border: Border.all(color: _Palette.paleRose),
       ),
       child: Column(
         children: [
@@ -905,10 +951,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             controller: _typeController,
             hint: 'e.g. Fine Dining, Cafe',
           ),
-          Divider(
-            height: 32,
-            color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
-          ),
+          Divider(height: 32, color: _Palette.paleRose),
           _buildEditableRow(
             icon: Icons.description_outlined,
             label: 'Description',
@@ -916,20 +959,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             hint: 'Brief description of your restaurant',
             maxLines: 3,
           ),
-          Divider(
-            height: 32,
-            color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
-          ),
+          Divider(height: 32, color: _Palette.paleRose),
           _buildEditableRow(
             icon: Icons.location_on_outlined,
             label: 'Address',
             controller: _addrController,
             hint: 'Street address',
           ),
-          Divider(
-            height: 32,
-            color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
-          ),
+          Divider(height: 32, color: _Palette.paleRose),
           if (isMobile) ...[
             _buildEditableRow(
               icon: Icons.map_outlined,
@@ -937,10 +974,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               controller: _stateController,
               hint: 'State',
             ),
-            Divider(
-              height: 32,
-              color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
-            ),
+            Divider(height: 32, color: _Palette.paleRose),
             _buildEditableRow(
               icon: Icons.pin_drop_outlined,
               label: 'Pincode',
@@ -969,20 +1003,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ],
             ),
-          Divider(
-            height: 32,
-            color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
-          ),
+          Divider(height: 32, color: _Palette.paleRose),
           _buildEditableRow(
             icon: Icons.phone_outlined,
             label: 'Primary Phone',
             controller: _phoneController,
             hint: 'Main contact number',
           ),
-          Divider(
-            height: 32,
-            color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
-          ),
+          Divider(height: 32, color: _Palette.paleRose),
           _buildEditableRow(
             icon: Icons.email_outlined,
             label: 'Primary Email',
@@ -1008,7 +1036,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: _Palette.lemonChiffon.withValues(alpha: 0.35),
+            color: _Palette.dustyBlush,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, color: _Palette.milanoRed, size: 20),
@@ -1051,9 +1079,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         color: _Palette.cardWhite,
         borderRadius: BorderRadius.circular(24),
         boxShadow: _Palette.softShadow,
-        border: Border.all(
-          color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
-        ),
+        border: Border.all(color: _Palette.paleRose),
       ),
       child: Column(
         children: [
@@ -1075,7 +1101,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               itemCount: prov.contacts.length,
               separatorBuilder: (_, __) => Divider(
                 height: 24,
-                color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+                color: _Palette.paleRose,
               ),
               itemBuilder: (context, index) {
                 final contact = prov.contacts[index];
@@ -1084,7 +1110,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: _Palette.lemonChiffon.withValues(alpha: 0.35),
+                        color: _Palette.dustyBlush,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
@@ -1125,7 +1151,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               icon: const Icon(Icons.add, size: 18),
               label: const Text('Add Contact'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: _Palette.milanoRedDeep,
+                backgroundColor: _Palette.milanoRed,
                 foregroundColor: Colors.white,
                 elevation: 3,
                 shadowColor: _Palette.milanoRed.withValues(alpha: 0.3),
@@ -1159,13 +1185,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           icon: Container(
             width: 52,
             height: 52,
-            decoration: BoxDecoration(
-              color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+            decoration: const BoxDecoration(
+              color: _Palette.dustyBlush,
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.contact_phone_rounded,
-              color: _Palette.milanoRedDeep,
+              color: _Palette.milanoRed,
               size: 26,
             ),
           ),
@@ -1199,9 +1225,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: _Palette.milanoRedDeep.withValues(alpha: 0.12),
-                    ),
+                    borderSide: const BorderSide(color: _Palette.paleRose),
                   ),
                 ),
               ),
@@ -1220,9 +1244,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: _Palette.milanoRedDeep.withValues(alpha: 0.12),
-                    ),
+                    borderSide: const BorderSide(color: _Palette.paleRose),
                   ),
                 ),
               ),
@@ -1236,9 +1258,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onPressed: () => Navigator.pop(context),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _Palette.textMuted,
-                  side: BorderSide(
-                    color: _Palette.milanoRedDeep.withValues(alpha: 0.15),
-                  ),
+                  side: const BorderSide(color: _Palette.paleRose),
                   padding: const EdgeInsets.symmetric(vertical: 13),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -1286,9 +1306,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         color: _Palette.cardWhite,
         borderRadius: BorderRadius.circular(16),
         boxShadow: _Palette.softShadow,
-        border: Border.all(
-          color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
-        ),
+        border: Border.all(color: _Palette.paleRose),
       ),
       child: Column(
         children: rows.asMap().entries.map((e) {
@@ -1306,7 +1324,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: _Palette.lemonChiffon.withValues(alpha: 0.35),
+                        color: _Palette.dustyBlush,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
@@ -1343,38 +1361,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               if (i < rows.length - 1)
-                Divider(
-                  height: 1,
-                  color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
-                ),
+                Divider(height: 1, color: _Palette.paleRose),
             ],
           );
         }).toList(),
-      ),
-    );
-  }
-}
-
-/// Small decorative gradient divider placed beneath the header title —
-/// purely cosmetic, mirrors the same accent used on the dashboard and menu
-/// screens so the title treatment matches exactly across the admin app.
-class _TitleDivider extends StatelessWidget {
-  const _TitleDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 64,
-      height: 3,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(4),
-        gradient: LinearGradient(
-          colors: [
-            Colors.transparent,
-            _Palette.lemonChiffon.withValues(alpha: 0.9),
-            Colors.transparent,
-          ],
-        ),
       ),
     );
   }

@@ -43,59 +43,254 @@ import '../core/theme.dart';
 /// with the original ivory color kept as the Scaffold's fallback
 /// background so nothing shifts if the asset fails to load. No other
 /// widget, spacing, logic, or copy was changed.
+///
+/// COLOR-THEME PASS ("Kumo Ramen" palette): swaps the underlying color
+/// values in `_LoginPalette` for the requested 5-color reference palette
+/// — Spicy Ember (#EE3F24), Noodle Cream (#FFEFCB), Matcha Leaf
+/// (#023820), Yolk Blaze (#F9A11B), and Tofu Silklaze (#FFF4E6) — for a
+/// more vivid, professional, restaurant-brand feel. Every field name
+/// below (`milanoRed`, `lemonChiffon`, `ivory`, `danger`, etc.) is
+/// unchanged on purpose, since every other widget in this file already
+/// reads from these exact names — only the `Color` values themselves,
+/// plus a couple of shadow/tint values derived from them, were updated:
+///   • milanoRed / milanoRedDark / milanoRedDeep → Matcha Leaf (#023820)
+///     and two darker shades derived from it, used as the primary brand
+///     green (logo ring, title gradient, button, focus states).
+///   • lemonChiffon / lemonChiffonSoft → Yolk Blaze (#F9A11B) and Noodle
+///     Cream (#FFEFCB), used as the warm gold/amber accent (logo ring
+///     sweep, card border, feature icon accents, divider marks).
+///   • ivory → Tofu Silklaze (#FFF4E6), the soft warm background behind
+///     the header/card.
+///   • featurePillBg → a soft Noodle Cream tint behind each feature
+///     icon circle, replacing the old flat green tint.
+///   • danger / dangerBg → Spicy Ember (#EE3F24) and a soft tint of it,
+///     since it already reads naturally as an alert/error red.
+/// No auth logic, controllers, focus handling, validation, navigation,
+/// spacing, or callback code was touched anywhere in this pass —
+/// presentation only.
+///
+/// POLISH PASS: the "Kumo Ramen" palette from the pass above was kept —
+/// no widget, layout, spacing, logic, controller, focus, validation,
+/// navigation, or callback code was touched — only the gradient stops,
+/// shadow depth/tint, border tones, and a couple of opacity/elevation
+/// values inside `_LoginPalette` were refined so the same five colors
+/// read as richer and more premium (smoother title/button gradient,
+/// a narrower feathered gold arc on the logo ring, a "lit from within"
+/// card edge, and a deeper, gold-tinted button shadow).
+///
+/// COLOR-THEME PASS ("Pure Slurp" palette): swapped the underlying color
+/// values in `_LoginPalette` for a Warm Gold / Deep Plum Brown / Soft
+/// Sage Cream / White / Muted Red reference palette — a warm, cozy
+/// noodle-house look with a deeper, less typical accent red.
+///
+/// COLOR-THEME PASS ("2024 Food Colors" palette): swapped the underlying
+/// color values in `_LoginPalette` for a Snow / Beer / Old Moss Green /
+/// Pullman Brown reference palette — a warm, appetizing yellow/green/
+/// brown food-branding look.
+///
+/// COLOR-THEME PASS ("Kumo Ramen — Refined"): restored and refined the
+/// original 5-color "Kumo Ramen" reference palette — Spicy Ember
+/// (#EE3F24), Noodle Cream (#FFEFCB), Matcha Leaf (#023820), Yolk Blaze
+/// (#F9A11B), and Tofu Silklaze (#FFF4E6) — putting all five colors to
+/// deliberate, professional use across the screen.
+///
+/// COLOR-THEME PASS ("Milano Red/Wine × Golden Chiffon × White") — this
+/// pass: swapped the underlying color values in `_LoginPalette` for a
+/// deep Milano red/wine primary, a golden/yellow-chiffon accent, and a
+/// background/surface palette that leans **majorly white** rather than
+/// warm cream, per this request. Every field name below (`milanoRed`,
+/// `lemonChiffon`, `ivory`, `danger`, etc.) is unchanged on purpose,
+/// since every other widget in this file already reads from these exact
+/// names — only the `Color` values themselves, plus the shadow/tint/
+/// gradient values derived from them, were updated:
+///   • milanoRed / milanoRedDark / milanoRedDeep → a deep Milano red/
+///     wine (#7A1330) and two darker wine shades derived from it — the
+///     primary brand tone used for the logo ring, title gradient,
+///     "Welcome back" heading, button, and focus states.
+///   • lemonChiffon / lemonChiffonSoft → a rich golden/yellow chiffon
+///     (#F0B429) and a very pale chiffon tint (#FDF3D7) — the accent
+///     used for the logo ring sweep, card border glow, feature-icon
+///     ring accents, divider marks, and the waving-hand icon.
+///   • ivory → nudged to sit almost flush with pure white (#FEFDFB) so
+///     the header, field fill, and page backdrop all read as clean,
+///     majorly-white surfaces, with the wine/gold only appearing as
+///     accents rather than a colored backdrop — the white `Colors.white`
+///     card itself, the fields, and the header now dominate the screen.
+///   • featurePillBg → a very pale chiffon-white tint behind each
+///     feature icon circle, so the icons sit on a barely-there gold
+///     wash rather than a strong color block.
+///   • danger / dangerBg → a clear, distinct crimson (#D7263D) and a
+///     soft pink-white tint of it, kept visually separate from the
+///     deep wine primary so an error banner never gets mistaken for
+///     the brand color.
+///   • the internal gradient "bridge" tone (used only to smooth the
+///     title/button gradients between the wine and the gold) was
+///     re-derived as a warm antique-gold midtone so the sweep reads as
+///     a deliberate, three-stop, professional gradient rather than a
+///     flat 2-stop blend.
+/// No auth logic, controllers, focus handling, validation, navigation,
+/// spacing, or callback code was touched anywhere in this pass —
+/// presentation only.
+///
+/// COLOR-THEME PASS ("PUREDINE Maroon + Cream" palette) — this pass:
+/// swapped the underlying color values in `_LoginPalette` for the
+/// requested reference palette — Deep Wine Maroon (#742A3C), Wine
+/// (#813244), Burgundy (#8A183F), Deep Brown/Black (#2E0D16), Warm
+/// Off-White (#FBF8F5), Soft Cream (#F7F1ED), Dusty Blush (#F3D9DC),
+/// Pale Rose (#EFD7DA), Warm Gold (#F3C564), Soft Yellow (#FCE1AB), and
+/// Muted Taupe (#9B707A) — a warmer, more upscale maroon-and-cream
+/// restaurant identity. Every field name below (`milanoRed`,
+/// `milanoRedDark`, `lemonChiffon`, `ivory`, `white`, `danger`, etc.) is
+/// unchanged on purpose, since every other widget in this file already
+/// reads from these exact names — only the `Color` values themselves,
+/// plus the gradient/shadow values derived from them, were updated:
+///   • milanoRed → Deep Wine Maroon (#742A3C), the primary brand tone
+///     used for the logo ring, title gradient, "Welcome back" heading,
+///     forgot-password link, field icons/cursor, and focus states.
+///   • milanoRedDark → Burgundy (#8A183F), the palette's own "primary
+///     accent", used as the deeper step in the logo ring and button
+///     gradients.
+///   • milanoRedDeep → Deep Brown/Black (#2E0D16), used as the deepest
+///     shadow tint (card shadow, field shadow) for a rich, grounded lift
+///     instead of a plain grey/black shadow.
+///   • wine (new field, additive only — see note below) → Wine
+///     (#813244), the requested lighter header-gradient tone, woven into
+///     the logo ring alongside the Maroon/Burgundy/Gold sweep.
+///   • lemonChiffon / lemonChiffonSoft → Warm Gold (#F3C564) and Soft
+///     Yellow (#FCE1AB), the accent used for the logo ring sweep, card
+///     border glow, feature-icon ring accents, divider marks, and the
+///     waving-hand icon.
+///   • ivory → Warm Off-White (#FBF8F5), the requested main background,
+///     also used for the input-field fill and the logo badge's inner
+///     "hole".
+///   • white → repurposed (per the same pattern as the pass above) to
+///     Soft Cream (#F7F1ED), the requested card background — the login
+///     card, and the unfocused field-icon chip background, now read as
+///     a warm soft cream rather than stark white. (The "Login" button
+///     label itself still renders as literal `Colors.white`, unaffected
+///     by this field, since it was never wired to this token.)
+///   • textDark → Deep Brown/Black (#2E0D16), used for input text and
+///     feature-item labels.
+///   • textMuted → Muted Taupe (#9B707A), used for the tagline,
+///     subtitle, hints, and other secondary text.
+///   • fieldBorder → Pale Rose (#EFD7DA), the requested card/element
+///     border tone, used for the unfocused input-field border.
+///   • featurePillBg → Dusty Blush (#F3D9DC), the requested icon-chip
+///     background, used behind each feature-highlight icon circle.
+///   • danger / dangerBg → kept as a clear, distinct crimson (#D7263D)
+///     and a soft tint of it, since the requested palette only defines
+///     a "Live/Success" green (not an error/alert color) and this stays
+///     visually distinct from the Maroon/Burgundy primary so an error
+///     banner is never mistaken for the brand color.
+///   • the internal gradient "bridge" tone previously named
+///     `_matchaGoldBridge` was re-derived as the requested CTA
+///     mid-gradient tone (#9B3E4E) so the title/button sweep reads as a
+///     deliberate, professional blend from Maroon through Burgundy-red
+///     into Gold. The button gradient's very first stop was also set to
+///     the requested CTA start tone (#6E1832) via a new, purely-internal
+///     private constant (`_ctaDeepStart`), so the Login button follows
+///     the exact "#6E1832 → #9B3E4E → #F3C564" sweep supplied in this
+///     request.
+/// No auth logic, controllers, focus handling, validation, navigation,
+/// spacing, or callback code was touched anywhere in this pass —
+/// presentation only. No header container, card, or field was added,
+/// removed, resized, or repositioned — only `Color` values (and the two
+/// small private/additive constants noted above, needed only to carry
+/// the extra requested gradient tones) changed.
 /// -----------------------------------------------------------------------
 class _LoginPalette {
-  // Core brand colors from the requested Theme 2 palette
-  static const Color milanoRed = Color(0xFF1E4A34); // Deep Green (Primary)
-  static const Color milanoRedDark = Color(0xFF163A29); // Deeper green
-  static const Color milanoRedDeep = Color(0xFF0F2A1C); // Deepest green
-  static const Color lemonChiffon = Color(0xFFC99A3D); // Warm Gold (Accent)
-  static const Color lemonChiffonSoft = Color(0xFFF3E7CC); // Soft gold tint
+  // Core brand colors — "PUREDINE Maroon + Cream" reference palette.
+  // Field names are unchanged from the previous themes on purpose (see
+  // the COLOR-THEME PASS notes above) — every other widget in this file
+  // reads from these exact names, so only the underlying Color values
+  // change.
+  static const Color milanoRed =
+      Color(0xFF742A3C); // Deep Wine Maroon (Primary)
+  static const Color milanoRedDark =
+      Color(0xFF8A183F); // Burgundy (Primary accent)
+  static const Color milanoRedDeep =
+      Color(0xFF2E0D16); // Deep Brown/Black (deepest shade)
 
-  // Supporting neutrals
-  static const Color ivory = Color(0xFFFAF7EF); // Soft Ivory background
-  static const Color white = Colors.white;
-  static const Color textDark = Color(0xFF20301F); // Deep green-charcoal text
-  static const Color textMuted = Color(0xFF708070); // Muted sage gray
-  static const Color fieldBorder = Color(0xFFE7E3D8);
-  static const Color featurePillBg = Color(0xFFE7F0E4); // Soft green tint
+  // Additive field: the palette's requested lighter "Wine" tone, woven
+  // into the logo ring gradient alongside Maroon/Burgundy/Gold. This is
+  // a new field (not a repurposed one) since nothing in the previous
+  // palette carried this specific tone.
+  static const Color wine = Color(0xFF813244); // Wine
 
-  // Feedback colors
-  static const Color danger = Color(0xFFB3261E);
-  static const Color dangerBg = Color(0xFFFBE3DC);
+  static const Color lemonChiffon = Color(0xFFF3C564); // Warm Gold (Accent)
+  static const Color lemonChiffonSoft =
+      Color(0xFFFCE1AB); // Soft Yellow highlight
+
+  // Supporting neutrals — warm cream/off-white per this pass, so the
+  // page backdrop reads as Warm Off-White and the card/field-icon chips
+  // read as Soft Cream, with the maroon/gold reserved for accents.
+  static const Color ivory =
+      Color(0xFFFBF8F5); // Warm Off-White (main background)
+  static const Color white = Color(0xFFF7F1ED); // Soft Cream (card background)
+  static const Color textDark = Color(0xFF2E0D16); // Deep Brown/Black text
+  static const Color textMuted = Color(0xFF9B707A); // Muted Taupe
+  static const Color fieldBorder = Color(0xFFEFD7DA); // Pale Rose
+  static const Color featurePillBg = Color(0xFFF3D9DC); // Dusty Blush
+
+  // Feedback colors — kept visually distinct from the maroon/burgundy
+  // primary so an error state never reads as "brand color". The
+  // requested palette only defines a Live/Success green, not an error
+  // tone, so this crimson is retained from the previous pass for clear,
+  // unambiguous alert styling.
+  static const Color danger = Color(0xFFD7263D); // Clear crimson
+  static const Color dangerBg = Color(0xFFFBE4E7); // Soft crimson tint
+
+  // Two small, purely-internal gradient tones — needed only to carry the
+  // exact CTA gradient requested ("#6E1832 → #9B3E4E → #F3C564") without
+  // overloading the core named fields above with a value that's only
+  // ever used inside a gradient stop.
+  static const Color _ctaDeepStart = Color(0xFF6E1832);
+  static const Color _matchaGoldBridge = Color(0xFF9B3E4E);
 
   // Gradients
   static const LinearGradient buttonGradient = LinearGradient(
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
-    colors: [milanoRed, milanoRedDark],
+    colors: [_ctaDeepStart, _matchaGoldBridge, lemonChiffon],
+    stops: [0.0, 0.55, 1.0],
   );
 
   static const LinearGradient titleShaderGradient = LinearGradient(
-    colors: [milanoRed, lemonChiffon],
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [milanoRed, _matchaGoldBridge, lemonChiffon],
+    stops: [0.0, 0.55, 1.0],
   );
 
   // Two-tone sweep gradient used to build the ring around the logo
-  // badge — mostly deep green with a warm gold accent arc, echoing the
-  // reference design's circular fork/spoon + leaf mark.
+  // badge — mostly Maroon with a Wine mid-step and a narrow, feathered
+  // Warm Gold accent arc, echoing the reference design's circular
+  // fork/spoon + leaf mark. The gold arc is narrow and feathered in/out
+  // for a clean, premium sweep rather than a hard-edged split.
   static const SweepGradient logoRingGradient = SweepGradient(
     colors: [
       milanoRed,
       milanoRed,
-      milanoRed,
+      wine,
       lemonChiffon,
-      lemonChiffon,
+      wine,
       milanoRed,
     ],
-    stops: [0.0, 0.55, 0.72, 0.82, 0.92, 1.0],
+    stops: [0.0, 0.58, 0.74, 0.83, 0.90, 1.0],
   );
 
   static List<BoxShadow> cardShadow = [
     BoxShadow(
-      color: milanoRedDeep.withValues(alpha: 0.12),
-      blurRadius: 34,
-      offset: const Offset(0, 20),
-      spreadRadius: -8,
+      color: milanoRedDeep.withValues(alpha: 0.14),
+      blurRadius: 38,
+      offset: const Offset(0, 22),
+      spreadRadius: -10,
+    ),
+    BoxShadow(
+      color: lemonChiffon.withValues(alpha: 0.12),
+      blurRadius: 20,
+      offset: const Offset(0, 6),
+      spreadRadius: -6,
     ),
     BoxShadow(
       color: Colors.black.withValues(alpha: 0.03),
@@ -106,25 +301,31 @@ class _LoginPalette {
 
   static List<BoxShadow> buttonShadow = [
     BoxShadow(
-      color: milanoRed.withValues(alpha: 0.32),
-      blurRadius: 20,
-      offset: const Offset(0, 12),
+      color: milanoRed.withValues(alpha: 0.34),
+      blurRadius: 24,
+      offset: const Offset(0, 14),
       spreadRadius: -4,
+    ),
+    BoxShadow(
+      color: lemonChiffon.withValues(alpha: 0.22),
+      blurRadius: 14,
+      offset: const Offset(0, 4),
+      spreadRadius: -6,
     ),
   ];
 
   static List<BoxShadow> badgeShadow = [
     BoxShadow(
-      color: lemonChiffon.withValues(alpha: 0.22),
-      blurRadius: 18,
-      spreadRadius: 1,
+      color: lemonChiffon.withValues(alpha: 0.30),
+      blurRadius: 22,
+      spreadRadius: 1.5,
     ),
   ];
 
   static List<BoxShadow> fieldShadow = [
     BoxShadow(
-      color: milanoRedDeep.withValues(alpha: 0.04),
-      blurRadius: 10,
+      color: milanoRedDeep.withValues(alpha: 0.05),
+      blurRadius: 12,
       offset: const Offset(0, 4),
     ),
   ];
@@ -382,7 +583,7 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
                           Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              // ── Logo badge: two-tone ring (green +
+                              // ── Logo badge: two-tone ring (wine +
                               // gold) with a fork/knife glyph in the
                               // centre and a small leaf accent
                               // overlapping the ring.
@@ -550,9 +751,9 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
                             boxShadow: _LoginPalette.cardShadow,
                             border: Border.all(
                               color: _LoginPalette.lemonChiffon.withValues(
-                                alpha: 0.45,
+                                alpha: 0.5,
                               ),
-                              width: 1.2,
+                              width: 1.3,
                             ),
                           ),
                           child: Column(
@@ -884,7 +1085,7 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
   }
 
   /// The circular logo mark shown at the top of the header — a two-tone
-  /// (green + gold) ring drawn with a sweep gradient, an ivory "hole" in
+  /// (wine + gold) ring drawn with a sweep gradient, an ivory "hole" in
   /// the middle so it reads as a donut/ring rather than a solid disc, a
   /// fork/knife glyph centred inside it, and a small gold leaf accent
   /// overlapping the ring at the top-right — mirroring the reference
@@ -969,6 +1170,10 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: _LoginPalette.featurePillBg,
+            border: Border.all(
+              color: _LoginPalette.lemonChiffon.withValues(alpha: 0.35),
+              width: 1,
+            ),
           ),
           child: Icon(
             icon,
@@ -992,7 +1197,7 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
 
   /// Reusable styled text field. Wrapped in its own elevated white card so
   /// the input is clearly visible against the form card behind it, with a
-  /// crisp border that strengthens and glows in the brand green on focus.
+  /// crisp border that strengthens and glows in the brand tone on focus.
   /// `isCompact` slightly tightens padding/icon sizing on very small
   /// screens so fields never feel oversized relative to the viewport.
   Widget _buildTextField({
@@ -1018,9 +1223,14 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
         boxShadow: hasFocus
             ? [
                 BoxShadow(
-                  color: _LoginPalette.milanoRed.withValues(alpha: 0.12),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
+                  color: _LoginPalette.milanoRed.withValues(alpha: 0.16),
+                  blurRadius: 18,
+                  offset: const Offset(0, 5),
+                ),
+                BoxShadow(
+                  color: _LoginPalette.lemonChiffon.withValues(alpha: 0.12),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
                 ),
               ]
             : _LoginPalette.fieldShadow,

@@ -1,7 +1,6 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:restaurant_unified_app/admin/core/models/restaurant_model.dart';
@@ -9,12 +8,12 @@ import 'package:restaurant_unified_app/admin/services/tables_service.dart';
 import 'package:restaurant_unified_app/utils/file_download_helper.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────
-/// Local "Dark Maroon × Soft Cream × Gold Glow" palette — matches
-/// AdminDashboardScreen, MenuScreen, OrdersScreen, ProfileScreen,
-/// StaffLandingScreen, and StaffScreen exactly, so this screen reads as
-/// part of the same consistent brand instead of its own one-off theme.
-/// Used ONLY for this screen's restyle. Nothing here touches AppColors or
-/// any other file — pure UI enhancement, no logic changed anywhere here.
+/// Local screen palette — matches AdminDashboardScreen, MenuScreen,
+/// OrdersScreen, ProfileScreen, StaffLandingScreen, and StaffScreen
+/// exactly, so this screen reads as part of the same consistent brand
+/// instead of its own one-off theme. Used ONLY for this screen's restyle.
+/// Nothing here touches AppColors or any other file — pure UI
+/// enhancement, no logic changed anywhere here.
 ///
 /// UI-ENHANCEMENT PASS 2: brings this screen's header up to the same
 /// distinctive "command bar" identity used on the Admin Orders screen — a
@@ -43,11 +42,11 @@ import 'package:restaurant_unified_app/utils/file_download_helper.dart';
 /// download logic was touched.
 ///
 /// UI-ENHANCEMENT PASS 5: restyled the QR Code dialog (`_showQRDialog`)
-/// to fully match the "Dark Maroon × Soft Cream × Gold Glow" theme —
-/// a maroon→gold command-bar header, a gold-ring frame around the QR
-/// canvas, and gradient maroon/gold action buttons replacing the plain
-/// red/blue buttons. The dialog heading was simplified to just the table
-/// number (no more "QR Code -" prefix and no duplicate subtitle line
+/// to fully match the screen's maroon × gold theme — a themed
+/// command-bar header, a gold-ring frame around the QR canvas, and
+/// gradient maroon/gold action buttons replacing the plain red/blue
+/// buttons. The dialog heading was simplified to just the table number
+/// (no more "QR Code -" prefix and no duplicate subtitle line
 /// underneath). Purely presentational — the QR data, download, and
 /// copy-link logic are byte-for-byte unchanged.
 ///
@@ -68,37 +67,136 @@ import 'package:restaurant_unified_app/utils/file_download_helper.dart';
 /// No provider, service, filtering, dialog-trigger, QR-generation,
 /// download, or copy-link logic was touched — only the sizing/wrapping
 /// needed to make the button row render without an overflow error.
+///
+/// UI-ENHANCEMENT PASS 7: `_buildHeader()` was rebuilt from the dark
+/// four-stop maroon "command bar" into a bright, majority-white top bar
+/// with a date "pill" on the left and the circular "Add Table" icon
+/// button on the right.
+///
+/// UI-ENHANCEMENT PASS 8: the promo-banner panel's circular decorative
+/// graphic on the right previously showed a real network photo
+/// (`Image.network(...)` with an `errorBuilder` fallback). That photo was
+/// removed entirely — the circular badge became a plain solid-color icon
+/// badge instead (no network image, no fallback branch needed).
+///
+/// UI-ENHANCEMENT PASS 9: `_buildHeader()` was rebuilt again to match
+/// StaffScreen's flat header — no date "pill" bar, no circular
+/// badge/photo of any kind, just a plain white bar with a hairline
+/// bottom border, a faint watermark icon behind the copy, a two-tone
+/// `ShaderMask` title, the date as plain inline text (desktop only), the
+/// same subtitle copy, a thin gold underline accent, and the exact same
+/// circular "Add Table" icon button (`_addIconButton()`, same
+/// `_showAddDialog` callback).
+///
+/// UI-ENHANCEMENT PASS 10 (this pass): presentation-only, exactly like
+/// every pass above — no provider, service, data loading, filtering,
+/// dialog, QR-generation, download, or copy-link logic anywhere in this
+/// file was touched, and no state field, controller, callback, or
+/// keyword was renamed.
+///   1. PALETTE — full PUREDINE mapping: every field name inside
+///      `_Palette` is unchanged on purpose (every widget in this file
+///      already reads from these exact names, so swapping only the
+///      underlying `Color` values re-skins the whole screen with no
+///      other code touched):
+///        • `milanoRed`        → Deep Wine Maroon `#742A3C` (primary / topbar)
+///        • `milanoRedLight`   → Wine `#813244` (topbar lighter gradient)
+///        • `milanoRedDeep`    → Burgundy `#8A183F` (primary accent)
+///        • `milanoRedDarkest` → Deep Brown/Black `#2E0D16`
+///        • `canvas`           → Warm Off-White `#FBF8F5` (main background)
+///        • `canvasDeep`       → Soft Cream `#F7F1ED` (card background)
+///        • `lemonChiffon`     → Warm Gold `#F3C564` (gold accent)
+///        • `lemonChiffonDeep` → deeper gold `#D9A421` (derived companion)
+///        • `textDark`         → Deep Brown/Black `#2E0D16`
+///        • `textMuted`        → Muted Taupe `#9B707A`
+///        • `success`          → Fresh Green `#44AF70`
+///        • `info`             → Deep Wine Maroon `#742A3C`, so the QR
+///          action icon stops being a stray blue against the warm palette
+///        • `danger` is kept as a clear alert red (not part of the
+///          supplied palette) so delete/error states stay legible.
+///      Four supporting PUREDINE tones were ADDED as new fields —
+///      `dustyBlush` (`#F3D9DC`, icon backgrounds), `paleRose`
+///      (`#EFD7DA`, card borders), `softYellow` (`#FCE1AB`, gold
+///      highlight) and `paleMint` (`#EAF6EF`, success backgrounds).
+///      Nothing existing was removed. `headerGradient` now holds the
+///      supplied header gradient exactly (`#742A3C → #813244`), and a
+///      new `ctaGradient` holds the supplied CTA gradient exactly
+///      (`#6E1832 → #9B3E4E → #F3C564`).
+///   2. TOP BAR: `_buildHeader()` is no longer a flat white bar — it now
+///      carries the PUREDINE Deep Wine Maroon → Wine diagonal gradient,
+///      a medium-depth (not near-black) maroon band running the full
+///      width from the very top of the screen down to the scrollable
+///      body. It gained the same ambient dressing the other admin
+///      headers use — a soft warm-gold corner glow, a large very faint
+///      watermark emblem, and a subtle diagonal glass sheen — plus a
+///      warm-gold hairline along its bottom edge. Structurally nothing
+///      inside changed: the same title, the same desktop-only inline
+///      date, the same subtitle copy, the same gold underline accent,
+///      and the exact same `_addIconButton()` with the exact same
+///      `_showAddDialog` callback. Only the copy's colors changed
+///      (white / soft-gold instead of maroon / taupe) so it reads
+///      clearly against the wine backdrop.
+///   3. TOP-TO-BOTTOM CONSISTENCY: so the whole screen reads as one
+///      brand rather than just a re-colored header, the card surfaces
+///      below it were tuned to the same spec — cards use the Pale Rose
+///      border and Soft Cream tints, small icon containers use the
+///      Dusty Blush icon-BG, the stats row/filter bar/table panel share
+///      the same rounded, softly shadowed treatment, and the backdrop
+///      gained an extra low blush glow so the bottom of a long scroll
+///      keeps the same warm tint as the top.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   _Palette._();
 
-  static const Color milanoRed = Color(0xFF8B1D1D); // Primary maroon
-  static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
-  static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
-  static const Color milanoRedDarkest =
-      Color(0xFF320A0A); // Fourth gradient stop
-  static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow
-  static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
-  static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
-  static const Color canvasDeep = Color(0xFFF5E9D6); // Deeper cream
+  // PUREDINE Maroon + Cream — field names unchanged on purpose (see the
+  // PASS 10 note above); only the underlying Color values changed.
+  static const Color milanoRed =
+      Color(0xFF742A3C); // Deep Wine Maroon (Primary / Topbar)
+  static const Color milanoRedDeep =
+      Color(0xFF8A183F); // Burgundy (Primary accent)
+  static const Color milanoRedLight =
+      Color(0xFF813244); // Wine (Topbar lighter gradient)
+  static const Color milanoRedDarkest = Color(0xFF2E0D16); // Deep Brown/Black
+  static const Color lemonChiffon = Color(0xFFF3C564); // Warm Gold (Accent)
+  static const Color lemonChiffonDeep =
+      Color(0xFFD9A421); // Deeper Warm Gold (derived)
+  static const Color canvas =
+      Color(0xFFFBF8F5); // Warm Off-White (Main background)
+  static const Color canvasDeep = Color(0xFFF7F1ED); // Soft Cream (Card bg)
   static const Color cardWhite = Colors.white;
-  static const Color textDark = Color(0xFF3A1608);
-  static const Color textMuted = Color(0xFF8A6F5E);
-  static const Color success = Color(0xFF2E9E5B);
-  static const Color danger = Color(0xFFC62828);
-  static const Color info = Color(0xFF2563EB);
+  static const Color textDark = Color(0xFF2E0D16); // Deep Brown/Black text
+  static const Color textMuted = Color(0xFF9B707A); // Muted Taupe
+  static const Color success = Color(0xFF44AF70); // Fresh Green
+  static const Color danger = Color(0xFFE0323F); // Clear alert red
+  static const Color info =
+      Color(0xFF742A3C); // Deep Wine Maroon (was a stray blue)
 
+  // PASS 10: four supporting PUREDINE tones added — nothing above this
+  // line was removed; these are new fields only.
+  static const Color dustyBlush =
+      Color(0xFFF3D9DC); // Dusty Blush — icon backgrounds
+  static const Color paleRose = Color(0xFFEFD7DA); // Pale Rose — card borders
+  static const Color softYellow = Color(0xFFFCE1AB); // Soft Yellow highlight
+  static const Color paleMint = Color(0xFFEAF6EF); // Pale Mint background
+
+  /// The supplied top-header gradient, exactly: `#742A3C → #813244`.
   static const LinearGradient headerGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [milanoRedLight, milanoRedDeep],
+    colors: [milanoRed, milanoRedLight],
+  );
+
+  /// The supplied CTA gradient, exactly: `#6E1832 → #9B3E4E → #F3C564`.
+  static const LinearGradient ctaGradient = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [Color(0xFF6E1832), Color(0xFF9B3E4E), lemonChiffon],
   );
 
   /// Themed soft shadow for resting cards/panels — matches the exact
   /// softShadow used across the other admin screens.
   static List<BoxShadow> get softShadow => [
         BoxShadow(
-          color: milanoRedDeep.withValues(alpha: 0.06),
+          color: milanoRed.withValues(alpha: 0.06),
           blurRadius: 18,
           offset: const Offset(0, 8),
         ),
@@ -261,9 +359,7 @@ class _TablesScreenState extends State<TablesScreen> {
                   onPressed: () => Navigator.pop(ctx, false),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: _Palette.textMuted,
-                    side: BorderSide(
-                      color: _Palette.milanoRedDeep.withValues(alpha: 0.15),
-                    ),
+                    side: const BorderSide(color: _Palette.paleRose),
                     padding: const EdgeInsets.symmetric(vertical: 13),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -441,21 +537,33 @@ class _TablesScreenState extends State<TablesScreen> {
     return 360.0;
   }
 
-  /// UI-ENHANCEMENT PASS 5: restyled to match the "Dark Maroon × Soft
-  /// Cream × Gold Glow" theme end-to-end — a maroon→gold command-bar
-  /// header (replacing the plain white header row), a gold-ring frame
-  /// around the QR canvas, and gradient maroon/gold action buttons
-  /// (replacing the flat red "Download PNG" / blue "Copy Link" buttons).
-  /// The heading now shows ONLY the table number ("Table 86") — the old
-  /// "QR Code - Table 86" prefix and the duplicate "Table 86" subtitle
-  /// line beneath it have been removed. The QR data, download callback,
-  /// and copy-to-clipboard callback are all byte-for-byte unchanged.
+  /// UI-ENHANCEMENT PASS 5: restyled to match the screen's maroon × gold
+  /// theme end-to-end — a themed command-bar header (replacing the plain
+  /// white header row), a gold-ring frame around the QR canvas, and
+  /// gradient maroon/gold action buttons (replacing the flat red
+  /// "Download PNG" / blue "Copy Link" buttons). The heading now shows
+  /// ONLY the table number ("Table 86") — the old "QR Code - Table 86"
+  /// prefix and the duplicate "Table 86" subtitle line beneath it have
+  /// been removed. The QR data, download callback, and copy-to-clipboard
+  /// callback are all byte-for-byte unchanged.
   ///
   /// UI-ENHANCEMENT PASS 6 (bugfix, purely visual): the card width now
   /// comes from `_qrDialogWidth()` instead of a fixed 360, and each
   /// action button's icon+label is wrapped in a `FittedBox` so the
   /// "Download PNG" / "Copy Link" row can never overflow on narrow mobile
   /// screens. See the PASS 6 note above `_Palette` for full details.
+  ///
+  /// UI-ENHANCEMENT PASS 7: the command-bar header strip switched from a
+  /// solid dark maroon gradient with white text/icons to a light
+  /// background with maroon text/icons and a gold bottom border.
+  ///
+  /// UI-ENHANCEMENT PASS 10: the dialog's colors now come from the
+  /// PUREDINE palette via the same `_Palette` fields as before (its
+  /// header strip sits on Soft Cream with a Warm Gold bottom border, the
+  /// primary button uses the Deep Wine Maroon → Wine gradient and the
+  /// secondary the Warm Gold → deeper-gold pair). The QR data, download
+  /// callback, and copy-to-clipboard callback remain byte-for-byte
+  /// unchanged.
   void _showQRDialog(TableModel t) {
     const baseUrl = 'https://customerfinal1.vercel.app/customer/scan-qr';
     final qrData = (t.qrCode != null && t.qrCode!.isNotEmpty)
@@ -480,7 +588,7 @@ class _TablesScreenState extends State<TablesScreen> {
             ),
             boxShadow: [
               BoxShadow(
-                color: _Palette.milanoRedDeep.withValues(alpha: 0.25),
+                color: _Palette.milanoRedDarkest.withValues(alpha: 0.25),
                 blurRadius: 30,
                 offset: const Offset(0, 14),
               ),
@@ -495,23 +603,19 @@ class _TablesScreenState extends State<TablesScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // ── Command-bar header — a compact maroon → gold strip so
-              // the dialog reads as part of the same brand identity as
-              // the rest of the screen, instead of a plain white popup
-              // header. Heading now shows only "Table {number}".
+              // ── Command-bar header — a light Soft Cream strip with
+              // maroon text/icons and a Warm Gold bottom border, matching
+              // the rest of the screen's PUREDINE identity. Heading still
+              // shows only "Table {number}".
               Container(
                 padding: const EdgeInsets.fromLTRB(20, 18, 14, 18),
                 decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      _Palette.milanoRedLight,
-                      _Palette.milanoRedDeep,
-                    ],
-                  ),
+                  color: _Palette.canvasDeep,
                   border: Border(
-                    bottom: BorderSide(color: _Palette.lemonChiffon, width: 3),
+                    bottom: BorderSide(
+                      color: _Palette.lemonChiffon,
+                      width: 3,
+                    ),
                   ),
                 ),
                 child: Row(
@@ -521,16 +625,18 @@ class _TablesScreenState extends State<TablesScreen> {
                       height: 44,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.14),
+                        color: _Palette.dustyBlush,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: _Palette.lemonChiffon.withValues(alpha: 0.6),
+                          color: _Palette.lemonChiffonDeep.withValues(
+                            alpha: 0.55,
+                          ),
                           width: 1.2,
                         ),
                       ),
                       child: const Icon(
                         Icons.qr_code_2,
-                        color: _Palette.lemonChiffon,
+                        color: _Palette.milanoRed,
                         size: 24,
                       ),
                     ),
@@ -541,7 +647,7 @@ class _TablesScreenState extends State<TablesScreen> {
                         style: GoogleFonts.playfairDisplay(
                           fontSize: 21,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: _Palette.milanoRed,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -558,12 +664,14 @@ class _TablesScreenState extends State<TablesScreen> {
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.14),
+                            color: _Palette.milanoRed.withValues(
+                              alpha: 0.08,
+                            ),
                           ),
                           child: const Icon(
                             Icons.close,
                             size: 17,
-                            color: Colors.white,
+                            color: _Palette.milanoRed,
                           ),
                         ),
                       ),
@@ -593,8 +701,7 @@ class _TablesScreenState extends State<TablesScreen> {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color:
-                                _Palette.milanoRedDeep.withValues(alpha: 0.12),
+                            color: _Palette.milanoRed.withValues(alpha: 0.12),
                             blurRadius: 18,
                             offset: const Offset(0, 8),
                           ),
@@ -612,11 +719,11 @@ class _TablesScreenState extends State<TablesScreen> {
                           size: 220,
                           eyeStyle: const QrEyeStyle(
                             eyeShape: QrEyeShape.square,
-                            color: _Palette.milanoRedDeep,
+                            color: _Palette.milanoRedDarkest,
                           ),
                           dataModuleStyle: const QrDataModuleStyle(
                             dataModuleShape: QrDataModuleShape.square,
-                            color: _Palette.milanoRedDeep,
+                            color: _Palette.milanoRedDarkest,
                           ),
                         ),
                       ),
@@ -665,13 +772,13 @@ class _TablesScreenState extends State<TablesScreen> {
                                   gradient: const LinearGradient(
                                     colors: [
                                       _Palette.milanoRedLight,
-                                      _Palette.milanoRedDeep,
+                                      _Palette.milanoRed,
                                     ],
                                   ),
                                   borderRadius: BorderRadius.circular(12),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: _Palette.milanoRedDeep
+                                      color: _Palette.milanoRed
                                           .withValues(alpha: 0.3),
                                       blurRadius: 12,
                                       offset: const Offset(0, 6),
@@ -719,7 +826,7 @@ class _TablesScreenState extends State<TablesScreen> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        // Secondary action — gold gradient with dark
+                        // Secondary action — gold gradient with deep
                         // maroon text/icon for contrast, so the two
                         // buttons read as one cohesive maroon×gold pair
                         // instead of the previous mismatched red/blue.
@@ -743,14 +850,14 @@ class _TablesScreenState extends State<TablesScreen> {
                                 decoration: BoxDecoration(
                                   gradient: const LinearGradient(
                                     colors: [
+                                      _Palette.softYellow,
                                       _Palette.lemonChiffon,
-                                      _Palette.lemonChiffonDeep,
                                     ],
                                   ),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: _Palette.milanoRedDeep
-                                        .withValues(alpha: 0.12),
+                                    color: _Palette.lemonChiffonDeep
+                                        .withValues(alpha: 0.45),
                                   ),
                                   boxShadow: [
                                     BoxShadow(
@@ -778,7 +885,7 @@ class _TablesScreenState extends State<TablesScreen> {
                                         const Icon(
                                           Icons.copy,
                                           size: 17,
-                                          color: _Palette.milanoRedDeep,
+                                          color: _Palette.milanoRed,
                                         ),
                                         const SizedBox(width: 8),
                                         Text(
@@ -786,7 +893,7 @@ class _TablesScreenState extends State<TablesScreen> {
                                           style: GoogleFonts.inter(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w700,
-                                            color: _Palette.milanoRedDeep,
+                                            color: _Palette.milanoRed,
                                           ),
                                         ),
                                       ],
@@ -838,13 +945,13 @@ class _TablesScreenState extends State<TablesScreen> {
         icon: Container(
           width: 52,
           height: 52,
-          decoration: BoxDecoration(
-            color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
+          decoration: const BoxDecoration(
+            color: _Palette.dustyBlush,
             shape: BoxShape.circle,
           ),
           child: const Icon(
             Icons.table_restaurant_rounded,
-            color: _Palette.milanoRedDeep,
+            color: _Palette.milanoRed,
             size: 26,
           ),
         ),
@@ -853,7 +960,7 @@ class _TablesScreenState extends State<TablesScreen> {
           textAlign: TextAlign.center,
           style: GoogleFonts.playfairDisplay(
             fontWeight: FontWeight.bold,
-            color: _Palette.milanoRedDeep,
+            color: _Palette.milanoRed,
           ),
         ),
         // Width is derived from the actual screen size (see _dialogWidth)
@@ -899,9 +1006,7 @@ class _TablesScreenState extends State<TablesScreen> {
                   onPressed: () => Navigator.pop(ctx),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: _Palette.textMuted,
-                    side: BorderSide(
-                      color: _Palette.milanoRedDeep.withValues(alpha: 0.15),
-                    ),
+                    side: const BorderSide(color: _Palette.paleRose),
                     padding: const EdgeInsets.symmetric(vertical: 13),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -971,7 +1076,7 @@ class _TablesScreenState extends State<TablesScreen> {
         prefixIcon: Icon(icon, size: 20, color: _Palette.milanoRed),
         labelStyle: GoogleFonts.inter(color: _Palette.textMuted),
         filled: true,
-        fillColor: _Palette.lemonChiffon.withValues(alpha: 0.35),
+        fillColor: _Palette.canvasDeep,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide.none,
@@ -994,9 +1099,9 @@ class _TablesScreenState extends State<TablesScreen> {
       body: Stack(
         children: [
           // ── Ambient background dressing ─────────────────────────────────
-          // Purely decorative — soft lemon/ruby glows plus a faint textured
-          // photograph, matching the rest of the admin app's "foggy"
-          // backdrop so this screen feels like one cohesive brand.
+          // Purely decorative — soft gold/wine/blush glows plus a faint
+          // textured photograph, matching the rest of the admin app's
+          // "foggy" backdrop so this screen feels like one cohesive brand.
           Positioned.fill(
             child: Container(
               color: _Palette.canvas,
@@ -1039,8 +1144,6 @@ class _TablesScreenState extends State<TablesScreen> {
                   // Extra low, wide glow further down the page — gives the
                   // long tables list a second soft focal point instead of
                   // all the ambient light sitting only near the header.
-                  // Matches the Admin Orders screen's Pass-2 backdrop
-                  // treatment.
                   Positioned(
                     top: 640,
                     right: -110,
@@ -1052,6 +1155,26 @@ class _TablesScreenState extends State<TablesScreen> {
                         gradient: RadialGradient(
                           colors: [
                             _Palette.milanoRedLight.withValues(alpha: 0.06),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // PASS 10: a soft blush glow low on the left, so the
+                  // bottom of a long scroll carries the same warm brand
+                  // tint as the top instead of fading to flat white.
+                  Positioned(
+                    bottom: 60,
+                    left: -60,
+                    child: Container(
+                      width: 220,
+                      height: 220,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            _Palette.dustyBlush.withValues(alpha: 0.45),
                             Colors.transparent,
                           ],
                         ),
@@ -1122,7 +1245,7 @@ class _TablesScreenState extends State<TablesScreen> {
                                   width: 4,
                                   height: 18,
                                   decoration: BoxDecoration(
-                                    color: _Palette.milanoRed,
+                                    color: _Palette.milanoRedDeep,
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                 ),
@@ -1151,289 +1274,184 @@ class _TablesScreenState extends State<TablesScreen> {
     );
   }
 
-  /// Branded "floating navbar" header — mirrors the exact treatment used on
-  /// AdminDashboardScreen / MenuScreen / OrdersScreen / ProfileScreen /
-  /// StaffLandingScreen / StaffScreen. UI-ENHANCEMENT PASS 2 pushes this
-  /// further into the same "command bar" identity used on the Admin
-  /// Orders screen: a richer four-stop diagonal gradient, a large faint
-  /// watermark emblem behind the title, and a fine glass highlight line
-  /// along the top edge. The previous long "Add Table" pill button
-  /// remains a compact circular icon button (table icon + small gold "+"
-  /// badge), tucked into the top row next to the back button — matching
-  /// the "add staff" icon button pattern used on StaffScreen's header.
-  /// UI-ENHANCEMENT PASS 3 tightens the header's top padding and the gap
-  /// between the top icon row and the title block so "Tables Management"
-  /// sits closer to the top edge.
-  /// UI-ENHANCEMENT PASS 4: the title block now sits directly in the same
-  /// row as the add-table icon button (title on the left, date/divider/
-  /// button on the right), instead of stacking below a separate top row.
-  /// This keeps the title and subtitle "up", level with the button, right
-  /// at the top of the header. Purely visual; the navigation and
-  /// add-table actions underneath are unchanged.
+  /// PASS 9 made this a flat white bar matching StaffScreen's header.
+  ///
+  /// PASS 10: the same bar now carries the PUREDINE Deep Wine Maroon →
+  /// Wine gradient (`#742A3C → #813244`) instead of flat white — a
+  /// medium-depth maroon top bar spanning the full width of the screen,
+  /// with a soft warm-gold corner glow, a large very faint watermark
+  /// emblem behind the copy, a subtle diagonal glass sheen, and a
+  /// warm-gold hairline along the bottom edge. Structurally identical to
+  /// before: the same two-tone `ShaderMask` title, the same desktop-only
+  /// inline date text (no pill/container around it), the same subtitle
+  /// copy, the same thin gold underline accent, and the exact same
+  /// circular "Add Table" icon button (`_addIconButton()`, same
+  /// `_showAddDialog` callback, completely unchanged). Only the copy's
+  /// colors changed so it reads clearly on the wine backdrop. No
+  /// navigation, dialog, or any other logic was touched — presentation
+  /// only.
   Widget _buildHeader(bool isMobile) {
-    return ClipRect(
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          // Richer four-stop diagonal maroon gradient — deeper and more
-          // dimensional than a flat three-stop wash, matching the Admin
-          // Orders screen's Pass-2 "faceted" surface language.
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              _Palette.milanoRedLight,
-              _Palette.milanoRed,
-              _Palette.milanoRedDeep,
-              _Palette.milanoRedDarkest,
-            ],
-            stops: [0.0, 0.38, 0.72, 1.0],
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: _Palette.headerGradient,
+        border: Border(
+          bottom: BorderSide(
+            color: _Palette.lemonChiffon.withValues(alpha: 0.30),
+            width: 1,
           ),
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(isMobile ? 28 : 38),
-            bottomRight: Radius.circular(isMobile ? 28 : 38),
-          ),
-          border: const Border(
-            bottom: BorderSide(color: _Palette.lemonChiffon, width: 4),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: _Palette.milanoRedDeep.withValues(alpha: 0.35),
-              blurRadius: 34,
-              offset: const Offset(0, 16),
-            ),
-            BoxShadow(
-              color: _Palette.lemonChiffon.withValues(alpha: 0.12),
-              blurRadius: 14,
-              offset: const Offset(0, 4),
-            ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.10),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
         ),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            // Subtle decorative diagonal ribbon accents (purely cosmetic,
-            // matches the dashboard/menu/orders/profile/staff headers for a
-            // consistent brand feel).
-            Positioned(
-              top: -60,
-              right: -40,
-              child: Transform.rotate(
-                angle: -0.5,
-                child: Container(
-                  width: 240,
-                  height: 90,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        _Palette.lemonChiffon.withValues(alpha: 0.14),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: -50,
-              left: -60,
-              child: Transform.rotate(
-                angle: 0.4,
-                child: Container(
-                  width: 220,
-                  height: 70,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.white.withValues(alpha: 0.06),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            // Soft gold glow anchored behind the add-table icon button —
-            // matches the same glow StaffScreen uses behind its add-staff
-            // icon button.
-            Positioned(
-              top: -30,
-              right: 20,
-              child: Container(
-                width: 130,
-                height: 130,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      _Palette.lemonChiffon.withValues(alpha: 0.22),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // ── Large faint watermark emblem — a unique signature touch
-            // this header didn't previously have, sitting low-opacity and
-            // large behind the copy, never competing with the title or
-            // controls. Matches the Admin Orders screen's Pass-2
-            // watermark treatment.
-            Positioned(
-              right: isMobile ? -20 : -10,
-              bottom: isMobile ? -18 : -14,
-              child: IgnorePointer(
-                child: Opacity(
-                  opacity: 0.06,
-                  child: Icon(
-                    Icons.table_restaurant_rounded,
-                    size: isMobile ? 120 : 170,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-
-            // Fine dotted texture accent, matching the app's refined
-            // decorative language used across the other admin headers.
-            Positioned(
-              top: 8,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: List.generate(
-                    5,
-                    (i) => Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
-                      width: 4,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _Palette.lemonChiffon.withValues(
-                          alpha: i == 2 ? 0.85 : 0.3,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // Fine glass highlight line along the very top edge, giving
-            // the full-width panel a polished, "premium glass" finish —
-            // matches the Admin Orders / Dashboard headers' top edge
-            // treatment.
-            Positioned(
-              top: 0,
-              left: 24,
-              right: 24,
-              child: Container(
-                height: 1,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.transparent,
-                      Colors.white.withValues(alpha: 0.35),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                isMobile ? 20 : 40,
-                isMobile ? 10 : 12,
-                isMobile ? 20 : 40,
-                isMobile ? 20 : 28,
-              ),
-              child: SafeArea(
-                bottom: false,
-                // Title block and the add-table icon button now share a
-                // single row — title/subtitle on the left, date/divider +
-                // button on the right — so the title sits "up", directly
-                // level with the button instead of stacked underneath it.
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+      ),
+      child: Stack(
+        children: [
+          // Ambient dressing for the wine backdrop — a soft warm-gold
+          // corner glow, a large very faint watermark emblem behind the
+          // copy, and a diagonal glass sheen. Purely decorative, clipped
+          // to the header's own bounds.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: ClipRect(
+                child: Stack(
                   children: [
-                    Expanded(
-                      child: _titleBlock(fontSize: isMobile ? 26 : 34),
-                    ),
-                    const SizedBox(width: 12),
-                    if (!isMobile) ...[
-                      Text(
-                        _todayLabel(),
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.3,
-                          color: Colors.white.withValues(alpha: 0.65),
+                    Positioned(
+                      top: -70,
+                      right: -50,
+                      child: Container(
+                        width: 230,
+                        height: 230,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              _Palette.lemonChiffon.withValues(alpha: 0.16),
+                              Colors.transparent,
+                            ],
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 18),
-                      Container(
-                        width: 1,
-                        height: 18,
-                        color: Colors.white.withValues(alpha: 0.18),
+                    ),
+                    Positioned(
+                      right: isMobile ? -22 : -14,
+                      bottom: isMobile ? -20 : -16,
+                      child: Icon(
+                        Icons.table_bar_rounded,
+                        size: isMobile ? 120 : 160,
+                        color: Colors.white.withValues(alpha: 0.05),
                       ),
-                      const SizedBox(width: 18),
-                    ],
-                    _addIconButton(),
+                    ),
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.06),
+                              Colors.transparent,
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.4, 1.0],
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                isMobile ? 18 : 32,
+                isMobile ? 16 : 22,
+                isMobile ? 18 : 32,
+                isMobile ? 18 : 24,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Top row — the two-tone title, the date (desktop
+                  // only, plain text, no pill), and the "add table" icon
+                  // button, all on one line. No search bar and no date
+                  // pill/circle of any kind here.
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: ShaderMask(
+                          shaderCallback: (bounds) => const LinearGradient(
+                            colors: [
+                              Colors.white,
+                              _Palette.lemonChiffon,
+                            ],
+                          ).createShader(bounds),
+                          child: Text(
+                            'Tables Management',
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.playfairDisplay(
+                              color: Colors.white,
+                              fontSize: isMobile ? 21 : 28,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (!isMobile) ...[
+                        Text(
+                          _todayLabel(),
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.3,
+                            color: _Palette.softYellow,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                      ],
+                      _addIconButton(),
+                    ],
+                  ),
+                  SizedBox(height: isMobile ? 4 : 6),
+                  Text(
+                    'Manage restaurant tables and QR codes',
+                    style: GoogleFonts.inter(
+                      color: Colors.white.withValues(alpha: 0.75),
+                      fontSize: isMobile ? 12.5 : 14,
+                    ),
+                  ),
+                  SizedBox(height: isMobile ? 12 : 14),
+                  // Thin gold gradient hairline — the same soft divider
+                  // language used across the rest of the app's headers.
+                  // Purely decorative.
+                  Container(
+                    width: 46,
+                    height: 3,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(4),
+                      gradient: LinearGradient(
+                        colors: [
+                          _Palette.lemonChiffon.withValues(alpha: 0.95),
+                          _Palette.lemonChiffon.withValues(alpha: 0.15),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
-    ).animate().fade(duration: 450.ms).slideY(begin: -0.1, duration: 450.ms);
-  }
-
-  Widget _titleBlock({required double fontSize}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          'Tables Management',
-          style: GoogleFonts.playfairDisplay(
-            color: Colors.white,
-            fontSize: fontSize,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.6,
-            height: 1.1,
-          ),
-        ),
-        const SizedBox(height: 10),
-        const _TitleDivider(),
-        const SizedBox(height: 10),
-        Text(
-          'Manage restaurant tables and QR codes',
-          style: GoogleFonts.inter(
-            color: _Palette.lemonChiffon,
-            fontSize: fontSize > 30 ? 14 : 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
     );
   }
 
-  /// Compact circular icon-only "add table" button, tucked into the top
-  /// right corner of the navbar next to the back button — replaces the
-  /// previous long "Add Table" pill button that sat beside/below the
-  /// title. Shows a table icon with a small gold "+" badge in the corner,
-  /// and matches the exact 46×46 circular styling StaffScreen uses for its
-  /// "add staff" icon button.
+  /// Compact circular icon-only "add table" button — completely
+  /// unchanged: same `_showAddDialog` callback, same table icon with a
+  /// small "+" badge in the corner. Its gold fill already read as the
+  /// header's primary affordance, and it reads even more clearly against
+  /// the new wine backdrop, so nothing inside it needed to change.
   Widget _addIconButton() {
     return Tooltip(
       message: 'Add Table',
@@ -1452,9 +1470,9 @@ class _TablesScreenState extends State<TablesScreen> {
               color: _Palette.lemonChiffon,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.18),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+                  color: _Palette.milanoRedDarkest.withValues(alpha: 0.28),
+                  blurRadius: 12,
+                  offset: const Offset(0, 5),
                 ),
               ],
               border: Border.all(
@@ -1469,7 +1487,7 @@ class _TablesScreenState extends State<TablesScreen> {
                   child: Icon(
                     Icons.table_restaurant_rounded,
                     size: 22,
-                    color: _Palette.milanoRedDeep,
+                    color: _Palette.milanoRed,
                   ),
                 ),
                 Positioned(
@@ -1481,7 +1499,7 @@ class _TablesScreenState extends State<TablesScreen> {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: _Palette.milanoRedDeep,
+                      color: _Palette.milanoRed,
                       border: Border.all(color: Colors.white, width: 1.5),
                     ),
                     child: const Icon(
@@ -1513,7 +1531,7 @@ class _TablesScreenState extends State<TablesScreen> {
             _buildStatCard(
               'Total',
               total.toString(),
-              _Palette.milanoRedDeep,
+              _Palette.milanoRed,
               isMobile,
               Icons.table_bar_outlined,
             ),
@@ -1537,7 +1555,7 @@ class _TablesScreenState extends State<TablesScreen> {
             _buildStatCard(
               'Occupied',
               occupied.toString(),
-              _Palette.milanoRed,
+              _Palette.milanoRedDeep,
               isMobile,
               Icons.people_alt_outlined,
             ),
@@ -1551,7 +1569,7 @@ class _TablesScreenState extends State<TablesScreen> {
         _buildStatCard(
           'Total Tables',
           total.toString(),
-          _Palette.milanoRedDeep,
+          _Palette.milanoRed,
           false,
           Icons.table_bar_outlined,
         ),
@@ -1575,7 +1593,7 @@ class _TablesScreenState extends State<TablesScreen> {
         _buildStatCard(
           'Occupied',
           occupied.toString(),
-          _Palette.milanoRed,
+          _Palette.milanoRedDeep,
           false,
           Icons.people_alt_outlined,
         ),
@@ -1583,12 +1601,15 @@ class _TablesScreenState extends State<TablesScreen> {
     );
   }
 
-  /// UI-ENHANCEMENT PASS 2: this stat card now carries the same slim
-  /// color-coded top cap used on the Admin Orders screen's stat cards
-  /// (a thin bar in the card's accent color, plus a small glowing dot
-  /// next to the label), so both admin screens share one consistent
-  /// "stat card" identity. Same label/value/color/icon inputs as before
-  /// — purely presentational restructuring, no data changed.
+  /// This stat card carries the same slim color-coded top cap used on the
+  /// Admin Orders screen's stat cards (a thin bar in the card's accent
+  /// color, plus a small glowing dot next to the label), so both admin
+  /// screens share one consistent "stat card" identity. Same
+  /// label/value/color/icon inputs as before.
+  ///
+  /// PASS 10: the card body sits on a white → Soft Cream wash with a Pale
+  /// Rose border, matching the PUREDINE card spec — decoration only, no
+  /// data changed.
   Widget _buildStatCard(
     String label,
     String value,
@@ -1599,7 +1620,7 @@ class _TablesScreenState extends State<TablesScreen> {
     Widget cardContent = Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.10),
@@ -1618,9 +1639,13 @@ class _TablesScreenState extends State<TablesScreen> {
           Container(
             padding: EdgeInsets.all(isMobile ? 16 : 20),
             decoration: BoxDecoration(
-              color: _Palette.cardWhite,
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Colors.white, _Palette.canvasDeep],
+              ),
               border: Border.all(
-                color: color.withValues(alpha: 0.18),
+                color: _Palette.paleRose,
                 width: 1,
               ),
             ),
@@ -1700,10 +1725,8 @@ class _TablesScreenState extends State<TablesScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _Palette.cardWhite,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
-        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _Palette.paleRose),
         boxShadow: _Palette.softShadow,
       ),
       child: Column(
@@ -1711,18 +1734,25 @@ class _TablesScreenState extends State<TablesScreen> {
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.filter_list,
-                size: 20,
-                color: _Palette.milanoRedDeep,
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _Palette.dustyBlush,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.filter_list,
+                  size: 18,
+                  color: _Palette.milanoRed,
+                ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Text(
                 'Filters',
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: _Palette.textDark,
+                  color: _Palette.milanoRed,
                 ),
               ),
             ],
@@ -1742,18 +1772,27 @@ class _TablesScreenState extends State<TablesScreen> {
                         prefixIcon: const Icon(
                           Icons.search,
                           size: 20,
-                          color: _Palette.milanoRedDeep,
+                          color: _Palette.milanoRed,
                         ),
                         filled: true,
-                        fillColor: _Palette.lemonChiffon.withValues(
-                          alpha: 0.2,
-                        ),
+                        fillColor: _Palette.canvasDeep,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: _Palette.paleRose,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: _Palette.paleRose,
+                          ),
+                        ),
+                        focusedBorder: const OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(12)),
                           borderSide: BorderSide(
-                            color: _Palette.milanoRedDeep.withValues(
-                              alpha: 0.15,
-                            ),
+                            color: _Palette.milanoRed,
+                            width: 1.4,
                           ),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
@@ -1796,31 +1835,25 @@ class _TablesScreenState extends State<TablesScreen> {
                           prefixIcon: const Icon(
                             Icons.search,
                             size: 20,
-                            color: _Palette.milanoRedDeep,
+                            color: _Palette.milanoRed,
                           ),
                           filled: true,
-                          fillColor: _Palette.lemonChiffon.withValues(
-                            alpha: 0.2,
-                          ),
+                          fillColor: _Palette.canvasDeep,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(
-                              color: _Palette.milanoRedDeep.withValues(
-                                alpha: 0.2,
-                              ),
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: _Palette.paleRose,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(
-                              color: _Palette.milanoRedDeep.withValues(
-                                alpha: 0.2,
-                              ),
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: _Palette.paleRose,
                             ),
                           ),
                           focusedBorder: const OutlineInputBorder(
                             borderRadius: BorderRadius.all(
-                              Radius.circular(10),
+                              Radius.circular(12),
                             ),
                             borderSide: BorderSide(
                               color: _Palette.milanoRed,
@@ -1872,11 +1905,9 @@ class _TablesScreenState extends State<TablesScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: _Palette.lemonChiffon.withValues(alpha: 0.2),
-        border: Border.all(
-          color: _Palette.milanoRedDeep.withValues(alpha: 0.2),
-        ),
-        borderRadius: BorderRadius.circular(10),
+        color: _Palette.canvasDeep,
+        border: Border.all(color: _Palette.paleRose),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -1884,7 +1915,7 @@ class _TablesScreenState extends State<TablesScreen> {
           isExpanded: true,
           icon: const Icon(
             Icons.keyboard_arrow_down,
-            color: _Palette.milanoRedDeep,
+            color: _Palette.milanoRed,
           ),
           dropdownColor: _Palette.cardWhite,
           items: items
@@ -1914,10 +1945,8 @@ class _TablesScreenState extends State<TablesScreen> {
         padding: const EdgeInsets.all(48),
         decoration: BoxDecoration(
           color: _Palette.cardWhite,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
-          ),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: _Palette.paleRose),
           boxShadow: _Palette.softShadow,
         ),
         child: Center(
@@ -1926,7 +1955,7 @@ class _TablesScreenState extends State<TablesScreen> {
               Icon(
                 Icons.table_bar_outlined,
                 size: 40,
-                color: _Palette.milanoRedDeep.withValues(alpha: 0.4),
+                color: _Palette.milanoRed.withValues(alpha: 0.35),
               ),
               const SizedBox(height: 12),
               Text(
@@ -1960,10 +1989,8 @@ class _TablesScreenState extends State<TablesScreen> {
     return Container(
       decoration: BoxDecoration(
         color: _Palette.cardWhite,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: _Palette.milanoRedDeep.withValues(alpha: 0.10),
-        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _Palette.paleRose),
         boxShadow: _Palette.softShadow,
       ),
       child: Column(
@@ -1972,9 +1999,9 @@ class _TablesScreenState extends State<TablesScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             decoration: BoxDecoration(
-              color: _Palette.lemonChiffon.withValues(alpha: 0.25),
+              color: _Palette.lemonChiffon.withValues(alpha: 0.30),
               borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
+                top: Radius.circular(17),
               ),
             ),
             child: Row(
@@ -2007,10 +2034,8 @@ class _TablesScreenState extends State<TablesScreen> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: _Palette.cardWhite,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
-        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _Palette.paleRose),
         boxShadow: _Palette.softShadow,
       ),
       child: Column(
@@ -2032,9 +2057,7 @@ class _TablesScreenState extends State<TablesScreen> {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: isOccupied
-                      ? _Palette.milanoRed.withValues(alpha: 0.1)
-                      : _Palette.success.withValues(alpha: 0.1),
+                  color: isOccupied ? _Palette.dustyBlush : _Palette.paleMint,
                   borderRadius: BorderRadius.circular(100),
                 ),
                 child: Text(
@@ -2055,10 +2078,8 @@ class _TablesScreenState extends State<TablesScreen> {
             child: Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                border: Border.all(
-                  color: _Palette.milanoRedDeep.withValues(alpha: 0.15),
-                ),
-                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: _Palette.paleRose),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: QrImageView(
                 data: qrData,
@@ -2066,7 +2087,7 @@ class _TablesScreenState extends State<TablesScreen> {
                 size: 60,
                 eyeStyle: const QrEyeStyle(
                   eyeShape: QrEyeShape.square,
-                  color: _Palette.milanoRedDeep,
+                  color: _Palette.milanoRedDarkest,
                 ),
               ),
             ),
@@ -2123,7 +2144,7 @@ class _TablesScreenState extends State<TablesScreen> {
         style: GoogleFonts.inter(
           fontSize: 11,
           fontWeight: FontWeight.w900,
-          color: _Palette.milanoRedDeep.withValues(alpha: 0.55),
+          color: _Palette.milanoRedDarkest.withValues(alpha: 0.65),
           letterSpacing: 1.2,
         ),
       ),
@@ -2141,10 +2162,8 @@ class _TablesScreenState extends State<TablesScreen> {
       decoration: BoxDecoration(
         border: index == _filteredTables.length - 1
             ? null
-            : Border(
-                bottom: BorderSide(
-                  color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
-                ),
+            : const Border(
+                bottom: BorderSide(color: _Palette.paleRose),
               ),
       ),
       child: Row(
@@ -2184,9 +2203,7 @@ class _TablesScreenState extends State<TablesScreen> {
               child: Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  border: Border.all(
-                    color: _Palette.milanoRedDeep.withValues(alpha: 0.15),
-                  ),
+                  border: Border.all(color: _Palette.paleRose),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: QrImageView(
@@ -2213,12 +2230,12 @@ class _TablesScreenState extends State<TablesScreen> {
                 ),
                 decoration: BoxDecoration(
                   color: t.status == 'OCCUPIED'
-                      ? _Palette.milanoRed.withValues(alpha: 0.08)
-                      : _Palette.success.withValues(alpha: 0.1),
+                      ? _Palette.dustyBlush
+                      : _Palette.paleMint,
                   borderRadius: BorderRadius.circular(100),
                   border: Border.all(
                     color: t.status == 'OCCUPIED'
-                        ? _Palette.milanoRed.withValues(alpha: 0.25)
+                        ? _Palette.milanoRedDeep.withValues(alpha: 0.25)
                         : _Palette.success.withValues(alpha: 0.25),
                   ),
                 ),

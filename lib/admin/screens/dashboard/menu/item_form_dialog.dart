@@ -5,49 +5,142 @@ import 'package:restaurant_unified_app/admin/core/models/restaurant_model.dart';
 import 'package:restaurant_unified_app/admin/services/menu_service.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────
-/// Local "Theme 1 — Dark Maroon × Soft Cream × Gold Glow" palette — matches
-/// MenuScreen / AdminDashboardScreen / CategoryFormDialog exactly. Used
-/// ONLY for this dialog's restyle. Nothing here touches AppColors or any
-/// other file — pure UI enhancement, no logic changed anywhere here. The
-/// header mirrors the same decorative language (ribbon accents, dotted
-/// texture line, radial glow, gold underline) used across the Menu screen
-/// navbar and the Category dialog, so every surface in the admin flow
-/// reads as one cohesive, professional brand.
+/// Local palette for this dialog's restyle. Used ONLY for this dialog's
+/// restyle. Nothing here touches AppColors or any other file — pure UI
+/// enhancement, no logic changed anywhere here.
 ///
-/// UI-ENHANCEMENT PASS 2: brings this dialog's header up to the same
-/// richer "command bar" identity used on the Orders/Menu screens — a
-/// deeper four-stop diagonal gradient, a large faint watermark emblem
-/// behind the title copy, and a fine glass highlight line along the very
-/// top edge. No form fields, validation, save/submit, or image-cleaning
-/// logic was touched anywhere in this pass — presentation only.
+/// UI-ENHANCEMENT PASS 2: brought this dialog's header up to a richer
+/// "command bar" identity — a deeper four-stop diagonal gradient, a large
+/// faint watermark emblem behind the title copy, and a fine glass
+/// highlight line along the very top edge. No form fields, validation,
+/// save/submit, or image-cleaning logic was touched — presentation only.
+///
+/// UI-ENHANCEMENT PASS 3: re-balanced the header to a majority-white look
+/// with maroon/gold used only as accents. No form fields, validation,
+/// save/submit, image-cleaning logic, dialog structure, or spacing was
+/// touched — presentation only.
+///
+/// UI-ENHANCEMENT PASS 4 (this pass — PUREDINE re-skin + StaffScreen-style
+/// header): zero changes to form fields, validation, save/submit,
+/// image-cleaning logic, category selection, availability toggle, or
+/// dialog-dismiss behavior anywhere in this file — palette and header
+/// presentation only.
+///   1. HEADER: rebuilt again — away from the Pass-3 majority-white header
+///      and into the SAME structural/visual pattern used by
+///      `StaffScreen._buildHeader()` (and, for consistency, the sibling
+///      `CategoryFormDialog`): a medium-depth (not near-black) PUREDINE
+///      Deep Wine Maroon → Wine diagonal gradient band (`#742A3C →
+///      #813244`) filling the whole header, with the same ambient
+///      dressing — a soft warm-gold corner glow, a large very faint
+///      watermark emblem tucked behind the copy, a subtle diagonal glass
+///      sheen, and a warm-gold hairline along the bottom edge. A small
+///      gold accent-dot row sits above an icon block + two-tone
+///      `ShaderMask` title + subtitle row, all recolored (white / soft
+///      gold) to read clearly on the dark backdrop. The close button is
+///      now the same circular "glass" button StaffScreen/CategoryForm-
+///      Dialog use — its `onPressed` callback
+///      (`Navigator.of(context).pop(false)`, gated on `_isLoading`) is
+///      completely unchanged, only the look changed. The icon shown
+///      (edit vs. add) and the title/subtitle copy still follow the same
+///      `isEditing` condition as before.
+///   2. PALETTE: `_Palette` was swapped to the exact PUREDINE Maroon +
+///      Cream palette supplied by the user:
+///        • `milanoRed`        → Deep Wine Maroon `#742A3C` (primary / topbar)
+///        • `milanoRedLight`   → Wine `#813244` (topbar lighter gradient)
+///        • `milanoRedDeep`    → Burgundy `#8A183F` (primary accent)
+///        • `milanoRedDarkest` → Deep Brown/Black `#2E0D16`
+///        • `canvas`           → Warm Off-White `#FBF8F5` (main background)
+///        • `canvasDeep`       → Soft Cream `#F7F1ED` (card/field background)
+///        • `lemonChiffon`     → Warm Gold `#F3C564` (gold accent)
+///        • `lemonChiffonDeep` → deeper gold `#D9A421` (derived companion)
+///        • `textDark`         → Deep Brown/Black `#2E0D16`
+///        • `textMuted`        → Muted Taupe `#9B707A`
+///        • `success`          → Fresh Green `#44AF70`
+///        • `danger` is kept as a clear alert red (not part of the
+///          supplied palette) so error/invalid states stay legible.
+///      Four supporting PUREDINE tones were added — `dustyBlush`
+///      (`#F3D9DC`, icon backgrounds), `paleRose` (`#EFD7DA`, field/card
+///      borders), `softYellow` (`#FCE1AB`, gold highlight / "OPTIONAL"
+///      chip) and `paleMint` (`#EAF6EF`, success backgrounds; kept for
+///      parity). `headerGradient` now holds the supplied header gradient
+///      exactly (`#742A3C → #813244`), and a new `ctaGradient` field
+///      holds the supplied CTA gradient exactly (`#6E1832 → #9B3E4E →
+///      #F3C564`) — kept for palette-shape parity with the other admin
+///      screens, not referenced elsewhere in this file today.
+///   3. TOP-TO-BOTTOM CONSISTENCY: the form-body panel, every text field,
+///      the category dropdown, the image-preview box, the "OPTIONAL"
+///      chips, the availability switch card, and the action row all
+///      follow the PUREDINE card spec — Soft Cream field fills, Pale Rose
+///      borders, Dusty Blush/Warm Gold accents — so the whole dialog
+///      reads as one brand from the header to the bottom action row. The
+///      "No Category Found" fallback dialog was recolored the same way.
+///      No form fields, validation, save/submit, image-cleaning logic, or
+///      dialog-dismiss behavior was touched.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
-  static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
-  static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
-  static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
-  static const Color milanoRedDarkest =
-      Color(0xFF2E0909); // Fourth gradient stop
-  static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow (Accent)
-  static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
-  static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
-  static const Color canvasDeep = Color(0xFFF5E9D6); // Deeper cream
+  // NOTE: field names are unchanged from the previous themes on purpose —
+  // every other widget in this file reads from these exact names, so only
+  // the underlying Color values change. Re-themed to the exact PUREDINE
+  // Maroon + Cream palette.
+  static const Color milanoRed =
+      Color(0xFF742A3C); // Deep Wine Maroon (Primary / Topbar)
+  static const Color milanoRedLight =
+      Color(0xFF813244); // Wine (Topbar lighter gradient)
+  static const Color milanoRedDeep =
+      Color(0xFF8A183F); // Burgundy (Primary accent)
+  static const Color milanoRedDarkest = Color(0xFF2E0D16); // Deep Brown/Black
+
+  static const Color lemonChiffon = Color(0xFFF3C564); // Warm Gold (Accent)
+  static const Color lemonChiffonDeep =
+      Color(0xFFD9A421); // Deeper Warm Gold (derived)
+
+  static const Color canvas =
+      Color(0xFFFBF8F5); // Warm Off-White (Main background)
+  static const Color canvasDeep = Color(0xFFF7F1ED); // Soft Cream (Card bg)
   static const Color cardWhite = Colors.white;
-  static const Color textDark = Color(0xFF3A1608);
-  static const Color textMuted = Color(0xFF8A6F5E);
-  static const Color success = Color(0xFF2E9E5B);
-  static const Color danger = Color(0xFFC62828);
+
+  static const Color textDark = Color(0xFF2E0D16); // Deep Brown/Black text
+  static const Color textMuted = Color(0xFF9B707A); // Muted Taupe
+
+  static const Color success = Color(0xFF44AF70); // Fresh Green
+  static const Color danger = Color(0xFFE0323F); // Clear alert red
+
+  // Supporting PUREDINE tones.
+  static const Color dustyBlush =
+      Color(0xFFF3D9DC); // Dusty Blush — icon backgrounds
+  static const Color paleRose =
+      Color(0xFFEFD7DA); // Pale Rose — field/card borders
+  static const Color softYellow = Color(0xFFFCE1AB); // Soft Yellow highlight
+  static const Color paleMint = Color(0xFFEAF6EF); // Pale Mint (parity)
+
+  /// The supplied top-header gradient, exactly: `#742A3C → #813244`.
+  static const LinearGradient headerGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [milanoRed, milanoRedLight],
+  );
+
+  /// The supplied CTA gradient, exactly: `#6E1832 → #9B3E4E → #F3C564`.
+  /// Kept defined for palette-shape parity with the other admin screens;
+  /// not referenced elsewhere in this file today, so an unused private
+  /// static field here causes no compile error.
+  static const LinearGradient ctaGradient = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [Color(0xFF6E1832), Color(0xFF9B3E4E), lemonChiffon],
+  );
 
   /// Themed soft shadow for resting surfaces — mirrors the shared shadow
-  /// language used across MenuScreen / AdminDashboardScreen.
+  /// language used across MenuScreen / StaffScreen / CategoryFormDialog.
   static List<BoxShadow> get softShadow => [
         BoxShadow(
-          color: milanoRedDeep.withValues(alpha: 0.06),
-          blurRadius: 18,
+          color: milanoRed.withValues(alpha: 0.08),
+          blurRadius: 20,
           offset: const Offset(0, 8),
         ),
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.03),
-          blurRadius: 4,
+          color: lemonChiffon.withValues(alpha: 0.05),
+          blurRadius: 6,
           offset: const Offset(0, 2),
         ),
       ];
@@ -56,7 +149,7 @@ class _Palette {
   /// primary action button so both read as "lifted" above the backdrop.
   static List<BoxShadow> get glowShadow => [
         BoxShadow(
-          color: milanoRedDeep.withValues(alpha: 0.28),
+          color: milanoRedDeep.withValues(alpha: 0.22),
           blurRadius: 40,
           offset: const Offset(0, 20),
         ),
@@ -247,29 +340,25 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
         margin: const EdgeInsets.only(left: 4, right: 4),
         alignment: Alignment.center,
         width: 20,
-        child: Icon(icon, color: _Palette.milanoRedDeep, size: 20),
+        child: Icon(icon, color: _Palette.milanoRed, size: 20),
       ),
       filled: true,
-      fillColor: _Palette.canvas,
+      fillColor: _Palette.canvasDeep,
       contentPadding: const EdgeInsets.symmetric(
         horizontal: 16,
         vertical: 16,
       ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(
-          color: _Palette.milanoRedDeep.withValues(alpha: 0.12),
-        ),
+        borderSide: const BorderSide(color: _Palette.paleRose),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(
-          color: _Palette.milanoRedDeep.withValues(alpha: 0.12),
-        ),
+        borderSide: const BorderSide(color: _Palette.paleRose),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: _Palette.milanoRedDeep, width: 1.6),
+        borderSide: const BorderSide(color: _Palette.milanoRed, width: 1.6),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -310,7 +399,7 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: _Palette.lemonChiffon.withValues(alpha: 0.5),
+                color: _Palette.softYellow,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -367,7 +456,7 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
             style: ElevatedButton.styleFrom(
-              backgroundColor: _Palette.milanoRedDeep,
+              backgroundColor: _Palette.milanoRed,
               padding: const EdgeInsets.symmetric(
                 horizontal: 32,
                 vertical: 12,
@@ -403,9 +492,7 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
           decoration: BoxDecoration(
             color: _Palette.cardWhite,
             borderRadius: BorderRadius.circular(26),
-            border: Border.all(
-              color: _Palette.milanoRedDeep.withValues(alpha: 0.08),
-            ),
+            border: Border.all(color: _Palette.paleRose),
             boxShadow: _Palette.glowShadow,
           ),
           clipBehavior: Clip.antiAlias,
@@ -414,296 +501,264 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // ── Header (mini navbar) ─────────────────────────────────
-              // Mirrors the Menu screen's header + CategoryFormDialog:
-              // brand gradient, decorative diagonal ribbons, a soft radial
-              // glow behind the icon block, a fine dotted accent line, and
-              // a gold underline beneath the title.
-              //
-              // UI-ENHANCEMENT PASS 2: upgraded from a three-stop to a
-              // richer four-stop diagonal gradient, a large faint
-              // watermark emblem tucked behind the copy, and a fine glass
-              // highlight line along the very top edge — matching the
-              // Orders/Menu screens' Pass-2 "command bar" treatment.
-              ClipRect(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        _Palette.milanoRedLight,
-                        _Palette.milanoRed,
-                        _Palette.milanoRedDeep,
-                        _Palette.milanoRedDarkest,
-                      ],
-                      stops: [0.0, 0.38, 0.72, 1.0],
+              // PASS 4: rebuilt into the same structural/visual pattern
+              // StaffScreen._buildHeader() (and CategoryFormDialog's
+              // header) use — a medium-depth PUREDINE Deep Wine Maroon →
+              // Wine diagonal gradient band with a soft warm-gold corner
+              // glow, a large very faint watermark emblem, a subtle
+              // diagonal glass sheen, and a warm-gold hairline along the
+              // bottom edge. The accent-dot row, the icon block, the
+              // two-tone ShaderMask title, the subtitle, and the hairline
+              // beneath it are all recolored for the dark backdrop. No
+              // form fields, validation, save/submit, image-cleaning
+              // logic, or dialog-dismiss behavior was touched.
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: _Palette.headerGradient,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: _Palette.lemonChiffon.withValues(alpha: 0.30),
+                      width: 1,
                     ),
-                    border: const Border(
-                      bottom: BorderSide(
-                        color: _Palette.lemonChiffon,
-                        width: 3.5,
-                      ),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: _Palette.milanoRed.withValues(alpha: 0.34),
-                        blurRadius: 24,
-                        offset: const Offset(0, 10),
-                      ),
-                      BoxShadow(
-                        color: _Palette.lemonChiffon.withValues(alpha: 0.10),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
                   ),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      // Decorative diagonal ribbon accents (purely cosmetic)
-                      Positioned(
-                        top: -46,
-                        right: -30,
-                        child: Transform.rotate(
-                          angle: -0.5,
-                          child: Container(
-                            width: 180,
-                            height: 74,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  _Palette.lemonChiffon.withValues(alpha: 0.20),
-                                  Colors.transparent,
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        bottom: -40,
-                        left: -40,
-                        child: Transform.rotate(
-                          angle: 0.4,
-                          child: Container(
-                            width: 160,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.white.withValues(alpha: 0.07),
-                                  Colors.transparent,
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Soft radial glow behind the icon block, adding depth
-                      // without affecting any layout or logic.
-                      Positioned(
-                        top: -30,
-                        left: -20,
-                        child: Container(
-                          width: 140,
-                          height: 140,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: RadialGradient(
-                              colors: [
-                                _Palette.lemonChiffon.withValues(alpha: 0.14),
-                                Colors.transparent,
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      // UI-ENHANCEMENT PASS 2: large faint watermark
-                      // emblem — a unique signature touch this header
-                      // didn't previously have, sitting low-opacity and
-                      // large behind the copy, never competing with the
-                      // title or the close button. Icon swaps between
-                      // "edit" and "add" to echo the header's own state,
-                      // purely decorative.
-                      Positioned(
-                        right: -14,
-                        bottom: -16,
-                        child: IgnorePointer(
-                          child: Opacity(
-                            opacity: 0.07,
-                            child: Icon(
-                              isEditing
-                                  ? Icons.edit_note_rounded
-                                  : Icons.restaurant_menu_rounded,
-                              size: 108,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Fine dotted texture accent — matches the dashed dot
-                      // row used on the Menu/Dashboard headers.
-                      Positioned(
-                        top: 8,
-                        left: 0,
-                        right: 0,
-                        child: Center(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: List.generate(
-                              5,
-                              (i) => Container(
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 3),
-                                width: 3.5,
-                                height: 3.5,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: _Palette.lemonChiffon.withValues(
-                                    alpha: i == 2 ? 0.85 : 0.28,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      // UI-ENHANCEMENT PASS 2: fine glass highlight line
-                      // along the very top edge of the header — purely
-                      // cosmetic, gives the header a more polished,
-                      // "premium panel" finish matching the Menu/Orders
-                      // headers' top edge treatment.
-                      Positioned(
-                        top: 0,
-                        left: 20,
-                        right: 20,
-                        child: Container(
-                          height: 1,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.transparent,
-                                Colors.white.withValues(alpha: 0.32),
-                                Colors.transparent,
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 24, 16, 20),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.14),
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: _Palette.lemonChiffon
-                                      .withValues(alpha: 0.4),
-                                  width: 1.2,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: _Palette.lemonChiffon
-                                        .withValues(alpha: 0.18),
-                                    blurRadius: 12,
-                                    spreadRadius: 1,
-                                  ),
-                                ],
-                              ),
-                              child: Icon(
-                                isEditing
-                                    ? Icons.edit_rounded
-                                    : Icons.add_box_rounded,
-                                color: _Palette.lemonChiffon,
-                                size: 23,
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    isEditing
-                                        ? 'Edit Menu Item'
-                                        : 'Add Menu Item',
-                                    style: GoogleFonts.playfairDisplay(
-                                      fontSize: isMobile ? 19 : 22,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                      height: 1.1,
-                                      letterSpacing: 0.3,
+                ),
+                child: Stack(
+                  children: [
+                    // Ambient dressing for the wine backdrop — a soft
+                    // warm-gold corner glow, a large very faint watermark
+                    // emblem behind the copy, and a diagonal glass sheen.
+                    // Purely decorative, clipped to the header's own
+                    // bounds — mirrors StaffScreen's header exactly.
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: ClipRect(
+                          child: Stack(
+                            children: [
+                              Positioned(
+                                top: -60,
+                                right: -40,
+                                child: Container(
+                                  width: 190,
+                                  height: 190,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: RadialGradient(
+                                      colors: [
+                                        _Palette.lemonChiffon.withValues(
+                                          alpha: 0.16,
+                                        ),
+                                        Colors.transparent,
+                                      ],
                                     ),
                                   ),
-                                  const SizedBox(height: 9),
-                                  Container(
-                                    width: 48,
-                                    height: 2.5,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(4),
-                                      gradient: LinearGradient(
+                                ),
+                              ),
+                              Positioned(
+                                right: -14,
+                                bottom: -16,
+                                child: Icon(
+                                  isEditing
+                                      ? Icons.edit_note_rounded
+                                      : Icons.restaurant_menu_rounded,
+                                  size: 110,
+                                  color: Colors.white.withValues(alpha: 0.05),
+                                ),
+                              ),
+                              Positioned.fill(
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Colors.white.withValues(alpha: 0.06),
+                                        Colors.transparent,
+                                        Colors.transparent,
+                                      ],
+                                      stops: const [0.0, 0.4, 1.0],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 24, 16, 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Small gold accent-dot row above the title —
+                          // purely decorative, recolored to sit on the
+                          // wine backdrop.
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: List.generate(
+                                5,
+                                (i) => Container(
+                                  margin: const EdgeInsets.only(right: 5),
+                                  width: 4,
+                                  height: 4,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: _Palette.lemonChiffon.withValues(
+                                      alpha: i == 2 ? 0.95 : 0.40,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Icon block — translucent white fill with a
+                              // gold ring, reading clearly on the wine
+                              // backdrop. Icon still follows the same
+                              // isEditing condition as before.
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.14),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: _Palette.lemonChiffon.withValues(
+                                      alpha: 0.55,
+                                    ),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Icon(
+                                  isEditing
+                                      ? Icons.edit_rounded
+                                      : Icons.add_box_rounded,
+                                  color: Colors.white,
+                                  size: 22,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // White → gold ShaderMask title,
+                                    // matching StaffScreen/CategoryForm-
+                                    // Dialog's title treatment.
+                                    ShaderMask(
+                                      shaderCallback: (bounds) =>
+                                          const LinearGradient(
                                         colors: [
-                                          _Palette.lemonChiffon
-                                              .withValues(alpha: 0.9),
-                                          Colors.transparent,
+                                          Colors.white,
+                                          _Palette.lemonChiffon,
                                         ],
+                                      ).createShader(bounds),
+                                      child: Text(
+                                        isEditing
+                                            ? 'Edit Menu Item'
+                                            : 'Add Menu Item',
+                                        style: GoogleFonts.playfairDisplay(
+                                          fontSize: isMobile ? 19 : 22,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                          height: 1.1,
+                                          letterSpacing: 0.3,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    isEditing
-                                        ? 'Update the details for this item'
-                                        : 'Add a new dish to your menu',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 12.5,
-                                      color:
-                                          Colors.white.withValues(alpha: 0.85),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      isEditing
+                                          ? 'Update the details for this item'
+                                          : 'Add a new dish to your menu',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12.5,
+                                        color: Colors.white.withValues(
+                                          alpha: 0.75,
+                                        ),
+                                      ),
                                     ),
+                                  ],
+                                ),
+                              ),
+                              // Close button — the same circular "glass"
+                              // treatment StaffScreen/CategoryFormDialog
+                              // use, so it reads clearly against the wine
+                              // backdrop. The onPressed callback is
+                              // completely unchanged.
+                              Material(
+                                color: Colors.transparent,
+                                shape: const CircleBorder(),
+                                child: InkWell(
+                                  customBorder: const CircleBorder(),
+                                  onTap: _isLoading
+                                      ? null
+                                      : () => Navigator.of(context).pop(false),
+                                  child: Container(
+                                    width: 36,
+                                    height: 36,
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.white.withValues(
+                                        alpha: 0.12,
+                                      ),
+                                      border: Border.all(
+                                        color: _Palette.lemonChiffon
+                                            .withValues(alpha: 0.45),
+                                        width: 1.2,
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      Icons.close_rounded,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          // Thin gold gradient hairline — same soft
+                          // divider language used across the rest of the
+                          // app's headers.
+                          Container(
+                            width: 46,
+                            height: 3,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(4),
+                              gradient: LinearGradient(
+                                colors: [
+                                  _Palette.lemonChiffon.withValues(
+                                    alpha: 0.95,
+                                  ),
+                                  _Palette.lemonChiffon.withValues(
+                                    alpha: 0.15,
                                   ),
                                 ],
                               ),
                             ),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.10),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.14),
-                                ),
-                              ),
-                              child: IconButton(
-                                onPressed: _isLoading
-                                    ? null
-                                    : () => Navigator.of(context).pop(false),
-                                icon: const Icon(
-                                  Icons.close_rounded,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                                splashRadius: 20,
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
 
               // ── Scrollable form body ──────────────────────────────────
-              // Given a faint cream tint (matching the app's canvas) so the
-              // content area reads as a distinct "panel" beneath the header
+              // Uses the PUREDINE main-background tint so the content area
+              // reads as a distinct "panel" beneath the wine header
               // instead of blending flatly into the white card.
               Flexible(
                 child: Container(
-                  color: _Palette.canvas.withValues(alpha: 0.5),
+                  color: _Palette.canvas,
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(24, 26, 24, 8),
                     child: Form(
@@ -722,7 +777,7 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                               initialValue: _selectedCategoryId,
                               icon: const Icon(
                                 Icons.keyboard_arrow_down_rounded,
-                                color: _Palette.milanoRedDeep,
+                                color: _Palette.milanoRed,
                               ),
                               style: GoogleFonts.inter(
                                 color: _Palette.textDark,
@@ -852,11 +907,7 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                             decoration: BoxDecoration(
                               color: _Palette.canvasDeep,
                               borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: _Palette.milanoRedDeep.withValues(
-                                  alpha: 0.12,
-                                ),
-                              ),
+                              border: Border.all(color: _Palette.paleRose),
                               boxShadow: [
                                 BoxShadow(
                                   color: _Palette.milanoRedDeep.withValues(
@@ -964,11 +1015,7 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: _Palette.milanoRedDeep.withValues(
-                                  alpha: 0.12,
-                                ),
-                              ),
+                              border: Border.all(color: _Palette.paleRose),
                               boxShadow: _Palette.softShadow,
                             ),
                             child: SwitchListTile(
@@ -1007,7 +1054,7 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
 
               // ── Actions ───────────────────────────────────────────────
               Container(
-                color: _Palette.canvas.withValues(alpha: 0.5),
+                color: _Palette.canvas,
                 padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
                 child: Row(
                   children: [
@@ -1019,10 +1066,7 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: _Palette.textMuted,
                           backgroundColor: Colors.white,
-                          side: BorderSide(
-                            color:
-                                _Palette.milanoRedDeep.withValues(alpha: 0.14),
-                          ),
+                          side: const BorderSide(color: _Palette.paleRose),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -1060,9 +1104,9 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _submit,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: _Palette.milanoRedDeep,
+                            backgroundColor: _Palette.milanoRed,
                             disabledBackgroundColor:
-                                _Palette.milanoRedDeep.withValues(alpha: 0.6),
+                                _Palette.milanoRed.withValues(alpha: 0.6),
                             elevation: 0,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(

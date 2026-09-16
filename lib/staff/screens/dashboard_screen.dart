@@ -11,14 +11,9 @@ import '../widgets/common_widgets.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────
-/// Local "Theme 1 — Dark Maroon × Soft Cream × Gold Glow" palette — matches
-/// the admin Menu Management, Staff, and Create Order screens exactly
-/// (#8B1D1D primary / #F4C430 gold accent), so the Staff Dashboard now
-/// reads as part of the same cohesive, professional brand instead of its
-/// own one-off theme.
-/// Used ONLY for this screen's restyle. Nothing here touches AppColors,
-/// AppTheme, or any other file — pure UI enhancement, no logic changed
-/// anywhere here.
+/// Local color palette for this screen's restyle. Nothing here touches
+/// AppColors, AppTheme, or any other file — pure UI enhancement, no logic
+/// changed anywhere here.
 ///
 /// UI-ENHANCEMENT PASS 2: the hero banner (this screen's navbar) has been
 /// pushed further beyond a straight Menu-header clone into its own
@@ -47,35 +42,192 @@ import 'package:flutter_animate/flutter_animate.dart';
 /// success/danger indicators keep their original semantic colors, since
 /// those carry functional meaning rather than brand styling.
 ///
-/// BUGFIX (this pass): guarded the greeting name against an empty string.
-/// Previously `firstName[0]` would throw a RangeError (index out of range)
-/// if the staff member's `name` ever came back empty from the backend,
-/// since ''.split(' ').first still returns '' and you can't index into an
-/// empty string. That crash was identical on web and mobile since it's
-/// Dart-level logic, not a layout/overflow issue. Fixed by falling back to
-/// 'Staff' whenever the resolved name is empty, and by defensively guarding
-/// the avatar-initial lookup itself. No other behavior changed.
+/// BUGFIX: guarded the greeting name against an empty string. Previously
+/// `firstName[0]` would throw a RangeError (index out of range) if the
+/// staff member's `name` ever came back empty from the backend, since
+/// ''.split(' ').first still returns '' and you can't index into an empty
+/// string. That crash was identical on web and mobile since it's Dart-level
+/// logic, not a layout/overflow issue. Fixed by falling back to 'Staff'
+/// whenever the resolved name is empty, and by defensively guarding the
+/// avatar-initial lookup itself. No other behavior changed.
+///
+/// COLOR-THEME PASS ("Milano Red/Wine × Golden Chiffon × White") — this
+/// pass: swapped the underlying color values in `_Palette` for a deep
+/// Milano red/wine primary, a golden/yellow-chiffon accent, and a
+/// background/surface palette that leans **majorly white** rather than
+/// warm cream, matching the same request already applied to the Login,
+/// Menu, and Orders screens so every part of the app shares one brand
+/// identity. Every field name below (`milanoRed`, `milanoRedDeep`,
+/// `milanoRedLight`, `lemonChiffon`, `lemonChiffonDeep`, `canvas`,
+/// `canvasDeep`, etc.) is unchanged on purpose, since every other widget in
+/// this file already reads from these exact names — only the `Color`
+/// values themselves were updated. No data, provider, or navigation logic
+/// was touched anywhere in this pass — presentation only.
+///
+/// UI-ENHANCEMENT PASS 4: the hero banner (`_DashboardHero`) was rebuilt
+/// from a heavy, dark, multi-layer gradient "command bar" into a clean,
+/// light, standard mobile top bar in the spirit of a payments-app home
+/// screen — a slim greeting row (small wine/gold-ringed avatar top-right,
+/// "Good Morning, {name}" on the left) laid directly on the app's own
+/// majorly-white canvas, with NO search bar added. The live-stats readout
+/// strip beneath it is kept (still the same `activeOrdersCount` /
+/// `newOrdersCount` / `availableTablesCount` values) but restyled from a
+/// dark glass capsule into light, softly-tinted stat chips so it reads as
+/// part of the same white surface instead of a separate dark panel. No
+/// data, provider, or navigation logic was touched — every stat value,
+/// avatar initial, and route still comes from the exact same values passed
+/// in from `DashboardScreen`.
+///
+/// UI-ENHANCEMENT PASS 5 (full-screen color consistency): the three
+/// Quick Action tiles other than "Create Order" ("New Orders", "Active
+/// Orders", "Tables") previously used ad-hoc, off-brand colors that
+/// didn't belong to the shared palette used everywhere else on this
+/// screen. Their `iconColor` / `iconBg` values were swapped for colors
+/// drawn from the exact same `_Palette` already used by the hero, the
+/// stat pills, the Active Orders panel, and the mini order cards. The
+/// order-status colors inside `_MiniOrderCard` (pending/preparing/ready/
+/// served) and the green "available tables" badge color are left exactly
+/// as they were, since those convey functional/semantic meaning rather
+/// than brand styling. Every `onTap`, badge value, route, and data value
+/// passed into these cards is byte-for-byte unchanged — only the color
+/// arguments changed.
+///
+/// PASS 6 / PASS 7: iterative visual refinements to the hero top bar
+/// (gradient warmth, accent dots, illustration banner) — no data,
+/// provider, or navigation logic touched at any point.
+///
+/// COLOR-THEME PASS 8 ("PUREDINE Maroon + Cream" palette):
+/// zero changes to data, provider, navigation, or any field/class name in
+/// this file — every stat value, avatar initial, badge value, route, and
+/// status color mapping is still byte-for-byte what it was before. Only
+/// two things changed, both purely presentational:
+///   1. `_Palette`'s underlying `Color` values were swapped for the new
+///      PUREDINE Maroon + Cream brand palette (Deep Wine Maroon, Wine,
+///      Burgundy, Warm Off-White, Soft Cream, Warm Gold, Soft Yellow,
+///      Deep Brown/Black, Muted Taupe, Fresh Green) — every field name
+///      (`milanoRed`, `milanoRedDeep`, `milanoRedLight`, `lemonChiffon`,
+///      `lemonChiffonDeep`, `canvas`, `canvasDeep`, `textDark`,
+///      `textMuted`) is unchanged on purpose, since the rest of this file
+///      already reads from these exact names. Three small additional
+///      palette constants (`dustyBlush`, `paleRose`, `paleMint`,
+///      `freshGreen`) were added purely as extra brand tints — nothing
+///      existing was renamed or removed.
+///   2. `_DashboardHero` was restyled from the light payments-app top bar
+///      back into a rich, dark maroon-to-wine gradient banner (per the
+///      requested reference look), with the greeting, tagline banner,
+///      date/live row, and live-stats readout all re-themed for a dark
+///      backdrop. The three live stats now render as individual white
+///      "readout" cards rather than one pill strip. No prop, callback,
+///      value, or route inside the hero changed — only how it's painted.
+///
+/// UI-ENHANCEMENT PASS 9: the three live-stat readouts ("Active", "New",
+/// "Tables Free") were pulled out of `_DashboardHero` into their own
+/// `_StatsRow` / `_StatCard` widgets. This is a pure layout relocation:
+///   • `_DashboardHero` no longer takes `activeOrdersCount` /
+///     `newOrdersCount` / `availableTablesCount` as props — it never used
+///     them for anything but painting the old in-banner stats row, which
+///     has been removed from the hero entirely.
+///   • `DashboardScreen.build()` still computes the exact same
+///     `activeOrdersCount`, `newOrdersCount`, and `availableTablesCount`
+///     values from the exact same providers, in the exact same order —
+///     they're simply now passed to `_StatsRow` instead of the hero.
+///   • No onTap, route, provider call, or badge/count value changed
+///     anywhere in this pass.
+///
+/// UI-ENHANCEMENT PASS 10: PASS 9 floated `_StatsRow` in a `Stack` with a
+/// negative bottom offset, so it still visually overlapped the hero's
+/// rounded bottom edge. Per the request to have the three stat boxes sit
+/// **fully outside** the top bar, that overlap was removed:
+/// `_DashboardHero` and `_StatsRow` became simple, non-overlapping
+/// siblings in the page's `Column` — the hero rendered completely, then
+/// the stats row rendered entirely below it on the plain white canvas,
+/// with normal spacing (no negative offsets, no `Stack`/`Positioned`, no
+/// `Clip.none`). Same three values, same order, same `_StatsRow`/
+/// `_StatCard` widgets — only the positioning changed from "floating over
+/// the hero edge" to "fully below the hero".
+///
+/// UI-ENHANCEMENT PASS 11: PASS 10 still kept `_StatsRow` as a *fixed*,
+/// non-scrolling sibling between the hero and the
+/// `Expanded`/`SingleChildScrollView`, so only the "Quick Actions" grid and
+/// everything below it actually scrolled. Per the request for the
+/// scrollbar/scrollable region to begin exactly where the three stat boxes
+/// start, `_StatsRow` has been moved to be the *first* child inside the
+/// scrollable `Column` (immediately above the "QUICK ACTIONS" section
+/// label), instead of being a fixed sibling of the hero. Only
+/// `_DashboardHero` remains fixed/non-scrolling now — everything from the
+/// stats row downward (stats, quick actions, active orders) scrolls
+/// together as one unit. Same three values
+/// (`activeOrdersCount`/`newOrdersCount`/`availableTablesCount`), same
+/// `_StatsRow`/`_StatCard` widgets, same padding/max-width treatment —
+/// only which container it lives inside (fixed vs. scrollable) changed.
+///
+/// UI-ENHANCEMENT PASS 12 (this pass — straight-bottomed top bar,
+/// matching MenuScreen's header): a single, purely presentational change
+/// to `_DashboardHero`'s own outer `Container` — no data, provider,
+/// navigation, prop, or callback anywhere in this file was touched, and
+/// nothing about `_StatsRow`, the Quick Actions grid, or the Active
+/// Orders section changed.
+///   • The hero's outer `Container` previously rounded its bottom-left
+///     and bottom-right corners (`Radius.circular(32)`) and cast its own
+///     `heroShadow` drop shadow below that curved edge. `MenuScreen`'s
+///     `_buildCustomHeader()` top bar, by contrast, is a plain, full-
+///     width, straight-edged band with no rounded corners and no shadow
+///     bleeding past its bottom edge (see that screen's Pass 26/27
+///     notes). To match that same flat top-bar shape here, the
+///     `borderRadius` was removed from the decoration (so the bottom
+///     edge is now a straight, flat line instead of curved) and the
+///     `heroShadow` entry was removed along with it, so no colored
+///     shadow spills down past the header into `_StatsRow`/the
+///     scrollable content beneath it.
+///   • The inner `ClipRRect` (which existed only to clip the ambient
+///     decorative glows/wash to the same rounded corners) was swapped
+///     for a plain `ClipRect`, since the header is no longer rounded —
+///     it still clips those purely-decorative Positioned glows to the
+///     header's own straight-edged bounds so nothing decorative bleeds
+///     outside the band, exactly the same way `MenuScreen`'s header
+///     clips its own ambient dressing to a plain rectangle.
+///   • Everything else inside the hero — the greeting row, the avatar
+///     and its halo glow, the tagline banner, the date/live row, and the
+///     gold hairline beneath it — is completely unchanged: same text,
+///     same values (`greeting`, `firstName`, `dateLabel`), same layout,
+///     same animations.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
-  // Dark Maroon — primary brand color (Theme 1)
-  static const Color milanoRed = Color(0xFF8B1D1D);
-  static const Color milanoRedDeep = Color(0xFF5C1212);
-  static const Color milanoRedLight = Color(0xFFA6302B);
+  // Primary brand — PUREDINE Maroon + Cream. Field names are unchanged on
+  // purpose — every widget below already reads from these exact names, so
+  // only the underlying Color values change.
+  static const Color milanoRed =
+      Color(0xFF742A3C); // Deep Wine Maroon (Primary / Topbar)
+  static const Color milanoRedDeep =
+      Color(0xFF8A183F); // Burgundy (Primary accent / deep)
+  static const Color milanoRedLight =
+      Color(0xFF813244); // Wine (topbar lighter gradient)
 
-  // Gold Glow — accent color (Theme 1)
-  static const Color lemonChiffon = Color(0xFFF4C430);
-  static const Color lemonChiffonDeep = Color(0xFFD4A017);
+  // Gold accent family — matching the Menu/Orders screens.
+  static const Color lemonChiffon =
+      Color(0xFFFCE1AB); // Soft Yellow (Gold highlight)
+  static const Color lemonChiffonDeep =
+      Color(0xFFF3C564); // Warm Gold (Gold accent)
 
-  // Soft Cream — canvas / background (Theme 1)
-  static const Color canvas = Color(0xFFFDF6EC);
-  static const Color canvasDeep = Color(0xFFF7ECD9);
+  // Majorly-white/cream canvas + background.
+  static const Color canvas =
+      Color(0xFFFBF8F5); // Warm Off-White (main background)
+  static const Color canvasDeep =
+      Color(0xFFF7F1ED); // Soft Cream (card background)
 
-  static const Color textDark = Color(0xFF2A1512);
-  static const Color textMuted = Color(0xFF8B7F72);
+  static const Color textDark = Color(0xFF2E0D16); // Deep Brown/Black
+  static const Color textMuted = Color(0xFF9B707A); // Muted Taupe
+
+  // Extra brand tints from the PUREDINE palette — additive only, nothing
+  // existing was renamed or removed to make room for these.
+  static const Color dustyBlush = Color(0xFFF3D9DC); // Blush/Pink tint
+  static const Color paleRose = Color(0xFFEFD7DA); // Light pink
+  static const Color paleMint = Color(0xFFEAF6EF); // Mint background
+  static const Color freshGreen = Color(0xFF44AF70); // Live / Success
 
   /// Shared soft resting-state shadow — matches the exact softShadow used
-  /// on MenuScreen / StaffScreen / Create Order screen, so every card on
-  /// this page carries the same warm, branded elevation.
+  /// on MenuScreen / StaffScreen / Orders screen, so every card on this
+  /// page carries the same warm, branded elevation.
   static List<BoxShadow> get softShadow => [
         BoxShadow(
           color: milanoRedDeep.withValues(alpha: 0.08),
@@ -104,57 +256,53 @@ class _Palette {
         ),
       ];
 
-  /// Navbar/header shadow stack — a rich three-layer shadow (deep maroon
-  /// drop shadow + soft ambient gold bloom + fine black contact shadow)
-  /// that gives the Dashboard hero real presence as a floating command
-  /// surface rather than a flat banner.
+  /// PASS 12: kept defined for palette-shape parity even though
+  /// `_DashboardHero` no longer uses it (see the Pass 12 note above) — a
+  /// deeper, warmer drop shadow, previously used to separate the rounded
+  /// hero banner from the cream content beneath it.
   static List<BoxShadow> get heroShadow => [
         BoxShadow(
-          color: milanoRed.withValues(alpha: 0.34),
-          blurRadius: 36,
-          offset: const Offset(0, 16),
+          color: milanoRedDeep.withValues(alpha: 0.28),
+          blurRadius: 24,
+          offset: const Offset(0, 10),
         ),
         BoxShadow(
-          color: lemonChiffon.withValues(alpha: 0.10),
-          blurRadius: 18,
-          offset: const Offset(0, 4),
-        ),
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.12),
+          color: Colors.black.withValues(alpha: 0.10),
           blurRadius: 6,
-          offset: const Offset(0, 2),
-        ),
-      ];
-
-  /// Soft inner "glass" shadow used on the stats capsule inside the hero —
-  /// pure decoration, gives the capsule a faint pressed-glass depth instead
-  /// of a flat dark fill.
-  static List<BoxShadow> get statCapsuleShadow => [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.18),
-          blurRadius: 16,
-          offset: const Offset(0, 7),
-        ),
-        BoxShadow(
-          color: lemonChiffon.withValues(alpha: 0.06),
-          blurRadius: 10,
-          offset: const Offset(0, -2),
+          offset: const Offset(0, 3),
         ),
       ];
 
   /// Ring/halo glow used behind the hero avatar — a slightly richer,
-  /// two-tone glow so the avatar reads as a clear focal point in the
-  /// redesigned navbar.
+  /// two-tone glow so the avatar reads as a clear focal point in the top
+  /// bar.
   static List<BoxShadow> get avatarHalo => [
         BoxShadow(
-          color: lemonChiffon.withValues(alpha: 0.30),
-          blurRadius: 20,
-          spreadRadius: 1,
+          color: lemonChiffonDeep.withValues(alpha: 0.30),
+          blurRadius: 14,
+          spreadRadius: 0.5,
         ),
         BoxShadow(
           color: Colors.black.withValues(alpha: 0.10),
-          blurRadius: 8,
-          offset: const Offset(0, 4),
+          blurRadius: 6,
+          offset: const Offset(0, 3),
+        ),
+      ];
+
+  /// PASS 9: a dedicated, slightly stronger "floating card" shadow used by
+  /// the stat cards now that they sit outside the hero, straddling the
+  /// maroon banner and the white canvas — needs enough depth to read as
+  /// clearly elevated against both backgrounds at once.
+  static List<BoxShadow> get floatingShadow => [
+        BoxShadow(
+          color: milanoRedDeep.withValues(alpha: 0.20),
+          blurRadius: 26,
+          offset: const Offset(0, 14),
+        ),
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.06),
+          blurRadius: 6,
+          offset: const Offset(0, 3),
         ),
       ];
 }
@@ -241,9 +389,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       backgroundColor: _Palette.canvas,
-      // Full-screen, edge-to-edge treatment — hero banner now draws behind
-      // the status bar, matching the Create Order / Menu screens' navbar.
-      extendBodyBehindAppBar: true,
       body: Stack(
         children: [
           // Soft ambient gradient wash behind everything
@@ -265,9 +410,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
 
           // Faint diagonal sheen sweeping across the whole page — a subtle
-          // extra layer of depth so the cream backdrop doesn't read as flat
-          // behind the hero, echoing the glass-highlight language used in
-          // the hero itself.
+          // extra layer of depth so the white backdrop doesn't read as flat.
           Positioned.fill(
             child: IgnorePointer(
               child: DecoratedBox(
@@ -288,10 +431,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
 
           // ── Ambient background dressing ─────────────────────────────────
-          // Purely decorative soft gold/maroon glows, matching the same
-          // "foggy" backdrop language used across the Menu/Staff/Create
-          // Order screens so this full-screen dashboard feels like one
-          // cohesive brand.
+          // Purely decorative soft gold/wine glows, matching the same
+          // "foggy" backdrop language used across the Menu/Staff/Orders
+          // screens so this full-screen dashboard feels like one cohesive
+          // brand.
           Positioned(
             top: -90,
             right: -70,
@@ -302,7 +445,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    _Palette.lemonChiffon.withValues(alpha: 0.20),
+                    _Palette.lemonChiffonDeep.withValues(alpha: 0.20),
                     Colors.transparent,
                   ],
                 ),
@@ -377,23 +520,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           Column(
             children: [
-              // ── Hero Greeting Banner (acts as the screen's navbar) ────────
+              // ── Hero Greeting Banner (acts as the screen's top bar) ──────
+              // PASS 11: this is now the ONLY fixed/non-scrolling element
+              // on the page — `_StatsRow` moved into the scrollable
+              // content below (see the comment above the scroll view) so
+              // the scrollable area begins exactly where the three stat
+              // boxes start.
+              // PASS 12: the hero itself is now a straight, flat-bottomed
+              // band (no rounded corners, no bleeding drop shadow),
+              // matching MenuScreen's `_buildCustomHeader()` shape — see
+              // the Pass 12 note above `_Palette` for details. Its props
+              // (`greeting`, `firstName`, `dateLabel`) are unchanged.
               _DashboardHero(
                 greeting: _getGreeting(),
                 firstName: firstName,
                 dateLabel: _todayLabel(),
-                newOrdersCount: newOrdersCount,
-                activeOrdersCount: activeOrdersCount,
-                availableTablesCount: availableTablesCount,
               ),
 
               // ── Scrollable content ────────────────────────────────────────
+              // PASS 11: `_StatsRow` is now the first child inside this
+              // scrollable Column (see immediately below), so the
+              // scrollbar/scrollable region starts right where the three
+              // stat boxes start, and they scroll together with Quick
+              // Actions / Active Orders beneath them.
               Expanded(
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
                   padding: EdgeInsets.symmetric(
                     horizontal: isMobile ? 16 : 24,
-                    vertical: isMobile ? 24 : 32,
+                    vertical: isMobile ? 16 : 28,
                   ),
                   child: Center(
                     child: ConstrainedBox(
@@ -401,6 +556,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // ── Live Stats Row — first thing in the scroll
+                          // view, so it's exactly where scrolling begins.
+                          // Same three values (`activeOrdersCount` /
+                          // `newOrdersCount` / `availableTablesCount`),
+                          // same order, same `_StatsRow`/`_StatCard`
+                          // widgets as every prior pass — only its
+                          // container (scrollable vs. fixed) changed.
+                          _StatsRow(
+                            activeOrdersCount: activeOrdersCount,
+                            newOrdersCount: newOrdersCount,
+                            availableTablesCount: availableTablesCount,
+                            isMobile: isMobile,
+                          ),
+                          SizedBox(height: isMobile ? 24 : 32),
+
                           // ── Section label ──
                           Row(
                             children: [
@@ -475,18 +645,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   _FeatureCard(
                                     icon: Icons.add_shopping_cart_rounded,
                                     iconColor: _Palette.milanoRedDeep,
-                                    iconBg: _Palette.milanoRedDeep
-                                        .withValues(alpha: 0.08),
+                                    iconBg: _Palette.dustyBlush
+                                        .withValues(alpha: 0.55),
                                     title: 'Create Order',
                                     description: 'Start a new table order',
                                     onTap: () => context.push(
                                       '/staff/create-order',
                                     ),
                                   ),
+                                  // PASS 5 / PASS 8: drawn from the same
+                                  // Warm Gold / Soft Yellow family used
+                                  // across the rest of the screen.
                                   _FeatureCard(
                                     icon: Icons.notifications_active_rounded,
-                                    iconColor: const Color(0xFFD97706),
-                                    iconBg: const Color(0xFFFFFBEB),
+                                    iconColor: _Palette.lemonChiffonDeep,
+                                    iconBg: _Palette.lemonChiffon
+                                        .withValues(alpha: 0.55),
                                     title: 'New Orders',
                                     description: 'View incoming orders',
                                     badge: newOrdersCount > 0
@@ -496,10 +670,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       '/staff/new-orders',
                                     ),
                                   ),
+                                  // PASS 5 / PASS 8: a lighter Milano
+                                  // Red/Wine tone, matching
+                                  // `milanoRedLight` used elsewhere on
+                                  // this screen (section-label accent,
+                                  // ambient glow, avatar halo).
                                   _FeatureCard(
                                     icon: Icons.receipt_long_rounded,
-                                    iconColor: const Color(0xFF0D9488),
-                                    iconBg: const Color(0xFFF0FDFA),
+                                    iconColor: _Palette.milanoRedLight,
+                                    iconBg: _Palette.paleRose
+                                        .withValues(alpha: 0.65),
                                     title: 'Active Orders',
                                     description: 'Manage live orders',
                                     badge: activeOrdersCount > 0
@@ -507,10 +687,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         : null,
                                     onTap: () => context.push('/staff/orders'),
                                   ),
+                                  // PASS 5 / PASS 8: now a soft Pale Mint
+                                  // tile (per the reference look) with a
+                                  // deep wine icon. The "N free" badge
+                                  // color stays AppColors.success (green),
+                                  // since it conveys the same functional
+                                  // "available" meaning the order-status
+                                  // badges carry elsewhere in the app.
                                   _FeatureCard(
                                     icon: Icons.grid_view_rounded,
-                                    iconColor: AppColors.slate600,
-                                    iconBg: AppColors.slate50,
+                                    iconColor: _Palette.milanoRedDeep,
+                                    iconBg: _Palette.paleMint,
                                     title: 'Tables',
                                     description: 'Floor plan overview',
                                     badge: availableTablesCount > 0
@@ -585,8 +772,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                 margin: const EdgeInsets.only(
                                                   right: 8,
                                                 ),
-                                                decoration: const BoxDecoration(
-                                                  color: Color(0xFF4ADE80),
+                                                decoration: BoxDecoration(
+                                                  color: _Palette.freshGreen,
                                                   shape: BoxShape.circle,
                                                 ),
                                               ),
@@ -723,299 +910,117 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-// ─── Hero Greeting Banner (Staff Dashboard's "navbar") ─────────────────────
-// Redesigned into its own distinctive "command bar" identity rather than a
-// straight clone of the Menu header:
-//   • A richer four-stop diagonal gradient surface (milanoRedLight →
-//     milanoRed → milanoRedDeep → near-black maroon) for more tonal depth.
-//   • A large, very faint watermark emblem (a restaurant glyph) sitting
-//     behind the greeting text — a unique signature element this banner
-//     didn't have before.
-//   • The exact same bottom-corner radius (28 mobile / 38 desktop) and the
-//     same three-layer `heroShadow` stack, so it still reads as part of
-//     the same design system.
-//   • A refined top row: the LIVE SYSTEM pill now has a soft pulsing halo
-//     around its status dot, and the avatar sits inside a two-tone gold
-//     ring with its own halo shadow.
-//   • A bolder greeting block — bigger name type, a slim label row with a
-//     small accent tick beside "GOOD MORNING," and an animated gold
-//     underline that draws in on load.
-//   • A rebuilt glass stats capsule: each stat now sits inside its own
-//     soft icon badge, with slim vertical dividers between stats instead
-//     of relying on padding alone — reads as a proper "readout strip"
-//     rather than three icons in a row.
-// No data, provider, or navigation logic was touched — every stat pill,
-// avatar initial, and route still comes from the exact same values passed
-// in from DashboardScreen.
+// ─── Hero Greeting Banner (Staff Dashboard's top bar) ──────────────────────
+// PASS 9: this widget no longer receives or paints the live-stats readout
+// (`newOrdersCount` / `activeOrdersCount` / `availableTablesCount`) — those
+// now live outside the hero in `_StatsRow`.
+// PASS 10: renders as a fully self-contained banner with no overlap from
+// anything beneath it — `_StatsRow` is now a plain sibling below the hero
+// (see `DashboardScreen.build()`), not positioned over its edge.
+// PASS 12: the outer band is now straight-bottomed (no rounded corners, no
+// bleeding `heroShadow`) to match `MenuScreen._buildCustomHeader()`'s flat
+// top-bar shape — see the Pass 12 note above `_Palette` for the full
+// rationale. Everything else about the hero is unchanged from PASS 8: a
+// rich dark maroon-to-wine gradient banner — a greeting row (sun icon +
+// "Good Morning" in gold, bold serif first name in white, top-right avatar
+// with a white ring and a small live/green status dot), a floating cream
+// tagline pill with a photo badge, and a light date/live row with a gold
+// hairline beneath it. No data, provider, or navigation logic lives in
+// this widget, same as every prior pass — the avatar's halo glow (already
+// defined in `_Palette`) is applied for a touch more depth.
 class _DashboardHero extends StatelessWidget {
   final String greeting;
   final String firstName;
   final String dateLabel;
-  final int newOrdersCount;
-  final int activeOrdersCount;
-  final int availableTablesCount;
 
   const _DashboardHero({
     required this.greeting,
     required this.firstName,
     required this.dateLabel,
-    required this.newOrdersCount,
-    required this.activeOrdersCount,
-    required this.availableTablesCount,
   });
 
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 600;
 
-    return ClipRect(
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          // Richer four-stop diagonal maroon gradient — deeper and more
-          // dimensional than a flat three-stop wash, giving the banner a
-          // more "faceted" surface unique to this dashboard.
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              _Palette.milanoRedLight,
-              _Palette.milanoRed,
-              _Palette.milanoRedDeep,
-              Color(0xFF3A0B0B),
-            ],
-            stops: [0.0, 0.38, 0.72, 1.0],
-          ),
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(isMobile ? 28 : 38),
-            bottomRight: Radius.circular(isMobile ? 28 : 38),
-          ),
-          border: const Border(
-            bottom: BorderSide(color: _Palette.lemonChiffon, width: 4),
-          ),
-          boxShadow: _Palette.heroShadow,
+    return Container(
+      width: double.infinity,
+      // PASS 12: straight, flat bottom edge — matching MenuScreen's
+      // `_buildCustomHeader()`, which is a plain full-width band with no
+      // rounded corners and no bleeding drop shadow beneath it. The
+      // previous bottomLeft/bottomRight 32px rounding and the separate
+      // `heroShadow` (which cast a soft shadow past the header's curved
+      // edge) have both been removed so this top bar reads as a clean,
+      // straight-bottomed band exactly like the Menu screen's header.
+      decoration: const BoxDecoration(
+        // Rich dark maroon-to-wine gradient, matching the reference look —
+        // Deep Wine Maroon at the top-left fading into the lighter Wine
+        // tone toward the bottom-right.
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _Palette.milanoRed,
+            _Palette.milanoRedLight,
+          ],
         ),
-        clipBehavior: Clip.antiAlias,
+      ),
+      child: ClipRect(
         child: Stack(
           children: [
-            // Background decorative glows — soft, ambient depth behind the
-            // whole panel.
-            Positioned(
-              top: -100,
-              right: -50,
-              child: Container(
-                width: 300,
-                height: 300,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      _Palette.lemonChiffon.withValues(alpha: 0.20),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: -80,
-              left: -60,
-              child: Container(
-                width: 220,
-                height: 220,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      _Palette.milanoRedLight.withValues(alpha: 0.22),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // Soft radial glow anchored behind the greeting text block —
-            // adds depth without touching layout.
-            Positioned(
-              top: 70,
-              left: -40,
-              child: Container(
-                width: 260,
-                height: 160,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      _Palette.lemonChiffon.withValues(alpha: 0.14),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // Extra ambient gold glow, lower-right — a fuller, richer
-            // backdrop behind the stats capsule.
-            Positioned(
-              bottom: -90,
-              right: -30,
-              child: Container(
-                width: 220,
-                height: 220,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      _Palette.lemonChiffon.withValues(alpha: 0.10),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // ── Large faint watermark emblem — a unique signature touch
-            // this banner didn't previously have, giving it its own
-            // identity beyond a plain gradient card. Sits low-opacity and
-            // large behind the greeting text, never competing with copy.
-            Positioned(
-              right: isMobile ? -30 : -10,
-              bottom: isMobile ? -20 : -10,
+            // A subtle deeper-wine wash toward the bottom, so content near
+            // the hero's lower edge reads clearly against the darkest part
+            // of the banner.
+            Positioned.fill(
               child: IgnorePointer(
-                child: Opacity(
-                  opacity: 0.07,
-                  child: Icon(
-                    Icons.restaurant_menu_rounded,
-                    size: isMobile ? 150 : 200,
-                    color: Colors.white,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        _Palette.milanoRedDeep.withValues(alpha: 0.35),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-
-            // Subtle decorative diagonal ribbon accents — the same brand
-            // language used on the Menu/Staff/Create Order navbar headers,
-            // with a third ribbon added for extra texture.
+            // Two very soft decorative gold glows tucked behind the
+            // content — purely decorative, mirroring the ambient-glow
+            // language used across the rest of the page.
             Positioned(
               top: -50,
-              left: -40,
-              child: Transform.rotate(
-                angle: 0.5,
+              right: -40,
+              child: IgnorePointer(
+                child: Container(
+                  width: 190,
+                  height: 190,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        _Palette.lemonChiffonDeep.withValues(alpha: 0.22),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -70,
+              left: -60,
+              child: IgnorePointer(
                 child: Container(
                   width: 200,
-                  height: 76,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        _Palette.lemonChiffon.withValues(alpha: 0.12),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: -40,
-              right: -30,
-              child: Transform.rotate(
-                angle: -0.4,
-                child: Container(
-                  width: 180,
-                  height: 68,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.white.withValues(alpha: 0.06),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              top: 30,
-              right: 40,
-              child: Transform.rotate(
-                angle: 0.7,
-                child: Container(
-                  width: 120,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        _Palette.lemonChiffon.withValues(alpha: 0.08),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // Fine dotted texture accent, matching the app's refined
-            // decorative language used across the admin headers.
-            Positioned(
-              top: 6,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: List.generate(
-                    5,
-                    (i) => Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
-                      width: 4,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _Palette.lemonChiffon.withValues(
-                          alpha: i == 2 ? 0.9 : 0.32,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // Fine glass highlight line along the very top edge, giving the
-            // full-width panel a polished, "premium glass" finish.
-            Positioned(
-              top: 0,
-              left: 24,
-              right: 24,
-              child: Container(
-                height: 1,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.transparent,
-                      Colors.white.withValues(alpha: 0.35),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // Extra soft corner glows tucked behind each top corner —
-            // frames the panel's full width with a touch more depth.
-            Positioned(
-              top: -20,
-              left: -20,
-              child: IgnorePointer(
-                child: Container(
-                  width: 110,
-                  height: 110,
+                  height: 200,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        Colors.white.withValues(alpha: 0.10),
+                        _Palette.lemonChiffon.withValues(alpha: 0.10),
                         Colors.transparent,
                       ],
                     ),
@@ -1023,387 +1028,278 @@ class _DashboardHero extends StatelessWidget {
                 ),
               ),
             ),
-            Positioned(
-              top: -20,
-              right: -20,
-              child: IgnorePointer(
-                child: Container(
-                  width: 110,
-                  height: 110,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        _Palette.lemonChiffon.withValues(alpha: 0.16),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
             SafeArea(
               bottom: false,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+                padding: EdgeInsets.fromLTRB(
+                  isMobile ? 18 : 32,
+                  isMobile ? 14 : 20,
+                  isMobile ? 18 : 32,
+                  // PASS 10: a normal, comfortable bottom padding — the
+                  // hero no longer needs to reserve extra room for an
+                  // overlapping stats row beneath it, since `_StatsRow`
+                  // now sits fully outside/below the hero as a plain
+                  // sibling.
+                  isMobile ? 24 : 30,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Top Row: Brand status + date pill + avatar
+                    // ── Top row: greeting (left) + avatar (right) ──────────
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 7,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(30),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.2),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
                                 children: [
-                                  // Status dot with a soft pulsing halo
-                                  // ring around it — a subtle, purely
-                                  // decorative "alive" cue.
-                                  Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      Container(
-                                        width: 14,
-                                        height: 14,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: const Color(
-                                            0xFF4ADE80,
-                                          ).withValues(alpha: 0.18),
-                                        ),
-                                      )
-                                          .animate(
-                                            onPlay: (c) => c.repeat(
-                                              reverse: true,
-                                            ),
-                                          )
-                                          .scale(
-                                            begin: const Offset(0.6, 0.6),
-                                            end: const Offset(1.15, 1.15),
-                                            duration: 1400.ms,
-                                            curve: Curves.easeInOut,
-                                          ),
-                                      Container(
-                                        width: 8,
-                                        height: 8,
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFF4ADE80),
-                                          shape: BoxShape.circle,
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: const Color(0xFF4ADE80)
-                                                  .withValues(alpha: 0.6),
-                                              blurRadius: 6,
-                                              spreadRadius: 1,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
+                                  Icon(
+                                    Icons.wb_sunny_rounded,
+                                    size: 15,
+                                    color: _Palette.lemonChiffon,
                                   ),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(width: 6),
                                   Text(
-                                    'LIVE SYSTEM',
+                                    greeting,
                                     style: GoogleFonts.inter(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w900,
-                                      color: Colors.white,
-                                      letterSpacing: 1.2,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: _Palette.lemonChiffon,
+                                      letterSpacing: 0.3,
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                            if (!isMobile) ...[
-                              const SizedBox(width: 10),
-                              // Floating date pill — same treatment as the
-                              // date chip used on the Menu/Create Order
-                              // screens' headers.
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 7,
+                              const SizedBox(height: 4),
+                              Text(
+                                firstName,
+                                style: GoogleFonts.playfairDisplay(
+                                  color: Colors.white,
+                                  fontSize: isMobile ? 30 : 36,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: -0.3,
+                                  height: 1.1,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: _Palette.lemonChiffon.withValues(
-                                      alpha: 0.25,
-                                    ),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.calendar_today_rounded,
-                                      size: 12,
-                                      color: _Palette.lemonChiffon.withValues(
-                                        alpha: 0.85,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      dateLabel,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        letterSpacing: 0.3,
-                                        color: Colors.white.withValues(
-                                          alpha: 0.75,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
-                          ],
-                        ),
-                        // Avatar — now sits inside a two-tone gold ring with
-                        // its own halo shadow, reading as the clear focal
-                        // point of the top row.
-                        Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                _Palette.lemonChiffon.withValues(alpha: 0.9),
-                                _Palette.lemonChiffonDeep.withValues(
-                                  alpha: 0.5,
-                                ),
-                              ],
-                            ),
-                            boxShadow: _Palette.avatarHalo,
-                          ),
-                          padding: const EdgeInsets.all(2.4),
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: _Palette.milanoRedDeep,
-                            ),
-                            child: CircleAvatar(
-                              radius: 20,
-                              backgroundColor:
-                                  _Palette.lemonChiffon.withValues(alpha: 0.25),
-                              child: Text(
-                                // BUGFIX: firstName is guaranteed non-empty
-                                // by the caller now (falls back to 'Staff'),
-                                // but this stays defensive in case firstName
-                                // is ever passed in directly from elsewhere.
-                                firstName.isNotEmpty
-                                    ? firstName[0].toUpperCase()
-                                    : '?',
-                                style: GoogleFonts.playfairDisplay(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: _Palette.lemonChiffon,
-                                ),
-                              ),
-                            ),
                           ),
                         ),
-                      ],
-                    ).animate().fade(duration: 600.ms).slideY(begin: -0.2),
-
-                    const SizedBox(height: 18),
-
-                    // Greeting Section — accent tick + label → big name →
-                    // animated gold divider → subtitle.
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                        const SizedBox(width: 14),
+                        // Avatar — white-ringed circle, top-right, with a
+                        // small live/green status dot overlapping its
+                        // bottom-right edge. PASS 9: re-applies the
+                        // `_Palette.avatarHalo` glow so the avatar reads
+                        // as a clear focal point against the gradient.
+                        Stack(
+                          clipBehavior: Clip.none,
                           children: [
                             Container(
-                              width: 3,
-                              height: 12,
-                              margin: const EdgeInsets.only(right: 8),
                               decoration: BoxDecoration(
-                                color: _Palette.lemonChiffon,
-                                borderRadius: BorderRadius.circular(2),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.85),
+                                  width: 1.6,
+                                ),
+                                boxShadow: _Palette.avatarHalo,
+                              ),
+                              padding: const EdgeInsets.all(2.5),
+                              child: CircleAvatar(
+                                radius: isMobile ? 24 : 27,
+                                backgroundColor:
+                                    Colors.white.withValues(alpha: 0.12),
+                                child: Text(
+                                  firstName.isNotEmpty
+                                      ? firstName[0].toUpperCase()
+                                      : '?',
+                                  style: GoogleFonts.playfairDisplay(
+                                    fontSize: isMobile ? 19 : 21,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ),
                             ),
-                            Text(
-                              '${greeting.toUpperCase()},',
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w800,
-                                color: _Palette.lemonChiffon,
-                                letterSpacing: 2.0,
+                            Positioned(
+                              bottom: 1,
+                              right: 1,
+                              child: Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: _Palette.freshGreen,
+                                  border: Border.all(
+                                    color: _Palette.milanoRedLight,
+                                    width: 2,
+                                  ),
+                                ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          firstName,
-                          style: GoogleFonts.playfairDisplay(
-                            color: Colors.white,
-                            fontSize: isMobile ? 30 : 36,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: -0.5,
-                            height: 1.1,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        // Title underline that draws in on load — same
-                        // gold gradient as before, now with an entrance
-                        // animation for a touch more polish.
-                        Container(
-                          width: 64,
-                          height: 2.5,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(4),
-                            gradient: LinearGradient(
-                              colors: [
-                                _Palette.lemonChiffon.withValues(alpha: 0.9),
-                                Colors.transparent,
-                              ],
-                            ),
-                          ),
-                        )
-                            .animate()
-                            .fade(duration: 500.ms, delay: 250.ms)
-                            .scaleX(
-                              begin: 0,
-                              end: 1,
-                              alignment: Alignment.centerLeft,
-                              duration: 500.ms,
-                              delay: 250.ms,
-                              curve: Curves.easeOutCubic,
-                            ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "Here's your live restaurant overview",
-                          style: GoogleFonts.inter(
-                            color: Colors.white.withValues(alpha: 0.85),
-                            fontSize: 12,
-                          ),
-                        ),
-                        if (isMobile) ...[
-                          const SizedBox(height: 12),
-                          // On mobile the date pill drops below the
-                          // subtitle instead of sitting in the top row, so
-                          // it never crowds the LIVE SYSTEM badge.
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: _Palette.lemonChiffon.withValues(
-                                  alpha: 0.25,
-                                ),
-                                width: 1,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.calendar_today_rounded,
-                                  size: 10,
-                                  color: _Palette.lemonChiffon.withValues(
-                                    alpha: 0.8,
-                                  ),
-                                ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  dateLabel,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white.withValues(
-                                      alpha: 0.7,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                      ],
+                    ).animate().fade(duration: 500.ms).slideY(begin: -0.15),
+
+                    SizedBox(height: isMobile ? 16 : 20),
+
+                    // ── Tagline banner ──────────────────────────────────────
+                    // Floating cream pill on the dark maroon backdrop —
+                    // fork/knife icon badge, tagline, a circular photo
+                    // badge, and a trailing chevron. Purely decorative: if
+                    // the image can't load, `errorBuilder` falls back to a
+                    // plain restaurant-service icon instead — no data,
+                    // callback, or navigation logic lives in this banner.
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isMobile ? 12 : 18,
+                        vertical: isMobile ? 10 : 14,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _Palette.canvasDeep.withValues(alpha: 0.96),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.12),
+                            blurRadius: 12,
+                            offset: const Offset(0, 6),
                           ),
                         ],
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: isMobile ? 36 : 42,
+                            height: isMobile ? 36 : 42,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: _Palette.dustyBlush,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.restaurant_rounded,
+                              size: isMobile ? 17 : 19,
+                              color: _Palette.milanoRedDeep,
+                            ),
+                          ),
+                          SizedBox(width: isMobile ? 10 : 14),
+                          Expanded(
+                            child: Text(
+                              'Serve every table, seamlessly.',
+                              style: GoogleFonts.playfairDisplay(
+                                color: _Palette.textDark,
+                                fontSize: isMobile ? 14.5 : 17,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          SizedBox(width: isMobile ? 10 : 14),
+                          Container(
+                            width: isMobile ? 40 : 48,
+                            height: isMobile ? 40 : 48,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: _Palette.lemonChiffonDeep
+                                    .withValues(alpha: 0.7),
+                                width: 2,
+                              ),
+                            ),
+                            child: ClipOval(
+                              child: Image.network(
+                                'https://images.unsplash.com/photo-1600891964092-4316c288032e?q=80&w=300&auto=format&fit=crop',
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Container(
+                                  color: _Palette.milanoRedDeep,
+                                  child: const Icon(
+                                    Icons.restaurant_rounded,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            color: _Palette.milanoRedDeep.withValues(
+                              alpha: 0.5,
+                            ),
+                            size: 20,
+                          ),
+                        ],
+                      ),
+                    ).animate().fade(duration: 500.ms, delay: 100.ms).slideY(
+                          begin: 0.1,
+                        ),
+
+                    SizedBox(height: isMobile ? 14 : 18),
+
+                    // ── Date + Live row ──────────────────────────────────────
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today_rounded,
+                          size: 12,
+                          color: Colors.white.withValues(alpha: 0.75),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          dateLabel,
+                          style: GoogleFonts.inter(
+                            fontSize: isMobile ? 11.5 : 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white.withValues(alpha: 0.85),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: _Palette.freshGreen,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          'Live',
+                          style: GoogleFonts.inter(
+                            fontSize: isMobile ? 11 : 12,
+                            fontWeight: FontWeight.w700,
+                            color: _Palette.freshGreen,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
                       ],
-                    )
-                        .animate()
-                        .fade(duration: 600.ms, delay: 200.ms)
-                        .slideX(begin: -0.1),
+                    ),
 
-                    const SizedBox(height: 20),
+                    SizedBox(height: isMobile ? 10 : 12),
 
-                    // Live Stats Row — rebuilt as a "readout strip": each
-                    // stat sits inside its own icon badge, with slim
-                    // vertical dividers between stats instead of relying
-                    // purely on padding, plus a refined glass shadow.
+                    // Thin gold gradient hairline underneath the date row.
                     Container(
-                      padding: const EdgeInsets.all(6),
+                      width: 46,
+                      height: 3,
                       decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(4),
                         gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
                           colors: [
-                            Colors.black.withValues(alpha: 0.24),
-                            Colors.black.withValues(alpha: 0.16),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.10),
-                        ),
-                        boxShadow: _Palette.statCapsuleShadow,
-                      ),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            _StatPill(
-                              icon: Icons.receipt_long_rounded,
-                              value: '$activeOrdersCount',
-                              label: 'Active',
-                            ),
-                            const _StatDivider(),
-                            _StatPill(
-                              icon: Icons.notifications_active_rounded,
-                              value: '$newOrdersCount',
-                              label: 'New',
-                              isAlert: newOrdersCount > 0,
-                            ),
-                            const _StatDivider(),
-                            _StatPill(
-                              icon: Icons.grid_view_rounded,
-                              value: '$availableTablesCount',
-                              label: 'Tables Free',
-                            ),
+                            _Palette.lemonChiffonDeep.withValues(alpha: 0.9),
+                            _Palette.lemonChiffonDeep.withValues(alpha: 0.15),
                           ],
                         ),
                       ),
-                    )
-                        .animate()
-                        .fade(duration: 600.ms, delay: 400.ms)
-                        .slideY(begin: 0.2),
+                    ),
                   ],
                 ),
               ),
@@ -1411,107 +1307,158 @@ class _DashboardHero extends StatelessWidget {
           ],
         ),
       ),
-    ).animate().fade(duration: 450.ms).slideY(begin: -0.15, duration: 450.ms);
-  }
-}
-
-// Slim vertical divider used between stat pills in the redesigned "readout
-// strip" — purely decorative spacing element, no logic.
-class _StatDivider extends StatelessWidget {
-  const _StatDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 1,
-      height: 30,
-      margin: const EdgeInsets.symmetric(horizontal: 2),
-      color: Colors.white.withValues(alpha: 0.10),
     );
   }
 }
 
-class _StatPill extends StatelessWidget {
+// ─── Live Stats Row (fully outside the hero) ───────────────────────────────
+// PASS 9: this is the new home for the three live-stat readouts that used
+// to render inside `_DashboardHero`. `_StatsRow` is a thin layout wrapper
+// around three `_StatCard`s.
+// PASS 10: `DashboardScreen.build()` now places it as a plain sibling
+// directly below the hero (no `Stack`/`Positioned`/negative offset), so it
+// sits entirely on the white canvas with zero overlap of the top bar. Same
+// three values, same order, same semantics as before: no data, provider,
+// or navigation logic lives here.
+class _StatsRow extends StatelessWidget {
+  final int activeOrdersCount;
+  final int newOrdersCount;
+  final int availableTablesCount;
+  final bool isMobile;
+
+  const _StatsRow({
+    required this.activeOrdersCount,
+    required this.newOrdersCount,
+    required this.availableTablesCount,
+    required this.isMobile,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _StatCard(
+            icon: Icons.receipt_long_rounded,
+            value: '$activeOrdersCount',
+            label: 'Active',
+            iconBg: _Palette.paleRose,
+            iconColor: _Palette.milanoRedDeep,
+          ),
+        ),
+        SizedBox(width: isMobile ? 10 : 14),
+        Expanded(
+          child: _StatCard(
+            icon: Icons.notifications_active_rounded,
+            value: '$newOrdersCount',
+            label: 'New',
+            isAlert: newOrdersCount > 0,
+            iconBg: _Palette.lemonChiffonDeep,
+            iconColor: _Palette.textDark,
+          ),
+        ),
+        SizedBox(width: isMobile ? 10 : 14),
+        Expanded(
+          child: _StatCard(
+            icon: Icons.grid_view_rounded,
+            value: '$availableTablesCount',
+            label: 'Tables Free',
+            iconBg: _Palette.dustyBlush,
+            iconColor: _Palette.milanoRedDeep,
+          ),
+        ),
+      ],
+    ).animate().fade(duration: 500.ms, delay: 200.ms).slideY(begin: 0.25);
+  }
+}
+
+// ─── Individual Stat Card ───────────────────────────────────────────────────
+// PASS 9: replaces the old in-hero `_StatPill` (which rendered icon-on-top,
+// number-below in a small dark-panel chip). This card is a horizontal
+// icon + value/label layout on its own white (or, when `isAlert` is true,
+// warm-gold) rounded card with a floating drop shadow — designed to read
+// clearly whether it's sitting over the dark hero or the white canvas
+// beneath it.
+class _StatCard extends StatelessWidget {
   final IconData icon;
   final String value;
   final String label;
+  final Color iconBg;
+  final Color iconColor;
   final bool isAlert;
 
-  const _StatPill({
+  const _StatCard({
     required this.icon,
     required this.value,
     required this.label,
+    required this.iconBg,
+    required this.iconColor,
     this.isAlert = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: 250.ms,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-      margin: const EdgeInsets.symmetric(horizontal: 2),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
         color: isAlert
-            ? _Palette.lemonChiffon.withValues(alpha: 0.92)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: isAlert
-            ? [
-                BoxShadow(
-                  color: _Palette.lemonChiffonDeep.withValues(alpha: 0.5),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ]
-            : null,
+            ? _Palette.lemonChiffon.withValues(alpha: 0.65)
+            : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isAlert
+              ? _Palette.lemonChiffonDeep.withValues(alpha: 0.45)
+              : _Palette.milanoRedDeep.withValues(alpha: 0.08),
+          width: 1.2,
+        ),
+        boxShadow: _Palette.floatingShadow,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Icon now sits inside its own small round badge instead of
-          // floating bare, so each stat reads as a distinct "readout"
-          // module rather than a plain icon+text pairing.
           Container(
-            width: 26,
-            height: 26,
+            width: 38,
+            height: 38,
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isAlert
-                  ? _Palette.milanoRedDeep.withValues(alpha: 0.10)
-                  : Colors.white.withValues(alpha: 0.10),
+              color: iconBg,
             ),
             child: Icon(
               icon,
-              size: 15,
-              color: isAlert ? _Palette.milanoRedDeep : _Palette.lemonChiffon,
+              size: 17,
+              color: iconColor,
             ),
           ),
           const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                value,
-                style: AppTheme.sans(
-                  size: 16,
-                  weight: FontWeight.w900,
-                  color: isAlert ? _Palette.milanoRedDeep : Colors.white,
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  value,
+                  style: AppTheme.sans(
+                    size: 19,
+                    weight: FontWeight.w900,
+                    color: _Palette.textDark,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              Text(
-                label.toUpperCase(),
-                style: AppTheme.sans(
-                  size: 9,
-                  weight: FontWeight.w700,
-                  color: isAlert
-                      ? _Palette.milanoRedDeep.withValues(alpha: 0.7)
-                      : Colors.white.withValues(alpha: 0.6),
-                  letterSpacing: 0.5,
+                Text(
+                  label.toUpperCase(),
+                  style: AppTheme.sans(
+                    size: 9,
+                    weight: FontWeight.w700,
+                    color: _Palette.textMuted,
+                    letterSpacing: 0.4,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

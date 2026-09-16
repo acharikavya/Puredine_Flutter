@@ -13,16 +13,15 @@ import 'profile_screen.dart';
 import 'package:go_router/go_router.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────
-/// Local "Theme 1 — Dark Maroon × Soft Cream × Gold Glow" palette — matches
-/// the Order Details / New Orders / Create Order / Menu Management / Orders
-/// screens exactly (#8B1D1D primary / #F4C430 gold accent), so the app shell
-/// (sidebar on wide screens, bottom nav on mobile) now reads as part of the
-/// same cohesive, professional brand instead of the previous neutral
-/// slate/white chrome. Used ONLY for this screen's visual layer — nothing
-/// here touches AppColors, AppShadows, or any role/auth logic. Role-based
-/// accent colors (accentColor / accentLightColor / isBilling) are still
-/// computed and passed through exactly as before; this palette only
-/// restyles the structural chrome around them.
+/// PUREDINE Maroon + Cream palette — matches the Order Details / New
+/// Orders / Create Order / Menu Management / Orders / Tables / Profile
+/// screens exactly, so the app shell (sidebar on wide screens, bottom nav
+/// on mobile) now reads as part of the same cohesive, professional brand.
+/// Used ONLY for this screen's visual layer — nothing here touches
+/// AppColors, AppShadows, or any role/auth logic. Role-based accent colors
+/// (accentColor / accentLightColor / isBilling) are still computed and
+/// passed through exactly as before; this palette only restyles the
+/// structural chrome around them.
 ///
 /// UI-ENHANCEMENT PASS: this revision adds richer depth (layered shadows,
 /// soft glows, subtle gradients), a clearer active-state language (side
@@ -54,19 +53,46 @@ import 'package:go_router/go_router.dart';
 /// outer/inner padding (vertical 3 / vertical 2) — so both bottom bars stay
 /// visually identical in construction. Purely dimensional; no structure,
 /// palette, animation curves, nav items, or tap behavior were touched.
+///
+/// PUREDINE PALETTE PASS (this pass): `_Palette`'s color values were
+/// swapped from the old Dark Maroon × Gold Glow set to the exact PUREDINE
+/// Maroon + Cream values, matching every other staff screen. Every field
+/// name, every shadow method signature, and every call site that consumes
+/// `_Palette` is unchanged — only the hex values behind each name changed.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
-  static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
-  static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
-  static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
-  static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow (Accent)
-  static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
-  static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
-  static const Color canvasDeep = Color(0xFFF5E9D6); // Deeper cream
-  static const Color textDark = Color(0xFF3A1608);
-  static const Color textMuted = Color(0xFF8A6F5E);
-  static const Color gold = Color(0xFFF4C430);
-  static const Color goldLight = Color(0xFFF7D66B);
+  // Primary / Topbar — Deep Wine Maroon
+  static const Color milanoRed = Color(0xFF742A3C);
+  // Primary accent / deep — Burgundy
+  static const Color milanoRedDeep = Color(0xFF8A183F);
+  // Topbar lighter gradient — Wine
+  static const Color milanoRedLight = Color(0xFF813244);
+
+  // Gold accent family — Warm Gold (accent) / a deeper gold used for
+  // borders and hover/emphasis states, plus the Soft Yellow highlight.
+  static const Color lemonChiffon = Color(0xFFF3C564); // Gold Glow (Accent)
+  static const Color lemonChiffonDeep = Color(0xFFD9A63E); // Deeper gold
+
+  // Main background — Warm Off-White
+  static const Color canvas = Color(0xFFFBF8F5);
+  // Card background — Soft Cream
+  static const Color canvasDeep = Color(0xFFF7F1ED);
+
+  // Dark text — Deep Brown/Black
+  static const Color textDark = Color(0xFF2E0D16);
+  // Secondary text — Muted Taupe
+  static const Color textMuted = Color(0xFF9B707A);
+
+  static const Color gold = Color(0xFFF3C564);
+  static const Color goldLight = Color(0xFFFCE1AB); // Soft Yellow highlight
+
+  // Extra brand tints from the PUREDINE palette.
+  static const Color dustyBlush = Color(0xFFF3D9DC); // Blush/Pink tint
+  static const Color paleRose = Color(0xFFEFD7DA); // Light pink
+  static const Color paleMint = Color(0xFFEAF6EF); // Mint background
+
+  // Live / Success — Fresh Green.
+  static const Color success = Color(0xFF44AF70);
 
   /// Themed soft shadow for resting cards/panels — matches the exact
   /// softShadow used on every other staff screen.
@@ -932,13 +958,13 @@ class _Sidebar extends StatelessWidget {
                             width: 6,
                             height: 6,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF4ADE80),
+                              color: _Palette.success,
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(
-                                    0xFF4ADE80,
-                                  ).withValues(alpha: 0.6),
+                                  color: _Palette.success.withValues(
+                                    alpha: 0.6,
+                                  ),
                                   blurRadius: 4,
                                 ),
                               ],

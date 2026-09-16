@@ -24,28 +24,119 @@ import 'profile/profile_screen.dart';
 /// construction, just reusing this file's own `_NavPalette` colors. All
 /// pre-existing color constants are unchanged so nothing else that
 /// already references `_NavPalette` is affected.
+///
+/// SIZE-REDUCTION PASS / SIZE-REDUCTION PASS 2 / CURSOR PASS: see the
+/// notes directly above `_AdminBottomNav` below — purely dimensional
+/// trims and a pointer-cursor affordance, no palette or logic changes.
+///
+/// COLOR-THEME PASS ("PUREDINE Maroon + Cream" — darker) — this pass:
+/// swapped the underlying color values in `_NavPalette` for the
+/// requested PUREDINE Maroon + Cream reference palette — Deep Wine
+/// Maroon (#742A3C), Wine (#813244), Burgundy (#8A183F), Deep Brown/
+/// Black (#2E0D16), Warm Off-White (#FBF8F5), Soft Cream (#F7F1ED),
+/// Dusty Blush (#F3D9DC), Pale Rose (#EFD7DA), Warm Gold (#F3C564),
+/// Soft Yellow (#FCE1AB), Fresh Green (#44AF70), and Muted Taupe
+/// (#9B707A) — and deepened the surrounding chrome (rail/dock
+/// backgrounds, shadows, a couple of flat fills turned into gradients)
+/// so the admin shell reads as noticeably richer/darker instead of
+/// washed out, matching the same PUREDINE identity now used on the
+/// login screen. Every field name below (`maroon`, `maroonDark`,
+/// `maroonDeep`, `maroonLight`, `gold`, `goldDeep`, `muted`, `cream`,
+/// `creamDeep`, `chipBg`) is unchanged on purpose, since every widget in
+/// this file already reads from these exact names — only the `Color`
+/// values themselves (plus two small additive fields, noted below) were
+/// updated:
+///   • maroon → Deep Wine Maroon (#742A3C), the primary brand tone used
+///     for the brand-header logo mark, the "Admin Panel" badge icon/
+///     text, the active side-nav-row gradient, and the active bottom-
+///     nav label.
+///   • maroonDark → Burgundy (#8A183F), the palette's own "primary
+///     accent", used as the deeper step in the brand-header logo
+///     gradient and the selected side-nav-row gradient.
+///   • maroonDeep → Deep Brown/Black (#2E0D16), used for the deepest
+///     shadow tint (dock shadow, chip shadow) and as the deep step in
+///     the active bottom-nav badge gradient, for a rich, grounded lift
+///     instead of a plain grey/black shadow.
+///   • maroonLight → Wine (#813244), the requested lighter header-
+///     gradient tone, used as the light step in the active bottom-nav
+///     badge gradient (Wine → Deep Brown/Black).
+///   • gold / goldDeep → Warm Gold (#F3C564) stays the accent used for
+///     the top indicator dot, active badge ring/glow, gold dock cap
+///     border, and side-nav accent bar. `goldDeep` is a small,
+///     purely-internal deeper-amber shade derived from Warm Gold (not a
+///     separate hex from the requested table — same pattern as the
+///     login screen's internal gradient "bridge" tone), used only to
+///     give the "Admin Panel" badge a richer two-stop gold gradient
+///     instead of a flat fill.
+///   • muted → Muted Taupe (#9B707A), used for inactive bottom-nav
+///     labels and the side-nav footer's secondary text.
+///   • cream → Warm Off-White (#FBF8F5), the requested main background,
+///     used for the Scaffold background, the side-nav rail, and (per
+///     the "for cards" background spec) the admin footer summary card.
+///   • creamDeep → Soft Cream (#F7F1ED), used as the deeper step in the
+///     bottom-nav dock's gradient and the side-nav rail's gradient, so
+///     both read as a richer cream instead of a near-white flat fill.
+///   • chipBg → Dusty Blush (#F3D9DC), which is exactly the requested
+///     "Icon BG" tone for cards — used for the unselected side-nav-row
+///     icon chip.
+///   • fieldBorder (new field, additive only) → Pale Rose (#EFD7DA), the
+///     requested card border tone, used on the admin footer summary
+///     card per the "for cards" border spec.
+///   • success (new field, additive only) → Fresh Green (#44AF70), the
+///     requested "Live/Success" tone, used for the footer card's
+///     "Online" status dot in place of the generic `Colors.green` it
+///     previously used.
+/// Shadow alpha/blur values in `softShadow`, `chipShadow`,
+/// `floatUpShadow`, `goldGlow`, and `accentGlow` were also deepened
+/// slightly (same colors, a bit more opacity/spread) for a richer,
+/// more premium lift. No tab order, routes, tap behavior, breakpoints,
+/// sizing, animation durations/curves, or any other logic was touched
+/// anywhere in this pass — presentation only.
 class _NavPalette {
-  static const Color maroon = Color(0xFF8B1D1D);
-  static const Color maroonDark = Color(0xFF6E1616);
-  static const Color maroonDeep = Color(0xFF4E0F0F);
-  static const Color maroonLight = Color(0xFFA83030);
-  static const Color gold = Color(0xFFF4C430);
-  static const Color goldDeep = Color(0xFFD9A62A);
-  static const Color muted = Color(0xFF8A6F5E);
-  static const Color cream = Color(0xFFFDF3E6);
-  static const Color creamDeep = Color(0xFFF5E9D6);
-  static const Color chipBg = Color(0xFFF3E1CE);
+  static const Color maroon = Color(0xFF742A3C); // Deep Wine Maroon (Primary)
+  static const Color maroonDark =
+      Color(0xFF8A183F); // Burgundy (Primary accent)
+  static const Color maroonDeep =
+      Color(0xFF2E0D16); // Deep Brown/Black (deepest shade)
+  static const Color maroonLight =
+      Color(0xFF813244); // Wine (lighter header gradient tone)
+  static const Color gold = Color(0xFFF3C564); // Warm Gold (Accent)
+
+  // Small, purely-internal deeper-amber shade derived from Warm Gold —
+  // not a separate hex from the requested table, needed only to give
+  // the "Admin Panel" badge a richer two-stop gold gradient instead of
+  // a flat fill (same pattern as the login screen's internal gradient
+  // "bridge" tone).
+  static const Color goldDeep = Color(0xFFD9A94A);
+
+  static const Color muted = Color(0xFF9B707A); // Muted Taupe
+  static const Color cream =
+      Color(0xFFFBF8F5); // Warm Off-White (main background)
+  static const Color creamDeep =
+      Color(0xFFF7F1ED); // Soft Cream (deeper cream / card tone)
+  static const Color chipBg =
+      Color(0xFFF3D9DC); // Dusty Blush (requested "Icon BG")
+
+  // Additive field: the requested "for cards" border tone, used on the
+  // admin footer summary card.
+  static const Color fieldBorder = Color(0xFFEFD7DA); // Pale Rose
+
+  // Additive field: the requested "Live/Success" tone, used for the
+  // footer card's "Online" status dot (previously a generic
+  // `Colors.green`).
+  static const Color success = Color(0xFF44AF70); // Fresh Green
 
   /// Themed soft shadow for resting cards/panels — mirrors `_Palette`'s
-  /// softShadow in main_scaffold.dart.
+  /// softShadow in main_scaffold.dart. Deepened slightly in the PUREDINE
+  /// darker pass for a richer lift.
   static List<BoxShadow> get softShadow => [
         BoxShadow(
-          color: maroonDeep.withValues(alpha: 0.07),
+          color: maroonDeep.withValues(alpha: 0.10),
           blurRadius: 20,
           offset: const Offset(0, 8),
         ),
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.03),
+          color: Colors.black.withValues(alpha: 0.04),
           blurRadius: 4,
           offset: const Offset(0, 2),
         ),
@@ -53,9 +144,10 @@ class _NavPalette {
 
   /// Small resting shadow for icon chips — gives inactive icon badges a
   /// gentle lift so they stay clearly visible against the cream chrome.
+  /// Deepened slightly in the PUREDINE darker pass.
   static List<BoxShadow> get chipShadow => [
         BoxShadow(
-          color: maroonDeep.withValues(alpha: 0.06),
+          color: maroonDeep.withValues(alpha: 0.09),
           blurRadius: 8,
           offset: const Offset(0, 3),
         ),
@@ -63,26 +155,28 @@ class _NavPalette {
 
   /// Elevated shadow that floats "up" — used for the bottom navigation bar
   /// so it reads as a raised, premium dock rather than a flat strip.
+  /// Deepened slightly in the PUREDINE darker pass.
   static List<BoxShadow> get floatUpShadow => [
         BoxShadow(
-          color: maroonDeep.withValues(alpha: 0.14),
+          color: maroonDeep.withValues(alpha: 0.18),
           blurRadius: 28,
           offset: const Offset(0, -10),
         ),
         BoxShadow(
-          color: gold.withValues(alpha: 0.10),
+          color: gold.withValues(alpha: 0.14),
           blurRadius: 24,
           offset: const Offset(0, -4),
         ),
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.03),
+          color: Colors.black.withValues(alpha: 0.04),
           blurRadius: 4,
           offset: const Offset(0, -1),
         ),
       ];
 
-  /// Soft ambient gold glow, used behind brand/avatar chips.
-  static List<BoxShadow> goldGlow({double alpha = 0.35}) => [
+  /// Soft ambient gold glow, used behind brand/avatar chips. Deepened
+  /// slightly in the PUREDINE darker pass.
+  static List<BoxShadow> goldGlow({double alpha = 0.40}) => [
         BoxShadow(
           color: gold.withValues(alpha: alpha),
           blurRadius: 14,
@@ -93,7 +187,8 @@ class _NavPalette {
   /// Wider, softer glow used behind an *active* accent-tinted badge — gives
   /// the currently-selected item a gentle "lit up" halo instead of a flat
   /// tinted circle, making the active state unmistakable at a glance.
-  static List<BoxShadow> accentGlow(Color color, {double alpha = 0.32}) => [
+  /// Deepened slightly in the PUREDINE darker pass.
+  static List<BoxShadow> accentGlow(Color color, {double alpha = 0.38}) => [
         BoxShadow(
           color: color.withValues(alpha: alpha),
           blurRadius: 18,
@@ -101,7 +196,7 @@ class _NavPalette {
           offset: const Offset(0, 6),
         ),
         BoxShadow(
-          color: gold.withValues(alpha: 0.14),
+          color: gold.withValues(alpha: 0.18),
           blurRadius: 10,
           offset: const Offset(0, 2),
         ),
@@ -274,6 +369,13 @@ class _AdminMainScaffoldState extends State<AdminMainScaffold> {
 // shows a hand/pointer cursor instead of the default arrow. Purely a
 // pointer-affordance change — no layout, palette, animation, or tap
 // behavior was touched.
+//
+// COLOR-THEME PASS ("PUREDINE Maroon + Cream" — darker): the dock's
+// background gradient now blends Warm Off-White into a more visible Soft
+// Cream (previously a near-white 0.5-alpha tint) so the bar reads as a
+// deliberate cream surface instead of washed-out white — see the
+// `_NavPalette` notes above for the full color mapping. No structure,
+// sizing, animation, or tap behavior was touched.
 class _AdminBottomNav extends StatelessWidget {
   final List<_AdminNavItem> items;
   final int currentIndex;
@@ -292,7 +394,7 @@ class _AdminBottomNav extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Colors.white, _NavPalette.creamDeep.withValues(alpha: 0.5)],
+          colors: [Colors.white, _NavPalette.creamDeep.withValues(alpha: 0.7)],
         ),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(28),
@@ -452,10 +554,19 @@ class _AdminBottomNav extends StatelessWidget {
 /// card) instead of a bottom bar. Purely a presentational alternative;
 /// no navigation logic is duplicated or diverges between layouts.
 ///
-/// Unchanged in this pass — only the mobile bottom nav above was
-/// restyled. The nav rows below already show a hand/pointer cursor on
-/// hover by default (InkWell's default `mouseCursor` resolves to
-/// `SystemMouseCursors.click`), so no cursor change was needed here.
+/// SIZE-REDUCTION / CURSOR PASSES: unchanged — only the mobile bottom nav
+/// was touched by those. The nav rows below already show a hand/pointer
+/// cursor on hover by default (InkWell's default `mouseCursor` resolves
+/// to `SystemMouseCursors.click`), so no cursor change was needed here.
+///
+/// COLOR-THEME PASS ("PUREDINE Maroon + Cream" — darker): the rail's flat
+/// cream fill is now a subtle top-to-bottom Warm Off-White → Soft Cream
+/// gradient, the brand-mark tile and "Admin Panel" badge now use small
+/// two-stop gradients instead of flat fills, and the footer summary card
+/// now uses the requested "for cards" background/border (Warm Off-White
+/// fill, Pale Rose border) with its "Online" dot recolored to the
+/// requested Fresh Green — see the `_NavPalette` notes above for the full
+/// mapping. No layout, sizing, or navigation logic was touched.
 class _AdminSideNavRail extends StatelessWidget {
   final List<_AdminNavItem> items;
   final int currentIndex;
@@ -471,7 +582,13 @@ class _AdminSideNavRail extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 240,
-      color: _NavPalette.cream,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [_NavPalette.cream, _NavPalette.creamDeep],
+        ),
+      ),
       child: SafeArea(
         left: false,
         right: false,
@@ -519,8 +636,13 @@ class _AdminSideNavRail extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: _NavPalette.maroon,
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [_NavPalette.maroon, _NavPalette.maroonDark],
+              ),
               borderRadius: BorderRadius.circular(12),
+              boxShadow: _NavPalette.goldGlow(alpha: 0.22),
             ),
             child: const Icon(
               Icons.restaurant_rounded,
@@ -551,8 +673,13 @@ class _AdminSideNavRail extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: _NavPalette.gold,
+          gradient: const LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: [_NavPalette.gold, _NavPalette.goldDeep],
+          ),
           borderRadius: BorderRadius.circular(20),
+          boxShadow: _NavPalette.goldGlow(alpha: 0.28),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -587,11 +714,15 @@ class _AdminSideNavRail extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _NavPalette.cream,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: _NavPalette.fieldBorder,
+            width: 1.2,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
+              color: _NavPalette.maroonDeep.withValues(alpha: 0.08),
               blurRadius: 10,
               offset: const Offset(0, 3),
             ),
@@ -632,7 +763,7 @@ class _AdminSideNavRail extends StatelessWidget {
                       width: 6,
                       height: 6,
                       decoration: const BoxDecoration(
-                        color: Colors.green,
+                        color: _NavPalette.success,
                         shape: BoxShape.circle,
                       ),
                     ),

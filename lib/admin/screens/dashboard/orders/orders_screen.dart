@@ -14,10 +14,7 @@ import 'package:restaurant_unified_app/admin/core/providers/restaurant_provider.
 import 'package:restaurant_unified_app/admin/services/orders_service.dart';
 
 /// -----------------------------------------------------------------------
-/// Screen-local theme palette: "Dark Maroon x Soft Cream x Gold Glow"
-/// Kept local to this file so it layers on top of the app's existing
-/// AppColors without requiring changes anywhere else. Only visual tokens
-/// live here — no business logic is affected.
+/// Screen-local theme palette.
 ///
 /// UI-ENHANCEMENT PASS 2: the header was pushed further into its own
 /// distinctive "command bar" identity (a richer four-stop diagonal
@@ -36,54 +33,176 @@ import 'package:restaurant_unified_app/admin/services/orders_service.dart';
 /// instead of floating in the middle of the bar. Purely a spacing/
 /// alignment tweak; no provider, filtering, sorting, status-update, or
 /// PDF/print logic was touched.
+///
+/// UI-ENHANCEMENT PASS 4 (brings this screen in line with
+/// the Menu Management screen's current look, both structurally and in
+/// color, so the two admin screens read as one consistent brand): zero
+/// changes to data loading, filtering, sorting, status-update, dialog,
+/// or PDF/print logic anywhere in this file — presentation only.
+///   1. PALETTE: `_OrdersTheme`'s field names are unchanged — every
+///      widget below already reads from these exact names — but the
+///      underlying `Color` values were re-pointed at the shared brand
+///      identity, automatically re-skinning every surface in this file
+///      (header, stat cards, filters, table, badges, dialogs, buttons,
+///      receipt) with no other code touched.
+///   2. HEADER: `_buildHeader()` is rebuilt from the old dark maroon
+///      gradient "command bar" into the standard header style the Menu
+///      screen uses — a plain title row (two-tone `ShaderMask`, a small
+///      gold accent-dot row, and a thin gold gradient hairline beneath
+///      the subtitle) plus a large rounded pill search bar underneath,
+///      using the exact same `_searchQuery` state and `onChanged`
+///      handler the old inline search field (previously inside
+///      `_buildFilterSection`) used to have — only relocated, not
+///      changed, and a "N found" chip is shown next to it exactly like
+///      on the Menu screen. The old inline search `TextField` was
+///      removed from `_buildFilterSection` since the header now owns
+///      search; the four filter dropdowns (Status, Payment, Type, Sort)
+///      are unchanged and simply reflow to fill the row search used to
+///      share.
+///   3. CARDS: the filters panel and the orders table panel now use the
+///      same 22px corner radius and softer bordered/shadowed treatment
+///      as the Menu screen's cards, via the shared `_OrdersTheme.
+///      softShadow`.
+///
+/// UI-ENHANCEMENT PASS 5: added a slim utility bar (`_buildTopBar`)
+/// above the "Orders Management" header, with a circular profile/store
+/// avatar and a short greeting.
+///
+/// UI-ENHANCEMENT PASS 6: removed the two small circular icon buttons
+/// that used to sit on the right side of `_buildTopBar` (the scan/QR
+/// icon and the notification bell): both were purely decorative — neither
+/// carried an `onTap` handler nor was wired to any notification,
+/// navigation, or scan feature — so removing them dropped zero logic.
+///
+/// UI-ENHANCEMENT PASS 7: PUREDINE Maroon + Cream re-theme, plus a
+/// wine-gradient background on the top utility bar.
+///
+/// UI-ENHANCEMENT PASS 8 (this pass): presentation-only, exactly like
+/// every pass above — no provider, data loading, filtering, sorting,
+/// status-update, dialog, or PDF/print logic anywhere in this file was
+/// touched, and no state field, callback, route, or keyword was renamed.
+///   1. TOP BAR REMOVED: the slim utility bar added in PASS 5 held only
+///      two purely decorative things — the circular store avatar on the
+///      left and the "Have a great day" line beside it. Neither carried
+///      an `onTap`, a provider read, or any state, so both have been
+///      removed per request, and with nothing left inside it the
+///      `_buildTopBar()` method and its single call in `build()` were
+///      dropped entirely. Nothing else moved: `_buildHeader()` is still
+///      the first widget in the body `Column`, now owning the top
+///      `SafeArea` inset that the utility bar used to absorb, so the
+///      title still clears the status bar / notch correctly.
+///   2. HEADER IS NOW THE BRANDED TOP BAR: with the utility strip gone,
+///      `_buildHeader()` itself carries the PUREDINE Deep Wine Maroon →
+///      Wine diagonal gradient (`#742A3C → #813244`) instead of sitting
+///      on the plain cream canvas — a medium-depth, not-too-dark maroon
+///      band running the full width from the very top of the screen down
+///      to the scrollable body. It gained the same ambient dressing the
+///      Menu screen's header uses (a soft warm-gold corner glow, a large
+///      very faint watermark emblem, and a subtle diagonal glass sheen),
+///      and a warm-gold hairline along its bottom edge. Everything
+///      inside it is structurally identical to before — the same accent
+///      dots, the same title/subtitle text, the same gold hairline, and
+///      the same white pill search bar wired to the exact same
+///      `_searchQuery` state, `onChanged` handler and "N found" chip.
+///      Only the colors of the copy changed (white/soft-gold instead of
+///      maroon/grey) so it reads clearly against the new wine backdrop.
+///   3. PALETTE — full PUREDINE mapping: `_OrdersTheme`'s field names
+///      are, as always, unchanged (every widget in this file reads from
+///      these exact names) — only the `Color` values were set to the
+///      supplied palette:
+///        • `milanoRed`        → Deep Wine Maroon `#742A3C` (primary / topbar)
+///        • `milanoRedLight`   → Wine `#813244` (topbar lighter gradient)
+///        • `milanoRedDark`    → Burgundy `#8A183F` (primary accent)
+///        • `milanoRedDarkest` → Deep Brown/Black `#2E0D16` (dark text)
+///        • `canvas`           → Warm Off-White `#FBF8F5` (main background)
+///        • `canvasDeep`       → Soft Cream `#F7F1ED` (card background)
+///        • `blushTint`        → Dusty Blush `#F3D9DC` (icon BG)
+///        • `paleRose`         → Pale Rose `#EFD7DA` (card border)
+///        • `lemonChiffon`/`gold` → Warm Gold `#F3C564` (gold accent)
+///        • `lemonChiffonSoft` → Soft Yellow `#FCE1AB` (gold highlight)
+///        • `goldSoft`         → deeper gold `#D9A421` (derived companion)
+///        • `successGreen`     → Fresh Green `#44AF70` (live / success)
+///        • `mintBg`           → Pale Mint `#EAF6EF` (success chip background)
+///        • `mutedTaupe`       → Muted Taupe `#9B707A` (secondary text)
+///      `primaryButtonGradient` uses the supplied CTA gradient exactly:
+///      `#6E1832 → #9B3E4E → #F3C564`, and `headerGradient` the supplied
+///      header gradient exactly: `#742A3C → #813244`.
+///   4. SUPPORTING SURFACES re-tuned to the same palette so the screen
+///      reads as one brand from the top bar all the way to the bottom of
+///      the scroll: the four stat cards now use maroon/wine/burgundy/
+///      green accents instead of the old stray blue, the order-type chip
+///      on each table row uses the Dusty Blush icon-BG with maroon text,
+///      and the filter panel / table / mobile cards keep the Pale Rose
+///      card border and Soft Cream tints. Every status and payment badge
+///      keeps its own semantic color (blue = placed, orange = preparing,
+///      purple = ready, teal = served, green = paid, red = cancelled) so
+///      no status meaning changed.
 /// -----------------------------------------------------------------------
 class _OrdersTheme {
-  // Primary brand — Dark Maroon (#8B1D1D) per Theme 1. Field names kept
-  // identical to the previous palette so every widget below (which
-  // references _OrdersTheme.milanoRed, .gold, etc.) is re-themed
-  // automatically without touching any layout or logic.
-  static const Color milanoRed = Color(0xFF8B1D1D); // Primary maroon
-  static const Color milanoRedDark = Color(0xFF5E1212); // Deeper maroon
-  static const Color milanoRedLight = Color(0xFFA5271F); // Lighter maroon
+  // Primary brand — the "PUREDINE Maroon + Cream" palette (see the
+  // UI-ENHANCEMENT PASS 8 note above). Field names are unchanged on
+  // purpose — every widget below already reads from these exact names,
+  // so only the underlying Color values change.
+  static const Color milanoRed =
+      Color(0xFF742A3C); // Deep Wine Maroon (Primary / Topbar)
+  static const Color milanoRedDark =
+      Color(0xFF8A183F); // Burgundy (Primary accent)
+  static const Color milanoRedLight =
+      Color(0xFF813244); // Wine (Topbar lighter gradient)
   static const Color milanoRedDarkest =
-      Color(0xFF3A0B0B); // Fourth gradient stop
+      Color(0xFF2E0D16); // Deep Brown/Black (dark text)
 
-  // Gold Glow accents (Theme 1: #F4C430) replacing the old lemon-chiffon
-  // tones, plus soft cream companions for badges/backgrounds.
-  static const Color lemonChiffon = Color(0xFFF4C430);
-  static const Color lemonChiffonSoft = Color(0xFFFDF3E7);
-  static const Color gold = Color(0xFFF4C430);
-  static const Color goldSoft = Color(0xFFF9DE8B);
+  // Gold accents — Warm Gold / Soft Yellow from the PUREDINE palette,
+  // plus a deeper companion shade used for fine dividers.
+  static const Color lemonChiffon = Color(0xFFF3C564); // Warm Gold (Accent)
+  static const Color lemonChiffonSoft =
+      Color(0xFFFCE1AB); // Soft Yellow (gold highlight)
+  static const Color gold = Color(0xFFF3C564); // Warm Gold
+  static const Color goldSoft = Color(0xFFD9A421); // Deeper gold (derived)
 
-  // Soft Cream canvas + card white, matching Theme 1's "Light" swatch.
-  static const Color canvas = Color(0xFFFDF3E7);
-  static const Color canvasDeep = Color(0xFFF3E4CC);
+  // Warm off-white / soft cream canvas, per the PUREDINE palette.
+  static const Color canvas = Color(0xFFFBF8F5); // Warm Off-White background
+  static const Color canvasDeep = Color(0xFFF7F1ED); // Soft Cream card tint
   static const Color cardWhite = Colors.white;
 
-  // Convenience gradients used for headers / primary buttons.
+  // Supporting PUREDINE tones — icon chips, card borders, and
+  // success/paid states respectively.
+  static const Color blushTint =
+      Color(0xFFF3D9DC); // Dusty Blush — icon chip backgrounds
+  static const Color paleRose = Color(0xFFEFD7DA); // Pale Rose — card borders
+  static const Color successGreen =
+      Color(0xFF44AF70); // Fresh Green — live/success/paid accents
+  static const Color mintBg =
+      Color(0xFFEAF6EF); // Pale Mint — success chip backgrounds
+  static const Color mutedTaupe =
+      Color(0xFF9B707A); // Muted Taupe — secondary text
+
+  // Convenience gradients used for headers / primary buttons — exactly
+  // the two gradients called out in the PUREDINE spec.
   static const LinearGradient headerGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [milanoRedLight, milanoRedDark],
+    colors: [milanoRed, milanoRedLight],
   );
 
   static const LinearGradient primaryButtonGradient = LinearGradient(
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
-    colors: [milanoRedDark, milanoRed],
+    colors: [Color(0xFF6E1832), Color(0xFF9B3E4E), lemonChiffon],
   );
 
   /// Themed soft shadow for resting cards/panels — mirrors the Menu
-  /// screen's softShadow so every surface shares the same warm tint.
+  /// screen's softShadow so every surface shares the same warm,
+  /// branded tint.
   static List<BoxShadow> get softShadow => [
         BoxShadow(
-          color: milanoRedDark.withValues(alpha: 0.06),
-          blurRadius: 18,
+          color: milanoRedDark.withValues(alpha: 0.07),
+          blurRadius: 20,
           offset: const Offset(0, 8),
         ),
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.03),
-          blurRadius: 4,
+          color: lemonChiffon.withValues(alpha: 0.05),
+          blurRadius: 6,
           offset: const Offset(0, 2),
         ),
       ];
@@ -228,8 +347,14 @@ class _OrdersScreenState extends State<OrdersScreen> {
       body: Column(
         children: [
           // ── Header Section ───────────────────────────────────────────────
-          // Fixed at the top, exactly like MenuScreen's custom header — it
-          // no longer scrolls away with the content beneath it.
+          // PASS 8: the slim utility bar that used to sit above this (the
+          // store avatar + "Have a great day" line) has been removed
+          // entirely — both were purely decorative with no callbacks or
+          // state. This header is now the screen's branded top bar: it
+          // owns the top SafeArea inset and carries the PUREDINE Deep
+          // Wine Maroon → Wine gradient. It stays fixed at the top,
+          // exactly like MenuScreen's custom header — it does not scroll
+          // away with the content beneath it.
           _buildHeader(isMobile),
 
           // ── Main Body Section ────────────────────────────────────────────
@@ -237,7 +362,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
             child: Stack(
               children: [
                 // ── Ambient background dressing ─────────────────────────────
-                // Purely decorative — soft lemon/ruby glows plus a faint
+                // Purely decorative — soft gold/wine glows plus a faint
                 // textured photograph, matching the Menu and Dashboard
                 // screens so the whole admin experience reads as one
                 // cohesive brand.
@@ -285,8 +410,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         // Extra low, wide glow further down the page —
                         // gives the long orders list a second soft focal
                         // point instead of all the ambient light sitting
-                        // only near the header. Matches the Admin
-                        // Dashboard / staff-side screens' Pass-2 backdrop.
+                        // only near the header.
                         Positioned(
                           top: 640,
                           right: -110,
@@ -300,6 +424,28 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                   _OrdersTheme.milanoRedLight.withValues(
                                     alpha: 0.06,
                                   ),
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        // PASS 8: a soft blush glow low on the left, so the
+                        // bottom of a long scroll carries the same warm
+                        // brand tint as the top instead of fading to flat
+                        // white. Purely decorative.
+                        Positioned(
+                          bottom: 60,
+                          left: -60,
+                          child: Container(
+                            width: 220,
+                            height: 220,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  _OrdersTheme.blushTint
+                                      .withValues(alpha: 0.45),
                                   Colors.transparent,
                                 ],
                               ),
@@ -388,284 +534,284 @@ class _OrdersScreenState extends State<OrdersScreen> {
           ),
         ],
       ),
-    );
+    ).animate().fadeIn();
   }
 
+  /// PASS 4 rebuilt this into the standard header style the Menu screen
+  /// uses — an accent-dot row, a two-tone `ShaderMask` title, a subtitle,
+  /// a thin gold gradient hairline, and a large rounded pill search bar
+  /// underneath. The search bar uses the exact same `_searchQuery` state
+  /// and `onChanged` handler the old inline search field (previously
+  /// inside `_buildFilterSection`) used to have — only relocated here,
+  /// not changed.
+  ///
+  /// PASS 8: with the decorative utility bar above it removed (see the
+  /// class doc comment), this header IS the screen's top bar now. It
+  /// carries the PUREDINE Deep Wine Maroon → Wine gradient
+  /// (`#742A3C → #813244`), owns the top `SafeArea` inset so the title
+  /// clears the status bar, and gained the same ambient dressing the Menu
+  /// screen's header uses — a soft warm-gold corner glow, a large very
+  /// faint watermark emblem, and a subtle diagonal glass sheen — plus a
+  /// warm-gold hairline along its bottom edge. Structurally nothing
+  /// inside changed: same dots, same title/subtitle text, same hairline,
+  /// same white pill search bar with the same state, handler and "N
+  /// found" chip. Only the copy's colors changed so it reads clearly on
+  /// the wine backdrop.
   Widget _buildHeader(bool isMobile) {
-    return ClipRect(
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.fromLTRB(
-          isMobile ? 20 : 40,
-          isMobile ? 14 : 18,
-          isMobile ? 20 : 40,
-          32,
-        ),
-        decoration: BoxDecoration(
-          // Richer four-stop diagonal maroon gradient — deeper and more
-          // dimensional than a flat three-stop wash, matching the Admin
-          // Dashboard / staff-side screens' Pass-2 "faceted" surface
-          // language.
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              _OrdersTheme.milanoRedLight,
-              _OrdersTheme.milanoRed,
-              _OrdersTheme.milanoRedDark,
-              _OrdersTheme.milanoRedDarkest,
-            ],
-            stops: [0.0, 0.38, 0.72, 1.0],
-          ),
-          // Softly rounded bottom corners give the header a modern,
-          // "floating navbar" feel that matches the Menu and Dashboard
-          // screens, instead of a flat hard-edged band.
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(isMobile ? 28 : 38),
-            bottomRight: Radius.circular(isMobile ? 28 : 38),
-          ),
-          border: const Border(
-            bottom: BorderSide(color: _OrdersTheme.gold, width: 4),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: _OrdersTheme.milanoRedDark.withValues(alpha: 0.35),
-              blurRadius: 34,
-              offset: const Offset(0, 16),
-            ),
-            BoxShadow(
-              color: _OrdersTheme.gold.withValues(alpha: 0.12),
-              blurRadius: 14,
-              offset: const Offset(0, 4),
-            ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.10),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: ClipRect(
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // Subtle decorative diagonal ribbon accents (purely cosmetic,
-              // matches the Menu/Dashboard headers for a consistent brand)
-              Positioned(
-                top: -60,
-                right: -40,
-                child: Transform.rotate(
-                  angle: -0.5,
-                  child: Container(
-                    width: 240,
-                    height: 90,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          _OrdersTheme.gold.withValues(alpha: 0.14),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: -50,
-                left: -60,
-                child: Transform.rotate(
-                  angle: 0.4,
-                  child: Container(
-                    width: 220,
-                    height: 70,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.white.withValues(alpha: 0.06),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              // ── Large faint watermark emblem — a unique signature
-              // touch this header didn't previously have, sitting
-              // low-opacity and large behind the copy, never competing
-              // with the title or controls. Matches the Admin Dashboard
-              // hero's Pass-2 watermark treatment.
-              Positioned(
-                right: isMobile ? -20 : -10,
-                bottom: isMobile ? -18 : -14,
-                child: IgnorePointer(
-                  child: Opacity(
-                    opacity: 0.06,
-                    child: Icon(
-                      Icons.receipt_long_rounded,
-                      size: isMobile ? 120 : 170,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-
-              // Fine dotted texture accent, matching the app's refined
-              // decorative language used on the Menu/Dashboard headers.
-              Positioned(
-                top: 8,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: List.generate(
-                      5,
-                      (i) => Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 3),
-                        width: 4,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _OrdersTheme.gold.withValues(
-                            alpha: i == 2 ? 0.85 : 0.3,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              // Fine glass highlight line along the very top edge, giving
-              // the full-width panel a polished, "premium glass" finish —
-              // matches the Admin Dashboard / staff-side headers' top
-              // edge treatment.
-              Positioned(
-                top: 0,
-                left: 24,
-                right: 24,
-                child: Container(
-                  height: 1,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.transparent,
-                        Colors.white.withValues(alpha: 0.35),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              isMobile
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Orders',
-                          style: GoogleFonts.playfairDisplay(
-                            color: Colors.white,
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Track customer orders',
-                          style: GoogleFonts.inter(
-                            color: _OrdersTheme.goldSoft,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        Container(
-                          height: 3,
-                          width: 64,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(4),
-                            gradient: LinearGradient(
-                              colors: [
-                                _OrdersTheme.gold,
-                                _OrdersTheme.gold.withValues(alpha: 0.0),
-                              ],
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: _OrdersTheme.gold.withValues(alpha: 0.6),
-                                blurRadius: 8,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Align(
-                            alignment: Alignment.topCenter,
-                            child: Column(
-                              children: [
-                                Text(
-                                  'Orders Management',
-                                  style: GoogleFonts.playfairDisplay(
-                                    color: Colors.white,
-                                    fontSize: 36,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'View and track customer orders',
-                                  style: GoogleFonts.inter(
-                                    color: _OrdersTheme.goldSoft,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(height: 14),
-                                Container(
-                                  height: 3,
-                                  width: 84,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(4),
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        _OrdersTheme.gold
-                                            .withValues(alpha: 0.0),
-                                        _OrdersTheme.gold,
-                                        _OrdersTheme.gold
-                                            .withValues(alpha: 0.0),
-                                      ],
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: _OrdersTheme.gold
-                                            .withValues(alpha: 0.6),
-                                        blurRadius: 8,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 48),
-                      ],
-                    ),
-            ],
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: _OrdersTheme.headerGradient,
+        border: Border(
+          bottom: BorderSide(
+            color: _OrdersTheme.lemonChiffon.withValues(alpha: 0.30),
+            width: 1,
           ),
         ),
       ),
-    ).animate().fade(duration: 450.ms).slideY(begin: -0.1, duration: 450.ms);
+      child: Stack(
+        children: [
+          // Ambient dressing for the wine backdrop — a soft warm-gold
+          // glow in the top-right corner, a large very faint watermark
+          // emblem behind the copy, and a diagonal glass sheen. Purely
+          // presentational, clipped to the header's own bounds.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: ClipRect(
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: -70,
+                      right: -50,
+                      child: Container(
+                        width: 230,
+                        height: 230,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              _OrdersTheme.lemonChiffon.withValues(alpha: 0.16),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      right: isMobile ? -22 : -14,
+                      bottom: isMobile ? -20 : -14,
+                      child: Icon(
+                        Icons.receipt_long_rounded,
+                        size: isMobile ? 130 : 170,
+                        color: Colors.white.withValues(alpha: 0.05),
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.06),
+                              Colors.transparent,
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.4, 1.0],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                isMobile ? 18 : 32,
+                isMobile ? 16 : 22,
+                isMobile ? 18 : 32,
+                isMobile ? 18 : 24,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Small gold accent-dot row above the title — same
+                  // "dotted texture accent" language used on the Menu
+                  // screen's header.
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: List.generate(
+                        5,
+                        (i) => Container(
+                          margin: const EdgeInsets.only(right: 5),
+                          width: 4,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _OrdersTheme.lemonChiffon.withValues(
+                              alpha: i == 2 ? 0.95 : 0.4,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        // Two-tone white→gold ShaderMask on the title, so
+                        // it reads cleanly against the wine backdrop while
+                        // keeping the same brand-title treatment.
+                        child: ShaderMask(
+                          shaderCallback: (bounds) => const LinearGradient(
+                            colors: [
+                              Colors.white,
+                              _OrdersTheme.lemonChiffon,
+                            ],
+                          ).createShader(bounds),
+                          child: Text(
+                            isMobile ? 'Orders' : 'Orders Management',
+                            style: GoogleFonts.playfairDisplay(
+                              color: Colors.white,
+                              fontSize: isMobile ? 21 : 28,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: isMobile ? 4 : 6),
+                  Text(
+                    isMobile
+                        ? 'Track customer orders'
+                        : 'View and track customer orders',
+                    style: GoogleFonts.inter(
+                      color: Colors.white.withValues(alpha: 0.75),
+                      fontSize: isMobile ? 12.5 : 14,
+                    ),
+                  ),
+                  SizedBox(height: isMobile ? 12 : 14),
+                  // Thin gold gradient hairline — same soft divider
+                  // language used on the Menu screen's header.
+                  Container(
+                    width: 46,
+                    height: 3,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(4),
+                      gradient: LinearGradient(
+                        colors: [
+                          _OrdersTheme.lemonChiffon.withValues(alpha: 0.95),
+                          _OrdersTheme.lemonChiffon.withValues(alpha: 0.15),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: isMobile ? 14 : 18),
+                  // Standard rounded pill search bar — same _searchQuery
+                  // state and the exact same onChanged handler the old
+                  // inline search field (previously inside
+                  // _buildFilterSection) used to have, so search behaves
+                  // identically to before, just relocated into the
+                  // header, matching the Menu screen's pattern.
+                  Container(
+                    height: 54,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(27),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.5),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _OrdersTheme.milanoRedDarkest
+                              .withValues(alpha: 0.25),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 18),
+                        Icon(
+                          Icons.search_rounded,
+                          color: _OrdersTheme.milanoRed.withValues(
+                            alpha: 0.55,
+                          ),
+                          size: 22,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextField(
+                            onChanged: (v) => setState(() => _searchQuery = v),
+                            style: GoogleFonts.inter(
+                              color: AppColors.textDark,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            cursorColor: _OrdersTheme.milanoRed,
+                            decoration: InputDecoration(
+                              hintText: 'Search by Order ID...',
+                              border: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              fillColor: Colors.transparent,
+                              filled: false,
+                              hintStyle: GoogleFonts.inter(
+                                color: _OrdersTheme.mutedTaupe,
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (_searchQuery.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 14),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _OrdersTheme.lemonChiffon.withValues(
+                                  alpha: 0.5,
+                                ),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                '${_filtered.length} found',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: _OrdersTheme.milanoRed,
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          const SizedBox(width: 14),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
+  /// PASS 8: the four stat cards now draw their accents from the PUREDINE
+  /// palette (Deep Wine Maroon, Wine, Fresh Green, Burgundy) instead of
+  /// the old stray blue, so the row reads as one brand. The card widget,
+  /// the values shown, and the filters they reflect are unchanged.
   Widget _buildStatsGrid(bool isMobile) {
     if (isMobile) {
       return SingleChildScrollView(
@@ -682,21 +828,21 @@ class _OrdersScreenState extends State<OrdersScreen> {
             _statCard(
               'Placed',
               _orders.where((o) => o.status == 'PLACED').length.toString(),
-              const Color(0xFF0284C7),
+              _OrdersTheme.milanoRedLight,
               isMobile,
             ),
             const SizedBox(width: 12),
             _statCard(
               'Served',
               _orders.where((o) => o.status == 'SERVED').length.toString(),
-              const Color(0xFF16A34A),
+              _OrdersTheme.successGreen,
               isMobile,
             ),
             const SizedBox(width: 12),
             _statCard(
               'Revenue',
               '₹${_totalRevenue.toStringAsFixed(0)}',
-              _OrdersTheme.milanoRed,
+              _OrdersTheme.milanoRedDark,
               isMobile,
             ),
           ],
@@ -719,7 +865,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
           child: _statCard(
             'Placed',
             _orders.where((o) => o.status == 'PLACED').length.toString(),
-            const Color(0xFF0284C7),
+            _OrdersTheme.milanoRedLight,
             false,
           ),
         ),
@@ -728,7 +874,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
           child: _statCard(
             'Served',
             _orders.where((o) => o.status == 'SERVED').length.toString(),
-            const Color(0xFF16A34A),
+            _OrdersTheme.successGreen,
             false,
           ),
         ),
@@ -737,7 +883,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
           child: _statCard(
             'Total Revenue',
             '₹${_totalRevenue.toStringAsFixed(0)}',
-            _OrdersTheme.milanoRed,
+            _OrdersTheme.milanoRedDark,
             false,
           ),
         ),
@@ -746,14 +892,17 @@ class _OrdersScreenState extends State<OrdersScreen> {
   }
 
   Widget _statCard(String title, String value, Color color, bool isMobile) {
-    // UI-ENHANCEMENT PASS 2: added a slim color-coded top cap, matching
-    // the Billing screen's stat boxes, so each figure has its own subtle
+    // A slim color-coded top cap so each figure has its own subtle
     // identity at a glance. Same title/value/color inputs as before.
+    //
+    // PASS 8: the card body sits on Soft Cream instead of flat white and
+    // the corner radius was raised to 18 so it matches the rest of the
+    // PUREDINE card language — decoration only.
     return Container(
       width: isMobile ? 130 : null,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.10),
@@ -769,9 +918,13 @@ class _OrdersScreenState extends State<OrdersScreen> {
           Container(
             padding: EdgeInsets.all(isMobile ? 16 : 24),
             decoration: BoxDecoration(
-              color: Colors.white,
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Colors.white, _OrdersTheme.canvasDeep],
+              ),
               border: Border.all(
-                color: color.withValues(alpha: 0.18),
+                color: _OrdersTheme.paleRose,
                 width: 1,
               ),
             ),
@@ -785,7 +938,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     Text(
                       title,
                       style: GoogleFonts.inter(
-                        color: AppColors.textMuted,
+                        color: _OrdersTheme.mutedTaupe,
                         fontSize: isMobile ? 12 : 14,
                         fontWeight: FontWeight.w500,
                       ),
@@ -823,23 +976,25 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
   }
 
+  /// PASS 4: the inline search `TextField` this section used to hold was
+  /// removed — search now lives in the header (see `_buildHeader`), wired
+  /// to the exact same `_searchQuery` state and `onChanged` handler. The
+  /// four filter dropdowns below (Status, Payment, Type, Sort) are
+  /// completely unchanged — only the row/column layout that used to share
+  /// space with the search field was simplified to fill that space
+  /// instead. The panel's corner radius/border/shadow matches the Menu
+  /// screen's card treatment (`_OrdersTheme.softShadow`).
   Widget _buildFilterSection(bool isMobile) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: _OrdersTheme.milanoRed.withValues(alpha: 0.15),
+          color: _OrdersTheme.paleRose,
           width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: _OrdersTheme.milanoRed.withValues(alpha: 0.06),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        boxShadow: _OrdersTheme.softShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -849,7 +1004,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: _OrdersTheme.lemonChiffon.withValues(alpha: 0.6),
+                  color: _OrdersTheme.blushTint,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
@@ -873,17 +1028,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
           if (isMobile)
             Column(
               children: [
-                TextField(
-                  onChanged: (v) => setState(() => _searchQuery = v),
-                  decoration: InputDecoration(
-                    hintText: 'Search by Order ID...',
-                    prefixIcon: const Icon(Icons.search, size: 20),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
                 _buildDropdown(
                     _statusFilter,
                     [
@@ -925,105 +1069,53 @@ class _OrdersScreenState extends State<OrdersScreen> {
               ],
             )
           else
-            Column(
+            Row(
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: TextField(
-                        onChanged: (v) => setState(() => _searchQuery = v),
-                        decoration: InputDecoration(
-                          hintText: 'Search by Order ID...',
-                          hintStyle: GoogleFonts.inter(
-                            color: Colors.grey.shade400,
-                            fontSize: 14,
-                          ),
-                          prefixIcon: Icon(
-                            Icons.search,
-                            size: 20,
-                            color: Colors.grey.shade500,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(
-                              color:
-                                  _OrdersTheme.milanoRed.withValues(alpha: 0.2),
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(
-                              color: _OrdersTheme.milanoRed
-                                  .withValues(alpha: 0.12),
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(
-                              color: _OrdersTheme.milanoRed
-                                  .withValues(alpha: 0.55),
-                              width: 1.4,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildDropdown(
-                          _statusFilter,
-                          [
-                            'All Status',
-                            'PLACED',
-                            'CONFIRMED',
-                            'PREPARING',
-                            'READY',
-                            'SERVED',
-                            'CANCELLED',
-                          ],
-                          (v) => setState(() => _statusFilter = v!)),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildDropdown(
-                          _paymentFilter,
-                          [
-                            'All Payments',
-                            'PAID',
-                            'PENDING',
-                          ],
-                          (v) => setState(() => _paymentFilter = v!)),
-                    ),
-                  ],
+                Expanded(
+                  child: _buildDropdown(
+                      _statusFilter,
+                      [
+                        'All Status',
+                        'PLACED',
+                        'CONFIRMED',
+                        'PREPARING',
+                        'READY',
+                        'SERVED',
+                        'CANCELLED',
+                      ],
+                      (v) => setState(() => _statusFilter = v!)),
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 1,
-                      child: _buildDropdown(
-                          _typeFilter,
-                          [
-                            'All Types',
-                            'DINE_IN',
-                            'TAKEAWAY',
-                          ],
-                          (v) => setState(() => _typeFilter = v!)),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      flex: 1,
-                      child: _buildDropdown(
-                          _sortOrder,
-                          [
-                            'Newest First',
-                            'Oldest First',
-                          ],
-                          (v) => setState(() => _sortOrder = v!)),
-                    ),
-                    const Spacer(flex: 2),
-                  ],
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildDropdown(
+                      _paymentFilter,
+                      [
+                        'All Payments',
+                        'PAID',
+                        'PENDING',
+                      ],
+                      (v) => setState(() => _paymentFilter = v!)),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildDropdown(
+                      _typeFilter,
+                      [
+                        'All Types',
+                        'DINE_IN',
+                        'TAKEAWAY',
+                      ],
+                      (v) => setState(() => _typeFilter = v!)),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildDropdown(
+                      _sortOrder,
+                      [
+                        'Newest First',
+                        'Oldest First',
+                      ],
+                      (v) => setState(() => _sortOrder = v!)),
                 ),
               ],
             ),
@@ -1040,15 +1132,18 @@ class _OrdersScreenState extends State<OrdersScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        border:
-            Border.all(color: _OrdersTheme.milanoRed.withValues(alpha: 0.2)),
-        borderRadius: BorderRadius.circular(8),
+        color: _OrdersTheme.canvasDeep.withValues(alpha: 0.5),
+        border: Border.all(color: _OrdersTheme.paleRose),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
-          icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey.shade600),
+          icon: const Icon(
+            Icons.keyboard_arrow_down,
+            color: _OrdersTheme.milanoRed,
+          ),
           items: items
               .map(
                 (i) => DropdownMenuItem(
@@ -1076,16 +1171,30 @@ class _OrdersScreenState extends State<OrdersScreen> {
         padding: const EdgeInsets.all(48),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.01),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: _OrdersTheme.paleRose),
+          boxShadow: _OrdersTheme.softShadow,
         ),
-        child: const Center(child: Text('No orders found')),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.receipt_long_rounded,
+                size: 44,
+                color: _OrdersTheme.milanoRed.withValues(alpha: 0.25),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'No orders found',
+                style: GoogleFonts.inter(
+                  color: _OrdersTheme.mutedTaupe,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     }
 
@@ -1130,14 +1239,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
         color: o.id == _highlightedOrderId
             ? _OrdersTheme.lemonChiffon.withValues(alpha: 0.35)
             : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 6),
-        ],
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: _OrdersTheme.softShadow,
         border: Border.all(
           color: o.id == _highlightedOrderId
               ? _OrdersTheme.gold
-              : _OrdersTheme.milanoRed.withValues(alpha: 0.05),
+              : _OrdersTheme.paleRose,
         ),
       ),
       child: Column(
@@ -1149,7 +1256,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 '#${o.id.substring(0, 8)}',
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.bold,
-                  color: _OrdersTheme.milanoRed,
+                  color: _OrdersTheme.milanoRedDark,
                 ),
               ),
               _statusBadge(
@@ -1164,7 +1271,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
               ),
             ],
           ),
-          const Divider(height: 24),
+          const Divider(height: 24, color: _OrdersTheme.paleRose),
           Row(
             children: [
               Expanded(
@@ -1175,7 +1282,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       'CUSTOMER',
                       style: GoogleFonts.inter(
                         fontSize: 10,
-                        color: AppColors.textMuted,
+                        color: _OrdersTheme.mutedTaupe,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -1196,7 +1303,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     'TOTAL',
                     style: GoogleFonts.inter(
                       fontSize: 10,
-                      color: AppColors.textMuted,
+                      color: _OrdersTheme.mutedTaupe,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -1205,7 +1312,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
-                      color: _OrdersTheme.milanoRed,
+                      color: _OrdersTheme.milanoRedDark,
                     ),
                   ),
                 ],
@@ -1220,12 +1327,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
               ElevatedButton(
                 onPressed: () => _showOrderDetails(o),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      _OrdersTheme.milanoRed.withValues(alpha: 0.08),
+                  backgroundColor: _OrdersTheme.blushTint,
                   foregroundColor: _OrdersTheme.milanoRed,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
                 child: const Text('Details'),
@@ -1242,21 +1348,15 @@ class _OrdersScreenState extends State<OrdersScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: _OrdersTheme.milanoRed.withValues(alpha: 0.15),
+          color: _OrdersTheme.paleRose,
           width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: _OrdersTheme.milanoRed.withValues(alpha: 0.06),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        boxShadow: _OrdersTheme.softShadow,
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(22),
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: ConstrainedBox(
@@ -1278,7 +1378,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.w700,
                       fontSize: 11,
-                      color: Colors.grey.shade600,
+                      color:
+                          _OrdersTheme.milanoRedDarkest.withValues(alpha: 0.65),
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -1289,7 +1390,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.w700,
                       fontSize: 11,
-                      color: Colors.grey.shade600,
+                      color:
+                          _OrdersTheme.milanoRedDarkest.withValues(alpha: 0.65),
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -1300,7 +1402,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.w700,
                       fontSize: 11,
-                      color: Colors.grey.shade600,
+                      color:
+                          _OrdersTheme.milanoRedDarkest.withValues(alpha: 0.65),
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -1311,7 +1414,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.w700,
                       fontSize: 11,
-                      color: Colors.grey.shade600,
+                      color:
+                          _OrdersTheme.milanoRedDarkest.withValues(alpha: 0.65),
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -1322,7 +1426,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.w700,
                       fontSize: 11,
-                      color: Colors.grey.shade600,
+                      color:
+                          _OrdersTheme.milanoRedDarkest.withValues(alpha: 0.65),
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -1333,7 +1438,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.w700,
                       fontSize: 11,
-                      color: Colors.grey.shade600,
+                      color:
+                          _OrdersTheme.milanoRedDarkest.withValues(alpha: 0.65),
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -1344,7 +1450,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.w700,
                       fontSize: 11,
-                      color: Colors.grey.shade600,
+                      color:
+                          _OrdersTheme.milanoRedDarkest.withValues(alpha: 0.65),
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -1355,7 +1462,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.w700,
                       fontSize: 11,
-                      color: Colors.grey.shade600,
+                      color:
+                          _OrdersTheme.milanoRedDarkest.withValues(alpha: 0.65),
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -1401,15 +1509,19 @@ class _OrdersScreenState extends State<OrdersScreen> {
                               '#${o.id.substring(0, 8)}',
                               style: GoogleFonts.inter(
                                 fontWeight: FontWeight.w700,
-                                color: _OrdersTheme.milanoRed,
+                                color: _OrdersTheme.milanoRedDark,
                                 fontSize: 13,
                               ),
                             ),
                             const SizedBox(height: 6),
+                            // PASS 8: the order-type chip now uses the
+                            // PUREDINE Dusty Blush icon-BG with maroon
+                            // text instead of the old pale blue — same
+                            // text/value, decoration only.
                             _badge(
                               o.orderType.replaceAll('_', '-'),
-                              const Color(0xFFE0F2FE),
-                              const Color(0xFF0284C7),
+                              _OrdersTheme.blushTint,
+                              _OrdersTheme.milanoRed,
                             ),
                           ],
                         ),
@@ -1421,14 +1533,14 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           children: [
                             Container(
                               padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade100,
+                              decoration: const BoxDecoration(
+                                color: _OrdersTheme.canvasDeep,
                                 shape: BoxShape.circle,
                               ),
-                              child: Icon(
+                              child: const Icon(
                                 Icons.person_outline,
                                 size: 14,
-                                color: Colors.grey.shade600,
+                                color: _OrdersTheme.milanoRed,
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -1450,10 +1562,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       anim(
                         Row(
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.location_on_outlined,
                               size: 14,
-                              color: Colors.grey.shade600,
+                              color: _OrdersTheme.mutedTaupe,
                             ),
                             const SizedBox(width: 4),
                             Expanded(
@@ -1490,7 +1602,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           '₹${o.totalAmount.toStringAsFixed(0)}',
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.w800,
-                            color: _OrdersTheme.milanoRed,
+                            color: _OrdersTheme.milanoRedDark,
                             fontSize: 14,
                           ),
                         ),
@@ -1506,7 +1618,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           ),
                           style: GoogleFonts.inter(
                             fontSize: 12,
-                            color: AppColors.textMuted,
+                            color: _OrdersTheme.mutedTaupe,
                           ),
                         ),
                       ),
@@ -1527,7 +1639,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                             backgroundColor: _OrdersTheme.milanoRed,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6),
+                              borderRadius: BorderRadius.circular(8),
                             ),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
@@ -1609,8 +1721,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
       text = const Color(0xFF0D9488);
     } else if (status.toUpperCase() == 'BILLED' ||
         status.toUpperCase() == 'PAID') {
-      bg = const Color(0xFFDCFCE7);
-      text = const Color(0xFF16A34A);
+      bg = _OrdersTheme.mintBg;
+      text = _OrdersTheme.successGreen;
     } else if (status.toUpperCase() == 'CANCELLED') {
       bg = const Color(0xFFFEE2E2);
       text = const Color(0xFFDC2626);
@@ -1669,8 +1781,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
     Color text = const Color(0xFFCA8A04);
 
     if (status.toUpperCase() == 'PAID') {
-      bg = const Color(0xFFDCFCE7);
-      text = const Color(0xFF16A34A);
+      bg = _OrdersTheme.mintBg;
+      text = _OrdersTheme.successGreen;
     } else if (status.toUpperCase() == 'BILLED') {
       bg = const Color(0xFFFFF7ED);
       text = const Color(0xFFF97316);
@@ -1758,7 +1870,18 @@ class _OrdersScreenState extends State<OrdersScreen> {
           const SizedBox(height: 16),
           Text(_error!, style: GoogleFonts.inter(color: AppColors.textMuted)),
           const SizedBox(height: 24),
-          ElevatedButton(onPressed: _loadOrders, child: const Text('Retry')),
+          ElevatedButton(
+            onPressed: _loadOrders,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _OrdersTheme.milanoRed,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text('Retry'),
+          ),
         ],
       ),
     );
@@ -1827,7 +1950,7 @@ class _PaymentDialogState extends State<_PaymentDialog> {
                       Text(
                         'Table ${widget.order.tableNumber ?? 'N/A'}',
                         style: GoogleFonts.inter(
-                          color: Colors.white70,
+                          color: _OrdersTheme.lemonChiffonSoft,
                           fontSize: 14,
                         ),
                       ),
@@ -1852,7 +1975,7 @@ class _PaymentDialogState extends State<_PaymentDialog> {
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey,
+                        color: _OrdersTheme.mutedTaupe,
                         letterSpacing: 1,
                       ),
                     ),
@@ -1870,7 +1993,7 @@ class _PaymentDialogState extends State<_PaymentDialog> {
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey,
+                        color: _OrdersTheme.mutedTaupe,
                         letterSpacing: 1,
                       ),
                     ),
@@ -1891,7 +2014,7 @@ class _PaymentDialogState extends State<_PaymentDialog> {
                       decoration: InputDecoration(
                         hintText: 'Custom amount (₹)',
                         filled: true,
-                        fillColor: Colors.grey.shade50,
+                        fillColor: _OrdersTheme.canvasDeep,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -1899,21 +2022,21 @@ class _PaymentDialogState extends State<_PaymentDialog> {
                       ),
                       keyboardType: TextInputType.number,
                     ),
-                    const Divider(height: 64),
+                    const Divider(height: 64, color: _OrdersTheme.paleRose),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           'Order Total',
                           style: GoogleFonts.inter(
-                            color: Colors.grey,
+                            color: _OrdersTheme.mutedTaupe,
                             fontSize: 16,
                           ),
                         ),
                         Text(
                           '₹${widget.order.totalAmount.toStringAsFixed(0)}',
                           style: GoogleFonts.inter(
-                            color: Colors.grey,
+                            color: _OrdersTheme.mutedTaupe,
                             fontSize: 16,
                           ),
                         ),
@@ -1928,7 +2051,7 @@ class _PaymentDialogState extends State<_PaymentDialog> {
                           style: GoogleFonts.inter(
                             fontSize: 24,
                             fontWeight: FontWeight.w900,
-                            color: _OrdersTheme.milanoRed,
+                            color: _OrdersTheme.milanoRedDark,
                           ),
                         ),
                         Text(
@@ -1936,7 +2059,7 @@ class _PaymentDialogState extends State<_PaymentDialog> {
                           style: GoogleFonts.inter(
                             fontSize: 24,
                             fontWeight: FontWeight.w900,
-                            color: _OrdersTheme.milanoRed,
+                            color: _OrdersTheme.milanoRedDark,
                           ),
                         ),
                       ],
@@ -1989,7 +2112,8 @@ class _PaymentDialogState extends State<_PaymentDialog> {
           padding: const EdgeInsets.symmetric(vertical: 24),
           decoration: BoxDecoration(
             border: Border.all(
-              color: isSelected ? _OrdersTheme.milanoRed : Colors.grey.shade200,
+              color:
+                  isSelected ? _OrdersTheme.milanoRed : _OrdersTheme.paleRose,
               width: 2,
             ),
             borderRadius: BorderRadius.circular(20),
@@ -2002,14 +2126,18 @@ class _PaymentDialogState extends State<_PaymentDialog> {
               Icon(
                 icon,
                 size: 32,
-                color: isSelected ? _OrdersTheme.milanoRed : Colors.grey,
+                color: isSelected
+                    ? _OrdersTheme.milanoRed
+                    : _OrdersTheme.mutedTaupe,
               ),
               const SizedBox(height: 8),
               Text(
                 label,
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.bold,
-                  color: isSelected ? _OrdersTheme.milanoRed : Colors.grey,
+                  color: isSelected
+                      ? _OrdersTheme.milanoRed
+                      : _OrdersTheme.mutedTaupe,
                 ),
               ),
             ],
@@ -2030,14 +2158,14 @@ class _PaymentDialogState extends State<_PaymentDialog> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? _OrdersTheme.milanoRed : Colors.grey.shade100,
+          color: isSelected ? _OrdersTheme.milanoRed : _OrdersTheme.canvasDeep,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Text(
           '${percentage.toInt()}%',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
-            color: isSelected ? Colors.white : Colors.grey.shade600,
+            color: isSelected ? Colors.white : _OrdersTheme.mutedTaupe,
           ),
         ),
       ),
@@ -2144,7 +2272,8 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
                 ],
               ),
             ),
-            const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+            const Divider(
+                height: 1, thickness: 1, color: _OrdersTheme.paleRose),
 
             Flexible(
               child: SingleChildScrollView(
@@ -2159,7 +2288,7 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: const Color(0xFFE2E8F0),
+                          color: _OrdersTheme.paleRose,
                           width: 1.5,
                         ),
                         boxShadow: [
@@ -2236,7 +2365,7 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: _currentOrder.status.toUpperCase() == 'PAID'
-                            ? AppColors.success
+                            ? _OrdersTheme.successGreen
                             : AppColors.slate600,
                         letterSpacing: 1.0,
                       ),
@@ -2247,7 +2376,7 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: Colors.grey.withValues(alpha: 0.3),
+                          color: _OrdersTheme.paleRose,
                           width: 1.5,
                         ),
                         color: Colors.white,
@@ -2264,7 +2393,7 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
                                     context,
                                     'Print Receipt',
                                     Icons.print,
-                                    const Color(0xFF1E293B),
+                                    _OrdersTheme.milanoRedDarkest,
                                     () {
                                       final restaurantName = context
                                               .read<RestaurantProvider>()
@@ -2278,7 +2407,7 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
                                     context,
                                     'Download Receipt',
                                     Icons.file_download,
-                                    const Color(0xFF0284C7),
+                                    _OrdersTheme.milanoRedDark,
                                     () {
                                       final restaurantName = context
                                               .read<RestaurantProvider>()
@@ -2331,7 +2460,7 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
                                       context,
                                       'Print Receipt',
                                       Icons.print,
-                                      const Color(0xFF1E293B),
+                                      _OrdersTheme.milanoRedDarkest,
                                       () {
                                         final restaurantName = context
                                                 .read<RestaurantProvider>()
@@ -2345,7 +2474,7 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
                                       context,
                                       'Download Receipt',
                                       Icons.file_download,
-                                      const Color(0xFF0284C7),
+                                      _OrdersTheme.milanoRedDark,
                                       () {
                                         final restaurantName = context
                                                 .read<RestaurantProvider>()
@@ -2450,7 +2579,7 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
                                 style: GoogleFonts.inter(
                                   fontSize: 24,
                                   fontWeight: FontWeight.w900,
-                                  color: const Color(0xFF0F172A),
+                                  color: _OrdersTheme.milanoRedDarkest,
                                   letterSpacing: 2.0,
                                 ),
                               );
@@ -2471,7 +2600,7 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
                     ),
 
                     const SizedBox(height: 32),
-                    const Divider(thickness: 1, color: Color(0xFFF1F5F9)),
+                    const Divider(thickness: 1, color: _OrdersTheme.paleRose),
                     const SizedBox(height: 24),
 
                     // Bill Details
@@ -2481,7 +2610,7 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: const Color(0xFFE2E8F0),
+                          color: _OrdersTheme.paleRose,
                           width: 1.5,
                         ),
                         boxShadow: [
@@ -2534,7 +2663,7 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
                     Container(
                       decoration: BoxDecoration(
                         border: Border.all(
-                          color: const Color(0xFFE2E8F0),
+                          color: _OrdersTheme.paleRose,
                           width: 1.5,
                         ),
                         borderRadius: BorderRadius.circular(16),
@@ -2584,7 +2713,9 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
                               ),
                               decoration: const BoxDecoration(
                                 border: Border(
-                                  top: BorderSide(color: Color(0xFFF1F5F9)),
+                                  top: BorderSide(
+                                    color: _OrdersTheme.canvasDeep,
+                                  ),
                                 ),
                               ),
                               child: Row(
@@ -2710,8 +2841,8 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
                             'Method: ${_currentOrder.paymentMethod ?? "N/A"}',
                             'Status: ${_currentOrder.paymentStatus.toUpperCase()}',
                           ],
-                          const Color(0xFFEFF6FF),
-                          const Color(0xFF1E40AF),
+                          _OrdersTheme.blushTint.withValues(alpha: 0.45),
+                          _OrdersTheme.milanoRed,
                         );
                         final time = _infoBox(
                           Icons.schedule,
@@ -2720,8 +2851,8 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
                             'Created: ${dateFormat.format(DateTime.tryParse(_currentOrder.createdAt) ?? DateTime.now())}',
                             'Updated: ${_currentOrder.updatedAt != null ? dateFormat.format(DateTime.tryParse(_currentOrder.updatedAt!) ?? DateTime.now()) : "N/A"}',
                           ],
-                          const Color(0xFFFAF5FF),
-                          const Color(0xFF6B21A8),
+                          _OrdersTheme.mintBg,
+                          _OrdersTheme.successGreen,
                         );
 
                         if (useVertical) {
@@ -2787,8 +2918,8 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
     if (s == 'CONFIRMED') return const Color(0xFFF97316); // Orange
     if (s == 'PREPARING') return const Color(0xFFA855F7); // Purple
     if (s == 'READY') return const Color(0xFF0D9488); // Teal
-    if (s == 'SERVED') return const Color(0xFF6366F1); // Indigo
-    return const Color(0xFF1E293B);
+    if (s == 'SERVED') return _OrdersTheme.milanoRed; // Deep Wine Maroon
+    return _OrdersTheme.milanoRedDarkest;
   }
 
   void _showPaymentDialog(BuildContext context) {
@@ -2809,7 +2940,7 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
       style: GoogleFonts.inter(
         fontSize: 12,
         fontWeight: FontWeight.bold,
-        color: AppColors.slate700,
+        color: _OrdersTheme.milanoRedDarkest.withValues(alpha: 0.75),
         letterSpacing: 0.5,
       ),
     );
@@ -3086,7 +3217,7 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
             label,
             style: GoogleFonts.inter(
               fontSize: 14,
-              color: AppColors.slate500,
+              color: _OrdersTheme.mutedTaupe,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -3115,8 +3246,8 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
     bool isBold = false,
     bool isBadge = false,
   }) {
-    Color badgeCol = const Color(0xFFF1F5F9);
-    Color textCol = const Color(0xFF475569);
+    Color badgeCol = _OrdersTheme.canvasDeep;
+    Color textCol = _OrdersTheme.milanoRedDarkest;
 
     if (isBadge) {
       final v = value.toUpperCase();
@@ -3133,8 +3264,8 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
         badgeCol = const Color(0xFFF0FDFA);
         textCol = const Color(0xFF0D9488);
       } else if (v == 'BILLED' || v == 'PAID') {
-        badgeCol = const Color(0xFFDCFCE7);
-        textCol = const Color(0xFF16A34A);
+        badgeCol = _OrdersTheme.mintBg;
+        textCol = _OrdersTheme.successGreen;
       } else if (v == 'CANCELLED' || v == 'PENDING') {
         badgeCol = const Color(0xFFFEE2E2);
         textCol = const Color(0xFFDC2626);
@@ -3147,7 +3278,7 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
         Text(
           label,
           style: GoogleFonts.inter(
-            color: AppColors.slate500,
+            color: _OrdersTheme.mutedTaupe,
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
@@ -3199,7 +3330,7 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
           style: GoogleFonts.inter(
             fontSize: isTotal ? 20 : 16,
             fontWeight: FontWeight.w900,
-            color: isTotal ? _OrdersTheme.milanoRed : AppColors.slate900,
+            color: isTotal ? _OrdersTheme.milanoRedDark : AppColors.slate900,
           ),
         ),
       ],

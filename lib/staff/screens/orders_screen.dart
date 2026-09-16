@@ -10,52 +10,119 @@ import '../../core/currency_utils.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────
-/// Local "Theme 1 — Dark Maroon × Soft Cream × Gold Glow" palette — matches
-/// the Order Details / New Orders / Create Order / Menu Management screens
-/// exactly (#8B1D1D primary / #F4C430 gold accent), so this screen now
+/// PUREDINE Maroon + Cream palette — matches the New Orders / Create Order
+/// / Menu Management / Order Details screens exactly, so this screen now
 /// reads as part of the same cohesive, professional brand instead of its
 /// own one-off theme. Used ONLY for this screen's visual layer. Nothing
 /// here touches AppColors, AppTheme, or any other file — pure UI
 /// enhancement, no logic changed anywhere in this file.
 ///
-/// UI-ENHANCEMENT PASS 2: the header was pushed further into its own
-/// distinctive "command bar" identity (four-stop gradient, a large faint
-/// watermark emblem, a glass highlight line, and a new live status
-/// readout strip built from the exact same per-status counts the filter
-/// chips already use), the full-screen backdrop gained an extra diagonal
-/// sheen + a second ambient glow for more depth, the sidebar filter chips
-/// now carry a per-status icon, and each order card picked up a slim
-/// status-colored accent rail and a slightly richer "View Details" chip.
-/// No provider, controller, route, filtering, or data value was touched
-/// anywhere in this pass — only Container/Decoration/TextStyle-level
-/// presentation changed.
+/// UI-ENHANCEMENT PASS 3: the header (`_ScreenHeader`) was rebuilt to
+/// match the New Orders screen's header language exactly — a two-stop
+/// maroon-to-wine gradient, a soft pair of ambient gold glows, an
+/// icon-only back chip, a title block (small icon + subtitle label, then
+/// the big title), a plain typographic tagline with a small gold accent
+/// rule (no icon badge, no card, no border/shadow), a date/live row, and a
+/// thin gold gradient hairline underneath. No big watermark emblem, no
+/// dotted texture, no four-stop gradient, no photo/avatar imagery
+/// anywhere — kept intentionally plain per the New Orders screen's design
+/// language. The header's existing "Create Order" action is preserved
+/// (same callback, same behavior) but restyled into the same minimal
+/// glass-chip language as the back button, and the tagline reflects the
+/// live count of orders currently in progress — a direct text formatting
+/// of the same confirmed/preparing/ready counts already computed in
+/// `build()`, not a new data source. The per-status counts remain visible
+/// exactly as before on the filter chips in the sidebar — untouched. No
+/// provider, controller, route, filtering, or data value was touched
+/// anywhere in this pass — only presentation changed.
 ///
-/// NOTE: this is a private class redeclared identically to the one in
-/// order_details_screen.dart / new_orders_screen.dart / menu_screen.dart
-/// (private classes can't be shared across files without a new shared
-/// import, which would go beyond a pure UI-only change here).
+/// UI-ENHANCEMENT PASS 4: `_ScreenHeader`'s bottom edge is now
+/// a straight, flat line — matching the Create Order screen's topbar
+/// treatment (its own UI-ENHANCEMENT PASS 7) — instead of the previous
+/// rounded 32px bottom corners. The `BorderRadius.only(bottomLeft/
+/// bottomRight: Radius.circular(32))` on the header `Container` and its
+/// matching `ClipRRect` were removed (so the banner is now a plain
+/// rectangle, using a plain `ClipRect` in place of the `ClipRRect`), and
+/// a thin warm-gold hairline border was added along the bottom edge, the
+/// same treatment the Create Order screen uses. Everything else inside
+/// the header — the gradient, the drop shadow, the ambient gold glows,
+/// the back chip, the "Create Order" chip, the title block, the tagline,
+/// and the date/live row — is completely unchanged, as is every other
+/// part of this file (filters, `_OrderCard`, and all provider/fetch
+/// logic in `_OrdersScreenState`). Presentation only.
+///
+/// UI-ENHANCEMENT PASS 5: removed the icon-only back chip that
+/// previously sat in the top-left of the header, alongside the
+/// "Create Order" chip. The `_BackChip` widget class was removed since
+/// it's no longer used anywhere in this file. The "Create Order" chip
+/// (`_CreateOrderChip`) is untouched and still sits in the header's top
+/// row, aligned to the right on its own. The `onBack` callback is still
+/// accepted by `_ScreenHeader` and still wired up from
+/// `_OrdersScreenState.build()` exactly as before — no navigation logic
+/// was touched, only the visible back icon was removed.
+///
+/// UI-ENHANCEMENT PASS 6 (this pass): the title block (small icon +
+/// subtitle label, then the big title) now sits in the same row as the
+/// `_CreateOrderChip`, side by side, instead of in its own row
+/// underneath. The previously separate "top row" (which used to hold
+/// only the Create Order chip) and the title block's own row have been
+/// merged into a single `Row` — the title block on the left (wrapped in
+/// `Expanded` so long titles still ellipsis correctly) and the chip on
+/// the right, vertically centered against each other. This removes one
+/// row's worth of vertical spacing from the header, so the banner reads
+/// as a little more compact/"pulled up." No text, callback, styling
+/// values (sizes/colors/weights), or animation on the title block itself
+/// were changed — only its position relative to the Create Order chip.
+/// Everything else in the header (tagline, date/live row, hairline,
+/// gradient, shadows, glows) and the rest of the file is unchanged.
+///
+/// NOTE: this is a private class redeclared identically to the ones in
+/// order_details_screen.dart / new_orders_screen.dart / create_order_
+/// screen.dart / menu_screen.dart (private classes can't be shared across
+/// files without a new shared import, which would go beyond a pure UI-only
+/// change here).
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
-  static const Color milanoRed = Color(0xFF8B1D1D); // Dark Maroon (Primary)
-  static const Color milanoRedDeep = Color(0xFF4E0F0F); // Deepest maroon
-  static const Color milanoRedLight = Color(0xFFA83030); // Lighter maroon
-  static const Color lemonChiffon = Color(0xFFF4C430); // Gold Glow (Accent)
-  static const Color lemonChiffonDeep = Color(0xFFD9A62A); // Deeper gold
-  static const Color canvas = Color(0xFFFFF8F0); // Soft Cream background
-  static const Color canvasDeep = Color(0xFFF5E9D6); // Deeper cream
-  static const Color textDark = Color(0xFF3A1608);
-  static const Color textMuted = Color(0xFF8A6F5E);
-  static const Color gold = Color(0xFFF4C430);
-  static const Color goldLight = Color(0xFFF7D66B);
+  // Primary / Topbar — Deep Wine Maroon
+  static const Color milanoRed = Color(0xFF742A3C);
+  // Primary accent / deep — Burgundy
+  static const Color milanoRedDeep = Color(0xFF8A183F);
+  // Topbar lighter gradient — Wine
+  static const Color milanoRedLight = Color(0xFF813244);
+
+  // Main background — Warm Off-White
+  static const Color canvas = Color(0xFFFBF8F5);
+  // Card background — Soft Cream
+  static const Color canvasDeep = Color(0xFFF7F1ED);
+
+  // Dark text — Deep Brown/Black
+  static const Color textDark = Color(0xFF2E0D16);
+  // Secondary text — Muted Taupe
+  static const Color textMuted = Color(0xFF9B707A);
+
+  // Gold accent family — Warm Gold (accent) / a deeper gold used for
+  // borders and hover/emphasis states, plus the Soft Yellow highlight.
+  static const Color gold = Color(0xFFF3C564);
+  static const Color goldLight = Color(0xFFFCE1AB); // Soft Yellow highlight
+  static const Color lemonChiffon = Color(0xFFF3C564); // alias, same as gold
+  static const Color lemonChiffonDeep = Color(0xFFD9A63E); // deeper gold
+
+  // Extra brand tints from the PUREDINE palette.
+  static const Color dustyBlush = Color(0xFFF3D9DC); // Blush/Pink tint
+  static const Color paleRose = Color(0xFFEFD7DA); // Light pink
+  static const Color paleMint = Color(0xFFEAF6EF); // Mint background
+
+  // Live / Success — Fresh Green, used for the header's "Live" indicator.
+  static const Color success = Color(0xFF44AF70);
 
   /// Themed soft shadow for resting cards/panels — matches the exact
   /// softShadow used on Order Details/Menu/Create Order/New Orders so
   /// every card on this screen carries the same warm, branded elevation.
   static List<BoxShadow> get softShadow => [
         BoxShadow(
-          color: milanoRedDeep.withValues(alpha: 0.07),
-          blurRadius: 20,
-          offset: const Offset(0, 8),
+          color: milanoRedDeep.withValues(alpha: 0.08),
+          blurRadius: 22,
+          offset: const Offset(0, 10),
         ),
         BoxShadow(
           color: Colors.black.withValues(alpha: 0.03),
@@ -64,40 +131,17 @@ class _Palette {
         ),
       ];
 
-  /// Richer navbar/header shadow stack — the same three-layer shadow
-  /// language used on the Order Details / New Orders / Create Order /
-  /// Dashboard headers (deep maroon drop shadow + soft ambient gold
-  /// bloom + fine black contact shadow).
+  /// Header/hero drop shadow — matches the New Orders hero exactly.
   static List<BoxShadow> get heroShadow => [
         BoxShadow(
-          color: milanoRedDeep.withValues(alpha: 0.40),
-          blurRadius: 34,
-          offset: const Offset(0, 15),
-        ),
-        BoxShadow(
-          color: lemonChiffon.withValues(alpha: 0.12),
-          blurRadius: 40,
-          offset: const Offset(0, 6),
+          color: milanoRedDeep.withValues(alpha: 0.28),
+          blurRadius: 24,
+          offset: const Offset(0, 10),
         ),
         BoxShadow(
           color: Colors.black.withValues(alpha: 0.10),
           blurRadius: 6,
-          offset: const Offset(0, 2),
-        ),
-      ];
-
-  /// Soft inner "glass" shadow used on the header's stats readout strip —
-  /// pure decoration, gives the capsule a faint pressed-glass depth.
-  static List<BoxShadow> get statCapsuleShadow => [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.16),
-          blurRadius: 14,
-          offset: const Offset(0, 6),
-        ),
-        BoxShadow(
-          color: lemonChiffon.withValues(alpha: 0.06),
-          blurRadius: 8,
-          offset: const Offset(0, -2),
+          offset: const Offset(0, 3),
         ),
       ];
 }
@@ -295,7 +339,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         shape: BoxShape.circle,
                         gradient: RadialGradient(
                           colors: [
-                            _Palette.lemonChiffon.withValues(alpha: 0.20),
+                            _Palette.gold.withValues(alpha: 0.16),
                             Colors.transparent,
                           ],
                         ),
@@ -329,7 +373,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         shape: BoxShape.circle,
                         gradient: RadialGradient(
                           colors: [
-                            _Palette.lemonChiffonDeep.withValues(alpha: 0.08),
+                            _Palette.lemonChiffonDeep.withValues(alpha: 0.07),
                             Colors.transparent,
                           ],
                         ),
@@ -386,9 +430,14 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
           Column(
             children: [
-              // ── Header — same Dark Maroon gradient + gold accents used
-              // throughout every other staff screen, now restyled into a
-              // richer "command bar" with a live status readout. ────────
+              // ── Header — restyled to match the New Orders screen's
+              // header design language exactly (two-stop maroon-to-wine
+              // gradient, title block, plain-text tagline with a gold
+              // accent rule, date/live row, gold hairline), and with a
+              // straight, flat bottom edge (see PASS 4 above) matching the
+              // Create Order screen's topbar. The "Create Order" action is
+              // preserved, restyled into the same minimal glass-chip
+              // language, and (PASS 6) now sits inline with the title. ─
               _ScreenHeader(
                 title: 'Active Orders',
                 subtitle: 'Manage Real-time Dining Service',
@@ -684,46 +733,40 @@ class _OrdersScreenState extends State<OrdersScreen> {
   }
 }
 
-/// Small decorative gradient divider placed beneath the header title —
-/// purely cosmetic, mirrors the accent used under section titles on the
-/// Order Details / Menu Management / Create Order / New Orders screens
-/// for a consistent brand language.
-class _TitleDivider extends StatelessWidget {
-  final double width;
-  const _TitleDivider() : width = 46;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: 3,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(4),
-        gradient: LinearGradient(
-          colors: [
-            Colors.transparent,
-            _Palette.lemonChiffon.withValues(alpha: 0.9),
-            Colors.transparent,
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Screen header — restyled into its own distinctive "command bar"
-// identity: a richer four-stop diagonal gradient, a large faint watermark
-// emblem behind the title, a fine glass highlight line along the top
-// edge, layered ribbon glows, a dotted texture accent, a floating date
-// pill, and a brand icon chip matching every other staff screen's header.
-// UI-ENHANCEMENT PASS 2 adds a live status readout strip (Confirmed /
-// Preparing / Ready / Served) built from the exact same per-status counts
-// the filter chips already use — no new data source, purely a display of
-// values already available at the call site. The back control remains
-// the same compact, icon-only "‹" chip, and the primary "Create Order"
-// action remains the same small circular "+" chip pinned to the top-right
-// of the navbar. The onBack/onCreateOrder callbacks are identical to
-// before — this is a purely presentational change. ─────────────────────
+// ─── Screen header — restyled to mirror the New Orders screen's header
+// exactly: a two-stop maroon-to-wine gradient, two soft ambient gold
+// glows, a small "Create Order" chip, a title block (small icon +
+// subtitle label, then the big title), a plain-text tagline anchored by a
+// small gold accent rule (no icon badge, no card, no border/shadow), and
+// a date/live row with a thin gold gradient hairline underneath. No
+// watermark emblem, no dotted texture, no photo/avatar imagery — kept
+// intentionally minimal per the New Orders screen's design language. The
+// tagline is data-driven off the confirmed/preparing/ready counts
+// (already computed by the caller) purely as a text format — no new
+// logic. Same callbacks (onBack / onCreateOrder) as before — this is a
+// purely presentational change.
+//
+// PASS 4: the bottom edge is now a straight, flat line — matching the
+// Create Order screen's topbar treatment — instead of the previous
+// rounded 32px bottom corners. The `BorderRadius.only(bottomLeft/
+// bottomRight)` on the `Container` and the matching `ClipRRect` were
+// removed (replaced with a plain `ClipRect`), and a thin warm-gold
+// hairline border was added along the bottom edge.
+//
+// PASS 5: the icon-only back chip that used to sit to the left of the
+// "Create Order" chip has been removed. `onBack` is still accepted here
+// and still passed through from the caller unchanged — no navigation
+// logic touched, only the visible icon was removed.
+//
+// PASS 6: the title block (icon + subtitle label, then the big title)
+// now sits in the same row as the "Create Order" chip instead of in its
+// own row beneath it, pulling the header content up and making the
+// banner a bit more compact. The title block is wrapped in `Expanded` so
+// the big title's existing `maxLines: 1` / ellipsis behavior still works
+// correctly next to the chip, and the row uses
+// `CrossAxisAlignment.center` so the title block and the chip line up
+// visually. No text, callback, or styling value was changed — only the
+// position of the title block relative to the chip.
 class _ScreenHeader extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -750,428 +793,263 @@ class _ScreenHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 800;
+    final inProgressCount = confirmedCount + preparingCount + readyCount;
 
-    return ClipRect(
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          // Richer four-stop diagonal maroon gradient — deeper and more
-          // dimensional than a flat three-stop wash, matching the
-          // Dashboard hero's "faceted" surface language.
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              _Palette.milanoRedLight,
-              _Palette.milanoRed,
-              _Palette.milanoRedDeep,
-              Color(0xFF320A0A),
-            ],
-            stops: [0.0, 0.38, 0.72, 1.0],
-          ),
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(isMobile ? 28 : 38),
-            bottomRight: Radius.circular(isMobile ? 28 : 38),
-          ),
-          border: Border(
-            bottom: BorderSide(
-              color: _Palette.lemonChiffon.withValues(alpha: 0.9),
-              width: 4,
-            ),
-          ),
-          boxShadow: _Palette.heroShadow,
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        // Two-stop Deep Wine Maroon → Wine gradient, matching the
+        // New Orders hero exactly.
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _Palette.milanoRed,
+            _Palette.milanoRedLight,
+          ],
         ),
-        clipBehavior: Clip.antiAlias,
+        // PASS 4: straight, flat bottom edge — no rounded corners —
+        // matching the Create Order screen's topbar shape, plus the same
+        // thin warm-gold hairline the Create Order screen uses along
+        // that bottom edge.
+        border: Border(
+          bottom: BorderSide(
+            color: _Palette.gold.withValues(alpha: 0.30),
+            width: 1,
+          ),
+        ),
+        boxShadow: _Palette.heroShadow,
+      ),
+      child: ClipRect(
         child: Stack(
           children: [
-            // Subtle decorative diagonal ribbon accents — purely cosmetic,
-            // matches every other staff screen's header for a consistent
-            // brand feel.
-            Positioned(
-              top: -60,
-              right: -40,
-              child: Transform.rotate(
-                angle: -0.5,
-                child: Container(
-                  width: 220,
-                  height: 84,
+            // A subtle deeper-wine wash toward the bottom, so content near
+            // the header's lower edge reads clearly against the darkest
+            // part of the banner.
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
                       colors: [
-                        _Palette.lemonChiffon.withValues(alpha: 0.16),
                         Colors.transparent,
+                        _Palette.milanoRedDeep.withValues(alpha: 0.35),
                       ],
                     ),
                   ),
                 ),
               ),
             ),
-            Positioned(
-              bottom: -50,
-              left: -60,
-              child: Transform.rotate(
-                angle: 0.4,
-                child: Container(
-                  width: 200,
-                  height: 66,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.white.withValues(alpha: 0.06),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            // Soft gold radial glow behind the brand icon, echoing the
-            // Dashboard / Order Details hero treatment.
+            // Two very soft decorative gold glows tucked behind the
+            // content — purely decorative, mirroring the New Orders hero.
             Positioned(
               top: -50,
-              left: -20,
-              child: Container(
-                width: 150,
-                height: 150,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      _Palette.lemonChiffon.withValues(alpha: 0.16),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            // Extra ambient gold glow, lower-right — matches the fuller
-            // "full-screen backdrop" glow used on the Order Details header.
-            Positioned(
-              bottom: -70,
-              right: -20,
-              child: Container(
-                width: 180,
-                height: 180,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      _Palette.lemonChiffon.withValues(alpha: 0.08),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // ── Large faint watermark emblem — a unique signature touch,
-            // sits low-opacity and large behind the copy, never competing
-            // with the title or the stats strip.
-            Positioned(
-              right: isMobile ? -30 : -10,
-              bottom: isMobile ? -22 : -16,
+              right: -40,
               child: IgnorePointer(
-                child: Opacity(
-                  opacity: 0.07,
-                  child: Icon(
-                    Icons.receipt_long_rounded,
-                    size: isMobile ? 140 : 190,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-
-            // Fine dotted texture accent, matching the refined decorative
-            // language used on the dashboard / menu-management headers.
-            Positioned(
-              top: 8,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: List.generate(
-                    5,
-                    (i) => Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
-                      width: 4,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _Palette.lemonChiffon.withValues(
-                          alpha: i == 2 ? 0.9 : 0.32,
-                        ),
-                      ),
+                child: Container(
+                  width: 190,
+                  height: 190,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        _Palette.gold.withValues(alpha: 0.22),
+                        Colors.transparent,
+                      ],
                     ),
                   ),
                 ),
               ),
             ),
-
-            // Fine glass highlight line along the very top edge, giving
-            // the full-width panel a polished, "premium glass" finish —
-            // matches the Dashboard hero's top edge treatment.
             Positioned(
-              top: 0,
-              left: 24,
-              right: 24,
-              child: Container(
-                height: 1,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.transparent,
-                      Colors.white.withValues(alpha: 0.35),
-                      Colors.transparent,
-                    ],
+              bottom: -70,
+              left: -60,
+              child: IgnorePointer(
+                child: Container(
+                  width: 200,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        _Palette.gold.withValues(alpha: 0.10),
+                        Colors.transparent,
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-
             SafeArea(
               bottom: false,
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
-                  isMobile ? 16 : 24,
-                  16,
-                  isMobile ? 16 : 24,
-                  22,
+                  isMobile ? 18 : 32,
+                  isMobile ? 14 : 20,
+                  isMobile ? 18 : 32,
+                  isMobile ? 24 : 30,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        // ── Icon-only back control — a single "‹" glyph,
-                        // no arrow icon and no "Back" label, matching the
-                        // Order Details screen's header control. ────────
-                        _BackChevronButton(onTap: onBack),
-                        const Spacer(),
-                        if (!isMobile) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: _Palette.lemonChiffon.withValues(
-                                  alpha: 0.25,
-                                ),
-                                width: 1,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.calendar_today_rounded,
-                                  size: 12,
-                                  color: _Palette.lemonChiffon.withValues(
-                                    alpha: 0.85,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  dateLabel,
-                                  style: AppTheme.sans(
-                                    size: 12,
-                                    weight: FontWeight.w600,
-                                    color: Colors.white.withValues(alpha: 0.75),
-                                  ).copyWith(letterSpacing: 0.3),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                        ],
-                        // ── Compact circular "Create Order" action,
-                        // pinned to the top-right of the navbar right next
-                        // to the back control. Same gold gradient +
-                        // lemon-chiffon edge as before, just re-shaped
-                        // into a small icon-only chip instead of a
-                        // full-width labeled button. ────────────────────
-                        Tooltip(
-                          message: 'Create Order',
-                          child: _CreateOrderCircleButton(
-                            onTap: onCreateOrder,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
+                    // ── Top row: title block (icon + subtitle label, then
+                    // the big title) on the left, "Create Order" chip on
+                    // the right — merged into a single row (PASS 6) so the
+                    // header sits more compact. Same onCreateOrder
+                    // callback as before — presentation only.
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // ── Brand icon chip — thin gold border + soft
-                        // gold glow, matching the Order Details / Create
-                        // Order / New Orders header icon. ───────────────
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.14),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: _Palette.gold.withValues(alpha: 0.8),
-                              width: 1.3,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: _Palette.gold.withValues(alpha: 0.3),
-                                blurRadius: 14,
-                                spreadRadius: 0.5,
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.receipt_long_rounded,
-                            color: _Palette.lemonChiffon,
-                            size: 23,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.receipt_long_rounded,
+                                    size: 15,
+                                    color: _Palette.gold,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    subtitle,
+                                    style: AppTheme.sans(
+                                      size: 13,
+                                      weight: FontWeight.w700,
+                                      color: _Palette.gold,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
                               Text(
                                 title,
                                 style: AppTheme.serif(
-                                  size: isMobile ? 22 : 26,
+                                  size: isMobile ? 26 : 32,
                                   weight: FontWeight.w900,
                                   color: Colors.white,
                                 ).copyWith(height: 1.1),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 8),
-                              const _TitleDivider(),
-                              const SizedBox(height: 8),
-                              Text(
-                                subtitle,
-                                style: AppTheme.sans(
-                                  size: 12.5,
-                                  weight: FontWeight.w600,
-                                  color: _Palette.lemonChiffon,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
                             ],
+                          ).animate().fade(duration: 500.ms).slideY(
+                                begin: -0.15,
+                              ),
+                        ),
+                        const SizedBox(width: 12),
+                        _CreateOrderChip(onTap: onCreateOrder),
+                      ],
+                    ),
+
+                    SizedBox(height: isMobile ? 16 : 20),
+
+                    // ── Tagline ───────────────────────────────────────
+                    // No card, no border/drop-shadow, no icon badge — just
+                    // clean, confident cream typography sitting directly
+                    // in the header, with a small gold accent rule above
+                    // it to anchor the line — matches the New Orders
+                    // header's tagline treatment exactly. The copy itself
+                    // reflects the live in-progress order count already
+                    // computed by the caller (a text format of existing
+                    // data, not new logic).
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 28,
+                          height: 3,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(4),
+                            gradient: LinearGradient(
+                              colors: [
+                                _Palette.gold.withValues(alpha: 0.9),
+                                _Palette.gold.withValues(alpha: 0.15),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: isMobile ? 8 : 10),
+                        Text(
+                          inProgressCount > 0
+                              ? '$inProgressCount order${inProgressCount == 1 ? '' : 's'} currently in progress.'
+                              : 'No orders in progress right now.',
+                          style: AppTheme.serif(
+                            size: isMobile ? 15.5 : 18,
+                            weight: FontWeight.w800,
+                            color: _Palette.canvasDeep,
+                          ).copyWith(height: 1.3, letterSpacing: 0.2),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ).animate().fade(duration: 500.ms, delay: 100.ms).slideY(
+                          begin: 0.1,
+                        ),
+
+                    SizedBox(height: isMobile ? 14 : 18),
+
+                    // ── Date + Live row ──────────────────────────────────
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today_rounded,
+                          size: 12,
+                          color: Colors.white.withValues(alpha: 0.75),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          dateLabel,
+                          style: AppTheme.sans(
+                            size: isMobile ? 11.5 : 12.5,
+                            weight: FontWeight.w600,
+                            color: Colors.white.withValues(alpha: 0.85),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: _Palette.success,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          'Live',
+                          style: AppTheme.sans(
+                            size: isMobile ? 11 : 12,
+                            weight: FontWeight.w700,
+                            color: _Palette.success,
+                            letterSpacing: 0.3,
                           ),
                         ),
                       ],
                     ),
-                    if (isMobile) ...[
-                      const SizedBox(height: 14),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: _Palette.lemonChiffon.withValues(
-                                alpha: 0.25,
-                              ),
-                              width: 1,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.calendar_today_rounded,
-                                size: 10,
-                                color: _Palette.lemonChiffon.withValues(
-                                  alpha: 0.8,
-                                ),
-                              ),
-                              const SizedBox(width: 5),
-                              Text(
-                                dateLabel,
-                                style: AppTheme.sans(
-                                  size: 10.5,
-                                  weight: FontWeight.w600,
-                                  color: Colors.white.withValues(alpha: 0.7),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
 
-                    const SizedBox(height: 18),
+                    SizedBox(height: isMobile ? 10 : 12),
 
-                    // ── Live status readout strip — Confirmed / Preparing
-                    // / Ready / Served, built straight from the same
-                    // per-status counts already powering the filter chips
-                    // below. Purely a display addition; no new data
-                    // source and no logic change.
+                    // Thin gold gradient hairline underneath the date row.
                     Container(
-                      padding: const EdgeInsets.all(6),
+                      width: 46,
+                      height: 3,
                       decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(4),
                         gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
                           colors: [
-                            Colors.black.withValues(alpha: 0.22),
-                            Colors.black.withValues(alpha: 0.14),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.10),
-                        ),
-                        boxShadow: _Palette.statCapsuleShadow,
-                      ),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            _HeaderStatPill(
-                              icon: Icons.access_time_rounded,
-                              value: '$confirmedCount',
-                              label: 'Confirmed',
-                              accent: const Color(0xFFFBBF24),
-                            ),
-                            const _HeaderStatDivider(),
-                            _HeaderStatPill(
-                              icon: Icons.local_fire_department_rounded,
-                              value: '$preparingCount',
-                              label: 'Preparing',
-                              accent: const Color(0xFF60A5FA),
-                            ),
-                            const _HeaderStatDivider(),
-                            _HeaderStatPill(
-                              icon: Icons.check_circle_outline_rounded,
-                              value: '$readyCount',
-                              label: 'Ready',
-                              accent: const Color(0xFF34D399),
-                            ),
-                            const _HeaderStatDivider(),
-                            _HeaderStatPill(
-                              icon: Icons.done_all_rounded,
-                              value: '$servedCount',
-                              label: 'Served',
-                              accent: Colors.white70,
-                            ),
+                            _Palette.gold.withValues(alpha: 0.9),
+                            _Palette.gold.withValues(alpha: 0.15),
                           ],
                         ),
                       ),
-                    )
-                        .animate()
-                        .fade(duration: 550.ms, delay: 200.ms)
-                        .slideY(begin: 0.2, duration: 550.ms, delay: 200.ms),
+                    ),
                   ],
                 ),
               ),
@@ -1183,212 +1061,69 @@ class _ScreenHeader extends StatelessWidget {
   }
 }
 
-/// Slim vertical divider used between stat pills in the header's readout
-/// strip — purely decorative spacing element, no logic.
-class _HeaderStatDivider extends StatelessWidget {
-  const _HeaderStatDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 1,
-      height: 28,
-      margin: const EdgeInsets.symmetric(horizontal: 2),
-      color: Colors.white.withValues(alpha: 0.10),
-    );
-  }
-}
-
-/// A single stat readout module (icon badge + value + label) used inside
-/// the header's live stats strip. Purely presentational — takes whatever
-/// value/label/accent it's given.
-class _HeaderStatPill extends StatelessWidget {
-  final IconData icon;
-  final String value;
-  final String label;
-  final Color accent;
-
-  const _HeaderStatPill({
-    required this.icon,
-    required this.value,
-    required this.label,
-    required this.accent,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      margin: const EdgeInsets.symmetric(horizontal: 2),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 24,
-            height: 24,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.10),
-            ),
-            child: Icon(icon, size: 13, color: accent),
-          ),
-          const SizedBox(width: 9),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                value,
-                style: AppTheme.sans(
-                  size: 15,
-                  weight: FontWeight.w900,
-                  color: Colors.white,
-                ),
-              ),
-              Text(
-                label.toUpperCase(),
-                style: AppTheme.sans(
-                  size: 8.5,
-                  weight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.6),
-                ).copyWith(letterSpacing: 0.4),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Compact icon-only "back" control — a circular glass button showing
-/// only a plain "‹" glyph. Replaces the previous arrow-icon + "Back"
-/// label combo with the same minimal, professional control used on the
-/// Order Details screen's header, for a consistent brand-wide top bar.
-class _BackChevronButton extends StatefulWidget {
+// ─── Create Order chip — same minimal glass-gold circular control as the
+// former back chip, showing a "+" glyph. Same onCreateOrder callback as
+// before — presentation only, no logic touched.
+class _CreateOrderChip extends StatefulWidget {
   final VoidCallback onTap;
-  const _BackChevronButton({required this.onTap});
+  const _CreateOrderChip({required this.onTap});
 
   @override
-  State<_BackChevronButton> createState() => _BackChevronButtonState();
+  State<_CreateOrderChip> createState() => _CreateOrderChipState();
 }
 
-class _BackChevronButtonState extends State<_BackChevronButton> {
-  bool _isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: 40,
-          height: 40,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: _isHovered
-                ? Colors.white.withValues(alpha: 0.20)
-                : Colors.white.withValues(alpha: 0.10),
-            border: Border.all(
-              color: _isHovered
-                  ? _Palette.lemonChiffon.withValues(alpha: 0.7)
-                  : _Palette.lemonChiffon.withValues(alpha: 0.4),
-              width: 1.2,
-            ),
-            boxShadow: _isHovered
-                ? [
-                    BoxShadow(
-                      color: _Palette.lemonChiffon.withValues(alpha: 0.25),
-                      blurRadius: 10,
-                      spreadRadius: 1,
-                    ),
-                  ]
-                : null,
-          ),
-          child: Text(
-            '‹',
-            style: AppTheme.sans(
-              size: 24,
-              weight: FontWeight.w900,
-              color: Colors.white,
-            ).copyWith(height: 1.0),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── "Create Order" action — a small circular gold chip pinned to the
-// top-right of the navbar, right beside the back control. Same gold
-// gradient + lemon-chiffon edge as the ACCEPT ORDER button on the New
-// Orders screen, so the primary call to action still carries the same
-// premium look, just condensed into an icon-only "+" glyph that matches
-// the compact, icon-only back control on the opposite side of the bar.
-class _CreateOrderCircleButton extends StatefulWidget {
-  final VoidCallback onTap;
-
-  const _CreateOrderCircleButton({required this.onTap});
-
-  @override
-  State<_CreateOrderCircleButton> createState() =>
-      _CreateOrderCircleButtonState();
-}
-
-class _CreateOrderCircleButtonState extends State<_CreateOrderCircleButton> {
+class _CreateOrderChipState extends State<_CreateOrderChip> {
   bool _pressed = false;
   bool _isHovered = false;
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        onTapDown: (_) => setState(() => _pressed = true),
-        onTapUp: (_) => setState(() => _pressed = false),
-        onTapCancel: () => setState(() => _pressed = false),
-        child: AnimatedScale(
-          scale: _pressed ? 0.92 : (_isHovered ? 1.06 : 1.0),
-          duration: 120.ms,
-          curve: Curves.easeOut,
-          child: Container(
-            width: 40,
-            height: 40,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                colors: [_Palette.gold, _Palette.goldLight],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              border: Border.all(
-                color: _Palette.lemonChiffonDeep.withValues(alpha: 0.6),
-                width: 1.2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: _Palette.gold.withValues(
-                    alpha: _isHovered ? 0.55 : 0.4,
-                  ),
-                  blurRadius: _isHovered ? 16 : 12,
-                  offset: const Offset(0, 4),
+    return Tooltip(
+      message: 'Create Order',
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: widget.onTap,
+          onTapDown: (_) => setState(() => _pressed = true),
+          onTapUp: (_) => setState(() => _pressed = false),
+          onTapCancel: () => setState(() => _pressed = false),
+          child: AnimatedScale(
+            scale: _pressed ? 0.92 : 1.0,
+            duration: 120.ms,
+            curve: Curves.easeOut,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _isHovered
+                    ? Colors.white.withValues(alpha: 0.20)
+                    : Colors.white.withValues(alpha: 0.10),
+                border: Border.all(
+                  color: _isHovered
+                      ? _Palette.gold.withValues(alpha: 0.85)
+                      : _Palette.gold.withValues(alpha: 0.55),
+                  width: 1.2,
                 ),
-              ],
-            ),
-            child: const Icon(
-              Icons.add_rounded,
-              color: Colors.white,
-              size: 22,
+                boxShadow: [
+                  BoxShadow(
+                    color: _Palette.gold.withValues(
+                      alpha: _isHovered ? 0.3 : 0.18,
+                    ),
+                    blurRadius: _isHovered ? 14 : 10,
+                    spreadRadius: _isHovered ? 1 : 0.5,
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.add_rounded,
+                size: 20,
+                color: Colors.white,
+              ),
             ),
           ),
         ),
@@ -1398,12 +1133,12 @@ class _CreateOrderCircleButtonState extends State<_CreateOrderCircleButton> {
 }
 
 // ─── Order Card ─────────────────────────────────────────────────────────
-// UI-ENHANCEMENT PASS 2: picked up a slim status-colored accent rail down
-// the left edge (matching the Dashboard's mini order cards and the Tables
-// screen's floor-plan tiles), a soft ring around the status icon chip,
-// and a slightly richer "View Details" pill with its own circular arrow
-// badge. Still wrapped in the same AppCard with the exact same onTap
-// route — no navigation or data logic changed.
+// Carries a slim status-colored accent rail down the left edge (matching
+// the Dashboard's mini order cards and the Tables screen's floor-plan
+// tiles), a soft ring around the status icon chip, and a richer "View
+// Details" pill with its own circular arrow badge. Still wrapped in the
+// same AppCard with the exact same onTap route — no navigation or data
+// logic changed.
 class _OrderCard extends StatelessWidget {
   final Order order;
   final Map<String, dynamic> config;

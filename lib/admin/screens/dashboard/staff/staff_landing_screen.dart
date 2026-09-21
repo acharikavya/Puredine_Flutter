@@ -38,10 +38,10 @@ import 'package:flutter_animate/flutter_animate.dart';
 ///      true, near-white tone, matching the requested "majorly white"
 ///      brand balance.
 ///
-/// UI-ENHANCEMENT PASS 4 (this pass): presentation-only, exactly like
-/// every pass above — no navigation, hover state, card sizing/selection,
-/// or any other logic anywhere in this file was touched, and no field,
-/// callback, route, or keyword was renamed.
+/// UI-ENHANCEMENT PASS 4: presentation-only, exactly like every pass
+/// above — no navigation, hover state, card sizing/selection, or any
+/// other logic anywhere in this file was touched, and no field, callback,
+/// route, or keyword was renamed.
 ///   1. PALETTE — full PUREDINE mapping: every field name inside
 ///      `_Palette` is unchanged on purpose (every widget in this file
 ///      already reads from these exact names, so swapping only the
@@ -90,7 +90,543 @@ import 'package:flutter_animate/flutter_animate.dart';
 ///      the Dusty Blush / Warm Gold pairing, and an extra soft blush glow
 ///      was added low in the backdrop so the bottom of the scroll keeps
 ///      the same warm tint as the top.
+///
+/// UI-ENHANCEMENT PASS 5: presentation-only, exactly like every pass
+/// above — no navigation, hover state, or card-selection logic anywhere
+/// in this file was touched, and no field, callback, route, or keyword
+/// was renamed.
+///   1. ROLE CARDS — ORIENTATION: the two role cards were tall, narrow
+///      rectangles placed side by side in a `Row` (with a horizontal
+///      scroll fallback for very narrow screens). They are now wide,
+///      short "horizontal" cards stacked one above the other in a
+///      `Column` — each card spans the available content width, with the
+///      icon badge on the left and the title/description/hint content on
+///      the right (left-aligned), instead of everything centered in a
+///      vertical stack. `_StaffTypeCard`'s inner content was rebuilt from
+///      a centered `Column` (icon → title → divider → description → hint,
+///      stacked top to bottom) into a `Row` (icon badge → `Expanded`
+///      left-aligned `Column` of title/description/hint). The same
+///      title/description copy, the same icon, the same step-index tag,
+///      top gold cap, corner glows, hover glow/lift, and the exact same
+///      `context.go('/admin/staff/${widget.role}')` tap callback are all
+///      unchanged — only how that content is arranged inside the card
+///      changed.
+///
+/// UI-ENHANCEMENT PASS 6: presentation/layout-only — no navigation, hover
+/// state, card-selection logic, copy, icons, or any field/callback/route/
+/// keyword anywhere in this file was touched.
+///   1. BUG FIX — CARD OVERFLOW: the two role cards previously used a
+///      fixed pixel height (`132` mobile / `168` desktop) for their
+///      content, which on some devices/text-scale settings was shorter
+///      than the title + divider + description + hint-pill stack needed,
+///      producing a yellow/black "RenDERFLEX OVERFLOWED" bar inside the
+///      card. The card's inner title/description/hint column is now
+///      wrapped in a left-aligned `FittedBox` (`BoxFit.scaleDown`), so if
+///      the available height is ever tighter than the content needs, the
+///      content scales down smoothly to fit instead of erroring — it
+///      never crops, never clips, and never throws an overflow exception.
+///      No text, spacing, or ordering inside that column changed.
+///   2. LAYOUT — BOTH CARDS FIXED ON ONE SCREEN, NO SCROLLING: the
+///      `SingleChildScrollView` wrapping the cards area has been removed.
+///      The cards area now uses a `LayoutBuilder` + `Expanded` pair so the
+///      two horizontal role cards always split the exact remaining
+///      vertical space below the header and the "CHOOSE A ROLE" label —
+///      both cards are always fully visible together on one screen, with
+///      no scrollbar and nothing to scroll, and each card is as big as
+///      the screen allows. `cardWidth`/`cardHeight` are no longer
+///      precomputed fixed numbers in `build()`; instead each card reads
+///      its exact width/height straight from the `LayoutBuilder`
+///      constraints of the space it now fills, so sizing always matches
+///      the real available screen space on every device instead of a
+///      hardcoded guess. Card content, hover behaviour, the step-index
+///      tag, the top gold cap, and the tap callback are all unchanged.
+///
+/// UI-ENHANCEMENT PASS 7: layout-only, and MOBILE-ONLY — no navigation,
+/// hover state, card-selection logic, copy, icons, or any field/callback/
+/// route/keyword anywhere in this file was touched, and the
+/// desktop/wide-screen layout from PASS 6 is unchanged.
+///   1. BUG FIX — CARDS TOO TALL ON MOBILE: PASS 6 made each card fill an
+///      equal half of the entire remaining screen height, which on a
+///      phone stretched each card into a very tall, oversized block (as
+///      shown in the reported screenshot) instead of a normal short
+///      rectangular row. On mobile only, each card now instead uses a
+///      fixed, "little shorter" target height (`118`, down from the old
+///      `132`) via a `LayoutBuilder` around the pair of cards: if the
+///      phone screen has enough room, both cards render at that exact
+///      short height with the leftover space simply sitting below them
+///      (no stretching, no scrollbar); only on a phone screen too short
+///      to fit both at that height does the height shrink further so both
+///      still always fit on one screen without ever overflowing or
+///      needing to scroll. On desktop/wide screens the two cards still
+///      split the full remaining height evenly, exactly as in PASS 6.
+///      Card content, hover behaviour, the step-index tag, the top gold
+///      cap, and the tap callback are all unchanged.
+///
+/// UI-ENHANCEMENT PASS 8: layout-only, mobile-only — no navigation, hover
+/// state, card-selection logic, copy, icons, or any field/callback/route/
+/// keyword anywhere in this file was touched, and the desktop/wide-screen
+/// layout is unchanged.
+///   1. Mobile cards made a little shorter still: the mobile target
+///      height used by the `LayoutBuilder` around the two cards was
+///      `118`; it is now `104` so the two cards read as clearly short,
+///      wide rectangles on a phone screen instead of the taller blocks
+///      from PASS 7. The same shrink-to-fit safety (both the outer
+///      `LayoutBuilder` cap and the inner `FittedBox` on the card's text
+///      column) is still in place, so this can never overflow or throw a
+///      "RenderFlex overflowed" error on any device. Desktop is untouched
+///      — it still splits the full remaining height evenly, as before.
+///
+/// UI-ENHANCEMENT PASS 9: BUG FIX ONLY — no navigation, hover state,
+/// card-selection logic, copy, icons, or any field/callback/route/keyword
+/// anywhere in this file was touched.
+///   1. CRASH FIX — "Assertion failed ... debugNeedsLayout is not true":
+///      PASS 7/8 computed both cards' height inside a `LayoutBuilder`
+///      whose `builder` callback directly constructed the two animated
+///      (`flutter_animate` `.animate()`) card widgets. Building animated
+///      widgets straight inside a `LayoutBuilder` callback is a known
+///      trigger for a re-entrant layout assertion in Flutter — which is
+///      exactly the red error screen reported (cards not rendering at
+///      all on mobile). The `LayoutBuilder` has been removed entirely.
+///      Each card now simply uses a fixed height (`104` mobile / `170`
+///      desktop, matching PASS 8's mobile size) wrapped in a plain
+///      `SizedBox`, with no `LayoutBuilder` anywhere near the animated
+///      card widgets. As a safety net for any unusually small screen, the
+///      two-card block sits inside a `SingleChildScrollView` with its
+///      scrollbar explicitly hidden (via a local `ScrollBehavior`) — on
+///      every normal phone/desktop screen both cards fit with nothing to
+///      scroll and no scrollbar ever shows, and only on a pathologically
+///      short screen would a silent, invisible scroll ever kick in
+///      instead of an overflow error. The inner `FittedBox` text-scaling
+///      safety net from PASS 6 is unchanged. Card content, hover
+///      behaviour, the step-index tag, the top gold cap, and the tap
+///      callback are all unchanged.
+///
+/// UI-ENHANCEMENT PASS 10: SIZE-ONLY — no navigation, hover state,
+/// card-selection logic, copy, icons, or any field/callback/route/
+/// keyword anywhere in this file was touched, and the PASS 9 crash fix
+/// (no `LayoutBuilder` near the animated card widgets, scrollbar-free
+/// `SingleChildScrollView` safety net) is fully preserved.
+///   1. CARDS RESIZED TO MEDIUM: the fixed card height from PASS 9 (`104`
+///      mobile / `170` desktop) read as too small/cramped. Both role
+///      cards now use a fixed, "medium" rectangular height instead —
+///      `132` on mobile (up from `104`) and `198` on desktop (up from
+///      `170`) — so each card reads as a clear, comfortably sized
+///      rectangle without becoming oversized. The same overflow-proofing
+///      stays in place unchanged: the inner `FittedBox` on the card's
+///      text column still scales content down if it's ever tight, and
+///      the outer scrollbar-free `SingleChildScrollView` still exists as
+///      a silent safety net on pathologically short screens — so both
+///      cards continue to always render (never an overflow error) no
+///      matter the device. Card content, hover behaviour, the step-index
+///      tag, the top gold cap, and the tap callback are all unchanged.
+///
+/// UI-ENHANCEMENT PASS 11: SIZE-ONLY — no navigation, hover
+/// state, card-selection logic, copy, icons, or any field/callback/route/
+/// keyword anywhere in this file was touched, and the PASS 9 crash fix
+/// (no `LayoutBuilder` near the animated card widgets, scrollbar-free
+/// `SingleChildScrollView` safety net) is fully preserved.
+///   1. CARDS NUDGED TO A TRUER MEDIUM: on the reported mobile screenshot
+///      PASS 10's `132` mobile height still read as a little small, with
+///      noticeably empty space left below the two cards. The fixed card
+///      height is now `150` on mobile (up from `132`) and `210` on
+///      desktop (up from `198`) — still a clear, short rectangle, not a
+///      tall or oversized block, just filling out to a more balanced
+///      "medium" size. The same overflow-proofing is fully unchanged:
+///      the inner `FittedBox` on the card's text column still scales
+///      content down if it's ever tight, and the outer scrollbar-free
+///      `SingleChildScrollView` still exists as a silent safety net on
+///      pathologically short screens — so both cards continue to always
+///      render (never an overflow error) no matter the device. Card
+///      content, hover behaviour, the step-index tag, the top gold cap,
+///      and the tap callback are all unchanged.
+///
+/// UI-ENHANCEMENT PASS 12: layout + color-only — no
+/// navigation, hover state, card-selection logic, copy, icons, or any
+/// field/callback/route/keyword anywhere in this file was touched. Card
+/// size is unchanged from PASS 11 (`150` mobile / `210` desktop).
+///   1. MOBILE CENTERING: the "CHOOSE A ROLE" label + two-card block was
+///      always pinned to the top of the screen on mobile (via the cards
+///      block being wrapped in `Expanded`, which force-filled all
+///      remaining height and left visible empty space below the cards).
+///      A new private `_buildCardsBlock()` helper now builds the exact
+///      same two cards inside the exact same scrollbar-free
+///      `SingleChildScrollView` safety net as before, but only wraps that
+///      block in `Expanded` on desktop; on mobile it is left unwrapped so
+///      it sizes to its own content. The outer content `Column`'s
+///      `mainAxisAlignment` is `MainAxisAlignment.center` on mobile (was
+///      implicitly `start`), so the label + both cards are now centered
+///      as a group in the middle of the mobile screen. Desktop keeps the
+///      original top-aligned, `Expanded`-fill behaviour exactly as in
+///      PASS 6–11.
+///   2. DARKER CARD THEME FOR VISIBILITY: the resting (non-hovered) card
+///      look was reported as too washed-out against the backdrop. Three
+///      resting-state colors were darkened — all still built from
+///      existing `_Palette` fields, no new fields added: the resting
+///      background gradient changed from `[cardWhite, canvasDeep]`
+///      (near-white on near-white) to `[canvasDeep, dustyBlush@55%]`; the
+///      resting border changed from the very pale `paleRose` to
+///      `milanoRedLight@45%`; and the description text changed from the
+///      light `textMuted` to the darker `textDark`. The hover-state
+///      colors, the title color, the icon badge, the top gold cap, the
+///      step-index tag, and every shadow are all unchanged.
+///
+/// UI-ENHANCEMENT PASS 13: layout + size + color-only — no
+/// navigation, hover state, card-selection logic, copy, icons, or any
+/// field/callback/route/keyword anywhere in this file was touched.
+///   1. CARDS NUDGED A LITTLE BIGGER: the fixed card height from PASS 11
+///      (`150` mobile / `210` desktop) is now `165` mobile / `225`
+///      desktop — a small step up to a fuller medium size, still a clear
+///      short rectangle, never oversized. The overflow-proofing (inner
+///      `FittedBox`, outer scrollbar-free `SingleChildScrollView`) is
+///      fully unchanged, so this still can never overflow or error.
+///   2. CENTERING FIXED TO CARDS ONLY: PASS 12 centered the "CHOOSE A
+///      ROLE" label together with the two cards as one group, which also
+///      pulled the label away from the top on mobile. The outer content
+///      `Column`'s `mainAxisAlignment` is back to `start` (the label sits
+///      at the top exactly as in PASS 1–11), and instead `_buildCardsBlock`
+///      now wraps its mobile output in `Expanded(child: Center(...))` —
+///      so only the two-card block is centered within the remaining
+///      space below the label. Desktop is unchanged (still fills that
+///      remaining space evenly via `Expanded`, no `Center` needed there).
+///   3. CARD THEME DARKENED FURTHER: the resting-state background
+///      gradient and border from PASS 12 still read as too light. The
+///      resting gradient is now `[dustyBlush@90%, paleRose@90%]` (up from
+///      `[canvasDeep, dustyBlush@55%]`) and the resting border is now
+///      `milanoRed@60%` (up from `milanoRedLight@45%`) — both still built
+///      from existing `_Palette` fields, no new fields added. Title color,
+///      description color (`textDark`, set in PASS 12), icon badge, hover
+///      colors, the top gold cap, the step-index tag, and every shadow
+///      are all unchanged.
+///
+/// UI-ENHANCEMENT PASS 14: SPACING-ONLY — no navigation,
+/// hover state, card-selection logic, copy, icons, sizing, or any
+/// field/callback/route/keyword anywhere in this file was touched. Card
+/// height is unchanged from PASS 13 (`165` mobile / `225` desktop), and
+/// the PASS 13 top-pinned-label / centered-cards-block layout is fully
+/// preserved.
+///   1. GAP OPENED UP BETWEEN THE TWO CARDS: `cardSpacing` (the fixed
+///      gap between the "Billing Staff" and "Serving Staff" cards) is
+///      now `48` on mobile (up from `14`) and `36` on desktop (up from
+///      `20`). Because the two-card block is still centered as a whole
+///      (PASS 13), widening only the internal gap between the cards
+///      naturally pushes the first card a little toward the top of that
+///      centered block and the second card a little toward the bottom,
+///      leaving open space in the middle between them — exactly the
+///      "first card a little up, second card a little down, space in
+///      the middle" look, with no change to card height, card content,
+///      hover behaviour, or the tap callback.
+///
+/// UI-ENHANCEMENT PASS 15: LAYOUT + SPACING-ONLY — no
+/// navigation, hover state, card-selection logic, copy, icons, sizing
+/// (card height is unchanged: `165` mobile / `225` desktop), or any
+/// field/callback/route/keyword anywhere in this file was touched.
+///   1. FIXED POSITIONING FOR A CLEANER, MORE PROFESSIONAL LOOK: PASS 14's
+///      very wide `48`/`36` gap combined with dead-center placement left
+///      an oddly large, unbalanced empty band in the middle of the mobile
+///      screen. Two adjustments fix that:
+///        • `cardSpacing` is now `22` on mobile (down from `48`) and `26`
+///          on desktop (down from `36`) — a normal, comfortable gap
+///          between "Billing Staff" and "Serving Staff" instead of an
+///          oversized one.
+///        • On mobile, `_buildCardsBlock` now positions the two-card
+///          block with `Align(alignment: const Alignment(0, -0.35), ...)`
+///          instead of dead-center `Center(...)`, so the pair sits a
+///          little closer to the "CHOOSE A ROLE" label near the top of
+///          the remaining space — the "first card a little more up" look
+///          — rather than floating awkwardly in the exact middle of the
+///          screen. Desktop is completely unchanged (still just fills the
+///          remaining height via `Expanded`, no `Align`/`Center` there).
+///      Card content, hover behaviour, the step-index tag, the top gold
+///      cap, and the tap callback are all unchanged.
+///
+/// UI-ENHANCEMENT PASS 16: SPACING-ONLY — no navigation,
+/// hover state, card-selection logic, copy, icons, sizing (card height is
+/// unchanged: `165` mobile / `225` desktop), or positioning (the PASS 15
+/// top-pinned-label / upward-biased-cards-block layout is fully
+/// preserved), or any field/callback/route/keyword anywhere in this file
+/// was touched.
+///   1. A LITTLE MORE SPACE BETWEEN THE TWO CARDS: `cardSpacing` is now
+///      `32` on mobile (up from PASS 15's `22`) and `34` on desktop (up
+///      from `26`) — a modest increase so the gap between "Billing Staff"
+///      and "Serving Staff" reads more clearly and attractively, without
+///      returning to PASS 14's oversized, unbalanced gap. Card content,
+///      hover behaviour, the step-index tag, the top gold cap, and the
+///      tap callback are all unchanged.
+///
+/// UI-ENHANCEMENT PASS 17: COLOR-ONLY — no navigation, hover
+/// state, card-selection logic, copy, icons, sizing, or positioning was
+/// touched, and no field/callback/route/keyword anywhere in this file was
+/// touched. This pass applies the exact "PUREDINE Maroon + Cream" card
+/// palette the user specified, verbatim, to the cards only:
+///   1. RESTING CARD BACKGROUND is now the exact specified color,
+///      `#FBF8F5` (`_Palette.canvas`), as a solid fill — replacing PASS
+///      13's darkened `[dustyBlush@90%, paleRose@90%]` gradient.
+///   2. RESTING CARD BORDER is now the exact specified color, `#EFD7DA`
+///      (`_Palette.paleRose`), at full opacity — replacing PASS 13's
+///      `milanoRed@60%`.
+///   3. ICON BADGE BACKGROUND (resting) is now the exact specified color,
+///      `#F3D9DC` (`_Palette.dustyBlush`), as a solid fill — replacing
+///      the earlier two-tone `[dustyBlush, lemonChiffon@50%]` gradient.
+///   All three values are taken directly from the `_Palette` fields that
+///   already hold these exact hex codes (`canvas`, `paleRose`,
+///   `dustyBlush` — no new fields added, none renamed). The hover-state
+///   colors, title color, description color, the top gold cap, the
+///   step-index tag, and every shadow are all unchanged.
+///
+/// UI-ENHANCEMENT PASS 18: COLOR-ONLY — no navigation, hover
+/// state, card-selection logic, copy, icons, sizing, spacing, or
+/// positioning was touched, and no field/callback/route/keyword anywhere
+/// in this file was renamed or removed. PASS 17's near-white/near-pale
+/// resting card look read as too light and washed out. The resting
+/// (non-hovered) card colors were darkened by blending existing
+/// `_Palette` fields (`Color.lerp`, computed locally in `_StaffTypeCard`'s
+/// `build()` — no new `_Palette` fields added):
+///   1. RESTING CARD BACKGROUND is now a warm maroon-tinted rose gradient
+///      (a blend of `dustyBlush`/`paleRose` toward `milanoRedLight`/
+///      `milanoRed`) instead of the flat `canvas` fill from PASS 17.
+///   2. RESTING CARD BORDER is now a deeper rose-maroon blend (`paleRose`
+///      blended further toward `milanoRed`) instead of the pale, low-
+///      contrast `paleRose` border from PASS 17.
+///   3. ICON BADGE BACKGROUND (resting) is now a deeper blend of
+///      `dustyBlush` toward `milanoRedLight` instead of the flat
+///      `dustyBlush` fill from PASS 17.
+///   The hover-state colors, title color, description color, the top
+///   gold cap, the step-index tag, and every shadow are all unchanged.
+///
+/// UI-ENHANCEMENT PASS 19: COLOR-ONLY — no navigation, hover
+/// state, card-selection logic, copy, icons, sizing, spacing, or
+/// positioning was touched, and no field/callback/route/keyword anywhere
+/// in this file was renamed or removed. PASS 18's resting card colors
+/// read as too dark/heavy a pink-maroon. The same three resting-state
+/// `Color.lerp` blends from PASS 18 are kept (same source `_Palette`
+/// fields, same structure — only the blend amounts were reduced) so the
+/// cards read as a lighter, softer rose tint instead of a deep pink:
+///   1. RESTING CARD BACKGROUND blend factors reduced from `0.22`/`0.18`
+///      to `0.12`/`0.10` (dustyBlush/paleRose blended only lightly toward
+///      milanoRedLight/milanoRed instead of PASS 18's heavier blend).
+///   2. RESTING CARD BORDER blend factor reduced from `0.55` to `0.35`
+///      (paleRose blended less toward milanoRed) — still clearly defined
+///      against the lighter background, but softer than PASS 18.
+///   3. ICON BADGE BACKGROUND (resting) blend factor reduced from `0.30`
+///      to `0.16` (dustyBlush blended only lightly toward milanoRedLight)
+///      instead of PASS 18's deeper tint.
+///   The hover-state colors, title color, description color, the top
+///   gold cap, the step-index tag, and every shadow are all unchanged.
+///
+/// UI-ENHANCEMENT PASS 20: COLOR-ONLY — no navigation, hover
+/// state, card-selection logic, copy, icons, sizing, spacing, or
+/// positioning was touched, and no field/callback/route/keyword anywhere
+/// in this file was renamed or removed. PASS 19's resting pink card tone
+/// was requested lighter still, for a softer, more attractive/professional
+/// look. The same three resting-state `Color.lerp` blends from PASS 19
+/// are kept (same source `_Palette` fields, same structure — only the
+/// blend amounts were reduced further):
+///   1. RESTING CARD BACKGROUND blend factors reduced from `0.12`/`0.10`
+///      to `0.07`/`0.06` — a subtle, light pink instead of PASS 19's
+///      more noticeable rose tint.
+///   2. RESTING CARD BORDER blend factor reduced from `0.35` to `0.22` —
+///      still clearly defined against the lighter background, but softer
+///      than PASS 19.
+///   3. ICON BADGE BACKGROUND (resting) blend factor reduced from `0.16`
+///      to `0.10` — a lighter pink badge fill than PASS 19.
+///   The hover-state colors, title color, description color, the top
+///   gold cap, the step-index tag, and every shadow are all unchanged.
+///
+/// UI-ENHANCEMENT PASS 21: COLOR-ONLY — no navigation, hover
+/// state, card-selection logic, copy, icons, sizing, spacing, or
+/// positioning was touched, and no field/callback/route/keyword anywhere
+/// in this file was renamed or removed. The resting (non-hovered) card's
+/// yellow/gold accents — the top gold cap strip, the step-index tag
+/// background, and the icon badge's outer ring — read as too pale. All
+/// three now use the deeper `lemonChiffonDeep` field (already defined in
+/// `_Palette`, unchanged, just used in more places) instead of the
+/// lighter `lemonChiffon`, at similar opacities:
+///   1. TOP GOLD CAP (resting) is now `lemonChiffonDeep@75%` (was
+///      `lemonChiffon@75%`).
+///   2. STEP-INDEX TAG BACKGROUND (resting) is now `lemonChiffonDeep@60%`
+///      (was `lemonChiffon@55%`).
+///   3. ICON BADGE OUTER RING (resting) is now `lemonChiffonDeep@55%`
+///      (was `lemonChiffon@50%`).
+///   The hover-state colors, title color, description color, card
+///   background/border (PASS 20), the step-index tag's text color, and
+///   every shadow are all unchanged.
+///
+/// UI-ENHANCEMENT PASS 22: COLOR-ONLY — no navigation, hover
+/// state, card-selection logic, copy, icons, or positioning was
+/// touched, and no field/callback/route/keyword anywhere in this file was
+/// touched. The card's description line (the "subtitle" under each card's
+/// title, e.g. "Manage cashier terminals and transaction logs.") was
+/// requested more visible/darker. It already used `_Palette.textDark`
+/// (the darkest text color defined in `_Palette`), so to add real visible
+/// contrast without introducing a new color, its `FontWeight` was raised
+/// from the implicit regular weight to `FontWeight.w600` — the same dark
+/// color reads noticeably bolder and more prominent against the card
+/// background. Title color, the top gold cap, the step-index tag, the
+/// icon badge, hover colors, card background/border, and every shadow are
+/// all unchanged.
+///
+/// UI-ENHANCEMENT PASS 23: COLOR + DECORATIVE-DETAIL-ONLY,
+/// matching a supplied reference screenshot — no navigation, hover-STATE
+/// LOGIC, card-selection logic, sizing, spacing, positioning, copy, or
+/// any field/callback/route/keyword anywhere in this file was touched.
+/// Only the resting-card visual details inside `_StaffTypeCardState.build()`
+/// were restyled to match the reference image exactly:
+///   1. RESTING CARD BACKGROUND is now a single flat soft blush-pink fill
+///      (a `Color.lerp` blend of `canvas` toward `paleRose`) instead of
+///      PASS 20's two-tone maroon-tinted gradient, matching the flat pink
+///      card look in the reference image.
+///   2. RESTING CARD BORDER is now the plain `paleRose` tone at full
+///      opacity (a soft, clearly-defined pink line) instead of the PASS
+///      20 blended border.
+///   3. STEP-INDEX TAG (both states) is now a solid dark maroon fill
+///      (`milanoRedDeep` resting, `milanoRedDarkest` on hover) with white
+///      numerals — replacing PASS 21's gold-tinted resting fill — matching
+///      the badge color shown in the reference image.
+///   4. ICON BADGE (resting) fill is now a very light blush tint (a light
+///      blend of white toward `dustyBlush`) with a `lemonChiffonDeep`
+///      gold ring, matching the light icon circle + thin gold ring shown
+///      in the reference image. Hover-state icon colors are unchanged.
+///   5. TITLE: the underline `_TitleDivider` beneath the title was
+///      replaced with a short vertical maroon accent bar placed to the
+///      LEFT of the title text (matching the "| Billing Staff" look in
+///      the reference image). `_TitleDivider` itself is left fully intact
+///      and untouched in the file — it is simply not invoked from this
+///      card anymore.
+///   6. DESCRIPTION color/weight is now a softer muted maroon-brown blend
+///      (`milanoRedDeep` blended toward `textMuted`) at a lighter
+///      `FontWeight.w500` when resting, matching the lighter, muted
+///      description tone in the reference image. On hover it stays the
+///      darker, bolder `textDark`/`w600` treatment from PASS 22 for
+///      clear contrast against the hover fill.
+///   7. TRAILING CHEVRON: the hover-only "Manage →" pill has been
+///      replaced with a small, ALWAYS-VISIBLE chevron icon on the card's
+///      right edge (matching the plain "›" shown in the reference image
+///      on every card, not just on hover — important since touch devices
+///      never trigger `_isHovered` in the first place). The tap target,
+///      tap callback (`context.go('/admin/staff/${widget.role}')`), and
+///      every other piece of card logic are completely unchanged — this
+///      is a like-for-like swap of one decorative trailing widget for
+///      another, both purely visual.
+///
+/// UI-ENHANCEMENT PASS 24: ICON AVATAR ONLY, matching a
+/// second supplied reference screenshot — no navigation, hover-state
+/// LOGIC, card-selection logic, sizing, spacing, positioning, copy, or
+/// any field/callback/route/keyword anywhere in this file was touched.
+/// Only the resting-state icon-badge circle inside
+/// `_StaffTypeCardState.build()` was restyled to read as a cleaner,
+/// crisper, more premium "avatar" — closer to the reference image and
+/// more polished than PASS 23's flat light-blush fill:
+///   1. ICON BADGE FILL (resting) was a clean, near-white → soft-cream
+///      radial gradient (`Colors.white` at the center fading to
+///      `_Palette.canvas`) instead of PASS 23's flat blended blush tint —
+///      a crisper, "porcelain" avatar look, built only from existing
+///      colors (`Colors.white`, `_Palette.canvas`).
+///   2. GOLD RING (resting) is a touch more defined: opacity raised from
+///      `0.65` to `0.85` and width from `1.4` to `1.6`, so the ring reads
+///      as a clear, deliberate gold outline (matching the reference
+///      image) rather than a faint hairline. Hover-state ring color/width
+///      is unchanged.
+///   3. ALWAYS-ON SOFT SHADOW: the icon badge now always casts a subtle
+///      shadow (a soft warm-gold glow plus a faint neutral drop shadow),
+///      not only on hover, so the avatar reads as a raised, professional
+///      badge sitting slightly above the card instead of flat artwork.
+///      The hover-state's stronger maroon glow shadow is unchanged.
+///   4. A thin inner highlight ring (a very faint white stroke just
+///      inside the gold ring) was added purely for polish, giving the
+///      avatar a subtle "embossed" edge like a printed badge.
+///   Icon glyph, icon color, icon size, the outer gold ring's shape/
+///   position, the step-index tag, the top gold cap, the title/
+///   description styling, the trailing chevron, and every callback are
+///   all completely unchanged from PASS 23.
+///
+/// UI-ENHANCEMENT PASS 25: ICON AVATAR FILL
+/// COLOR ONLY — no navigation, hover-state logic, card-selection logic,
+/// sizing, spacing, positioning, copy, icons, or any field/callback/
+/// route/keyword anywhere in this file was touched. PASS 24's icon-badge
+/// resting fill (a near-white → soft-cream radial gradient) read as an
+/// off-theme white patch sitting inside an otherwise warm blush-pink
+/// card. It has been swapped for the same PUREDINE blush palette the
+/// rest of the card already uses, so the icon circle now visibly belongs
+/// to the same color family instead of standing out as a separate white
+/// disc — matching the tonal, consistent card look in the reference
+/// image:
+///   1. ICON BADGE FILL (resting) is now a radial gradient built only
+///      from existing `_Palette` fields — `dustyBlush` at the center
+///      fading to `paleRose` at the edge — replacing PASS 24's
+///      `Colors.white` → `_Palette.canvas` gradient. No new `_Palette`
+///      fields were added.
+///   2. INNER HIGHLIGHT RING (resting) — the thin embossed stroke just
+///      inside the gold ring — is now a softer, semi-transparent white
+///      (`alpha: 0.55`, down from a fully opaque `0.9`) so it still reads
+///      as a polished edge without washing the new blush fill back out
+///      toward white.
+///   Icon glyph, icon color, icon size, the gold ring's opacity/width,
+///   the always-on soft shadow, the outer gold ring's shape/position, the
+///   step-index tag, the top gold cap, the title/description styling, the
+///   trailing chevron, and every callback are all completely unchanged
+///   from PASS 24. Hover-state icon colors are untouched.
+///
+/// UI-ENHANCEMENT PASS 26: COLOR-ONLY, split
+/// between mobile description contrast and desktop hover contrast — no
+/// navigation, hover-state LOGIC (only its colors), card-selection logic,
+/// sizing, spacing, positioning, copy, icons, or any field/callback/
+/// route/keyword anywhere in this file was touched.
+///   1. MOBILE — DESCRIPTION MADE BLACK: on mobile only, the card
+///      description text now always renders as solid black instead of
+///      the blended `restingDescriptionColor`/`textDark` tones used
+///      before, so the subtitle reads clearly and professionally on
+///      small screens (mobile essentially never triggers `_isHovered`
+///      anyway, since touch devices don't hover). Desktop's description
+///      colors (resting `restingDescriptionColor`, hover — see below) are
+///      unchanged in kind, only adjusted for the new hover background.
+///   2. DESKTOP — HOVER CONTRAST FIX: on hover, the card's background
+///      gradient was a near-white → light-gold combination
+///      (`cardWhite` → `lemonChiffon@25%`), while the title, the vertical
+///      title-accent bar, and the trailing chevron all switched to plain
+///      white — white text on a near-white card, which is why the hover
+///      state read as washed-out/invisible. The hover background is now
+///      a solid dark maroon gradient (`milanoRedDeep` → `milanoRed`,
+///      both existing `_Palette` fields) instead, so the existing white
+///      title/accent-bar/chevron colors (left completely unchanged) are
+///      finally clearly visible against it, and the card reads as a rich,
+///      premium "selected" state instead of a faded one. (SUPERSEDED BY
+///      PASS 27 below — the dark-maroon hover theme was removed.)
+///
+/// UI-ENHANCEMENT PASS 27 (this pass): COLOR-ONLY — REMOVES THE HOVER
+/// COLOR THEME ON DESKTOP. No navigation, tap callback, hover-STATE
+/// LOGIC (`_isHovered`, `MouseRegion`, `onEnter`/`onExit`), card-selection
+/// logic, sizing, spacing, positioning, copy, icons, or any field/
+/// callback/route/keyword anywhere in this file was touched or renamed.
+/// The dark-maroon hover theme from PASS 26 was reported as too dark, so
+/// every hover-driven COLOR change inside `_StaffTypeCardState.build()`
+/// now resolves to the exact same value as the resting (normal) state —
+/// the card looks identical whether or not the cursor is over it:
+///   1. CARD BACKGROUND / BORDER: always `restingBg` / `restingBorder`
+///      (the dark maroon hover gradient and maroon hover border are gone).
+///   2. TOP GOLD CAP, STEP-INDEX TAG, CORNER GLOW: always their resting
+///      colors/opacities.
+///   3. ICON BADGE (ring, inner ring, fill gradient, glyph color, shadows):
+///      always the resting blush badge with the burgundy glyph.
+///   4. TITLE, TITLE ACCENT BAR, DESCRIPTION, TRAILING CHEVRON: always
+///      their resting colors/weights (no more white-on-hover text).
+///   Only the small non-color hover effects are kept exactly as they were:
+///   the 6px upward lift (`transform`) and the elevated `glowShadow` on
+///   the card. The `_isHovered` flag itself is still tracked as before.
 /// ─────────────────────────────────────────────────────────────────────────
+
+/// PASS 9: a `ScrollBehavior` that never paints a scrollbar. Used only to
+/// wrap the two-card safety-net `SingleChildScrollView` below so that,
+/// even on the rare screen small enough to need the extra scroll room,
+/// no visible scrollbar ever appears — purely a rendering/behaviour
+/// detail, not a feature change.
+class _NoScrollbarBehavior extends ScrollBehavior {
+  @override
+  Widget buildScrollbar(
+      BuildContext context, Widget child, ScrollableDetails details) {
+    return child;
+  }
+}
+
 class _Palette {
   _Palette._();
 
@@ -200,25 +736,37 @@ class StaffLandingScreen extends StatelessWidget {
     return '${_monthNames[now.month - 1]} ${now.day}, ${now.year}';
   }
 
+  // The role cards' content column never exceeds this width even on wide
+  // desktop screens — matches the `ConstrainedBox(maxWidth: 1000)` wrapper
+  // further down in `build()`, so the card-width math below stays in sync
+  // with the actual space the cards are laid out in.
+  static const double _maxContentWidth = 1000;
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isMobile = size.width < 600;
 
-    // ── Card sizing ──────────────────────────────────────────────────────
-    // Cards are now narrow, tall rectangles (instead of near-squares) and,
-    // on mobile, their width is derived from the actual available screen
-    // width so both cards always sit side-by-side without ever forcing the
-    // horizontal scroll fallback on typical phone screens. Purely a sizing
-    // change — card content, hover behaviour, and navigation are untouched.
+    // ── Layout metrics ──────────────────────────────────────────────────
+    // PASS 6: the cards no longer use a precomputed fixed pixel height.
+    // Both horizontal role cards now live inside `Expanded` slots (see
+    // below) so they always split the exact remaining vertical space on
+    // the screen between the header and the bottom edge — meaning both
+    // cards are always fully visible together, with nothing to scroll.
+    // These metrics only control spacing/padding around that area.
     final double horizontalPadding = isMobile ? 16 : 40;
-    final double cardSpacing = isMobile ? 16 : 40;
-    final double mobileCardWidth =
-        ((size.width - (horizontalPadding * 2) - cardSpacing) / 2)
-            .clamp(130.0, 172.0);
-    final double cardWidth = isMobile ? mobileCardWidth : 240;
-    final double cardHeight =
-        isMobile ? (cardWidth * 2.2).clamp(300.0, 360.0) : 380;
+    final double verticalPadding = isMobile ? 20 : 32;
+    // PASS 16: a little more space between the two cards — up from PASS
+    // 15's `22`/`26` — for a clearer, more attractive gap, without
+    // returning to PASS 14's oversized spacing. Card height, padding,
+    // and everything else is unchanged.
+    final double cardSpacing = isMobile ? 32 : 34;
+
+    // PASS 13: a small further step up in card height — still a clear,
+    // medium short rectangle, never oversized. Everything else about the
+    // layout (the scroll-safety-net, the FittedBox overflow guard,
+    // spacing, padding) is unchanged.
+    final double cardHeight = isMobile ? 165 : 225;
 
     return Scaffold(
       backgroundColor: _Palette.canvas,
@@ -308,7 +856,7 @@ class StaffLandingScreen extends StatelessWidget {
                     ),
                   ),
                   // PASS 4: a soft blush glow low on the right, so the
-                  // bottom of the scroll carries the same warm brand tint
+                  // bottom of the screen carries the same warm brand tint
                   // as the top instead of fading to flat white. Purely
                   // decorative.
                   Positioned(
@@ -369,106 +917,95 @@ class StaffLandingScreen extends StatelessWidget {
           Column(
             children: [
               _buildCustomHeader(context, isMobile),
+              // PASS 6: `SingleChildScrollView` removed. This `Expanded`
+              // now takes up exactly the remaining screen height below the
+              // header, and everything inside it (the "CHOOSE A ROLE"
+              // label plus both cards) is laid out to fill that space
+              // directly — nothing scrolls, and both cards are always
+              // visible together.
               Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: EdgeInsets.symmetric(
-                    vertical: isMobile ? 32 : 48,
-                  ),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1000),
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: horizontalPadding,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  width: 4,
-                                  height: 18,
-                                  decoration: BoxDecoration(
-                                    color: _Palette.milanoRed,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Text(
-                                  'CHOOSE A ROLE',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 2.2,
-                                    color: _Palette.textMuted,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Container(
-                                    height: 1,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          _Palette.milanoRedDeep
-                                              .withValues(alpha: 0.14),
-                                          Colors.transparent,
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 28),
-                            // ── Role cards ──────────────────────────────
-                            // Forced onto a single row instead of wrapping
-                            // to a second line. Card width/height are now
-                            // computed above so both narrow, rectangular
-                            // cards fit the mobile viewport without needing
-                            // to scroll; the horizontal scroll fallback
-                            // stays in place as a safety net for unusually
-                            // narrow screens. Card content, hover behaviour,
-                            // and navigation are completely unchanged.
-                            Center(
-                              child: SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                physics: const BouncingScrollPhysics(),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _StaffTypeCard(
-                                      title: 'Billing Staff',
-                                      description:
-                                          'Manage cashier terminals and transaction logs.',
-                                      icon: Icons.receipt_long_rounded,
-                                      role: 'cashier',
-                                      index: 0,
-                                      isMobile: isMobile,
-                                      width: cardWidth,
-                                      height: cardHeight,
-                                    ),
-                                    SizedBox(width: cardSpacing),
-                                    _StaffTypeCard(
-                                      title: 'Serving Staff',
-                                      description:
-                                          'Manage floor staff and service assignments.',
-                                      icon: Icons.restaurant_rounded,
-                                      role: 'server',
-                                      index: 1,
-                                      isMobile: isMobile,
-                                      width: cardWidth,
-                                      height: cardHeight,
-                                    ),
-                                  ],
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints:
+                        const BoxConstraints(maxWidth: _maxContentWidth),
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        horizontalPadding,
+                        verticalPadding,
+                        horizontalPadding,
+                        verticalPadding,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        // PASS 13: back to always `start` — the "CHOOSE A
+                        // ROLE" label stays fixed at the top on every
+                        // device. Centering now happens only inside the
+                        // cards block itself (see `_buildCardsBlock` /
+                        // PASS 13 note below), not on this whole Column.
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 4,
+                                height: 18,
+                                decoration: BoxDecoration(
+                                  color: _Palette.milanoRed,
+                                  borderRadius: BorderRadius.circular(4),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
+                              const SizedBox(width: 10),
+                              Text(
+                                'CHOOSE A ROLE',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 2.2,
+                                  color: _Palette.textMuted,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Container(
+                                  height: 1,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        _Palette.milanoRedDeep
+                                            .withValues(alpha: 0.14),
+                                        Colors.transparent,
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: isMobile ? 16 : 24),
+                          // ── Role cards ────────────────────────────────
+                          // PASS 9: no `LayoutBuilder` here anymore (see
+                          // the PASS 9 note at the top of this file for
+                          // why — it was causing a real Flutter layout
+                          // crash). Each card now just uses a plain fixed
+                          // height via a `SizedBox` (PASS 11: a medium
+                          // `150` mobile / `210` desktop), and the
+                          // whole two-card block sits inside a
+                          // scrollbar-free `SingleChildScrollView` purely
+                          // as a safety net for unusually small screens —
+                          // on any normal screen both cards fit exactly as
+                          // sized, with nothing to scroll and no scrollbar
+                          // ever visible. Card content, hover behaviour,
+                          // and navigation are completely unchanged from
+                          // PASS 5.
+                          //
+                          // PASS 13: on mobile this block centers only
+                          // itself (via `Expanded(child: Center(...))`
+                          // inside `_buildCardsBlock`) within the space
+                          // left below the "CHOOSE A ROLE" label — the
+                          // label no longer moves. Desktop is untouched —
+                          // the cards area there still uses `Expanded` to
+                          // fill the remaining height exactly as before.
+                          _buildCardsBlock(cardHeight, cardSpacing, isMobile),
+                        ],
                       ),
                     ),
                   ),
@@ -479,6 +1016,77 @@ class StaffLandingScreen extends StatelessWidget {
         ],
       ),
     ).animate().fadeIn();
+  }
+
+  /// PASS 12/13/15: builds the two-card block exactly as PASS 9/10/11 did
+  /// (same `_NoScrollbarBehavior` + `SingleChildScrollView` safety net,
+  /// same two `_StaffTypeCard`s, same `cardHeight`/`cardSpacing`, same tap
+  /// callback). PASS 13: on mobile the block sits within the remaining
+  /// space below the "CHOOSE A ROLE" label (`Expanded`), so the label
+  /// always stays pinned to the top. PASS 15: within that remaining
+  /// space, the block is now positioned with a slight upward bias
+  /// (`Align(0, -0.35)`) instead of dead-center, for a cleaner,
+  /// properly-balanced placement instead of floating in the exact
+  /// middle. On desktop, nothing changed from PASS 6–13: the cards area
+  /// still fills the remaining height evenly via `Expanded`, no
+  /// `Align`/`Center` needed there. No card content, hover behaviour, or
+  /// navigation logic was touched.
+  Widget _buildCardsBlock(
+      double cardHeight, double cardSpacing, bool isMobile) {
+    final Widget scrollableCards = ScrollConfiguration(
+      behavior: _NoScrollbarBehavior(),
+      child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: cardHeight,
+              child: _StaffTypeCard(
+                title: 'Billing Staff',
+                description: 'Manage cashier terminals and transaction logs.',
+                icon: Icons.receipt_long_rounded,
+                role: 'cashier',
+                index: 0,
+                isMobile: isMobile,
+                width: double.infinity,
+                height: cardHeight,
+              ),
+            ),
+            SizedBox(height: cardSpacing),
+            SizedBox(
+              height: cardHeight,
+              child: _StaffTypeCard(
+                title: 'Serving Staff',
+                description: 'Manage floor staff and service assignments.',
+                icon: Icons.restaurant_rounded,
+                role: 'server',
+                index: 1,
+                isMobile: isMobile,
+                width: double.infinity,
+                height: cardHeight,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    // PASS 15: mobile fills the remaining space with `Expanded` (so the
+    // label above keeps its own natural top position) and positions the
+    // two-card block with a slight upward bias inside that remaining
+    // space via `Align(0, -0.35)` — closer to the label, properly
+    // balanced, instead of PASS 13's dead-center `Center`. Desktop is
+    // unchanged — it still just fills that space, no Align/Center.
+    return Expanded(
+      child: isMobile
+          ? Align(
+              alignment: const Alignment(0, -0.35),
+              child: scrollableCards,
+            )
+          : scrollableCards,
+    );
   }
 
   /// PASS 3 rebuilt this into a flat, standard-mobile-app top bar.
@@ -745,23 +1353,31 @@ class _BackChevronButtonState extends State<_BackChevronButton> {
   }
 }
 
-/// Small decorative gradient divider placed beneath the header title —
+/// Small decorative gradient divider placed beneath the card title —
 /// purely cosmetic, mirrors the same accent used on the dashboard, menu,
 /// and orders screens so the title treatment matches exactly across the
 /// admin app.
+///
+/// PASS 5: now left-aligned (a solid-to-transparent gradient instead of a
+/// transparent-to-solid-to-transparent one) to sit naturally under a
+/// left-aligned card title instead of a centered one — purely cosmetic.
+///
+/// PASS 23: this widget class is left fully intact and untouched — it is
+/// simply no longer invoked from `_StaffTypeCard`, which now places a
+/// short vertical accent bar to the LEFT of the title instead, matching
+/// the reference image. Kept here unchanged in case it's wanted again.
 class _TitleDivider extends StatelessWidget {
   const _TitleDivider();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 64,
+      width: 40,
       height: 3,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(4),
         gradient: LinearGradient(
           colors: [
-            Colors.transparent,
             _Palette.lemonChiffon.withValues(alpha: 0.9),
             Colors.transparent,
           ],
@@ -799,19 +1415,46 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
 
   @override
   Widget build(BuildContext context) {
-    // Slightly denser content metrics on mobile, where cards are narrow,
-    // tall rectangles rather than near-squares — keeps the icon, title,
-    // and description comfortably inside the smaller footprint without
-    // touching any hover logic, navigation, or card behaviour.
-    final double iconBoxSize = widget.isMobile ? 58 : 72;
-    final double iconSize = widget.isMobile ? 26 : 32;
-    final double titleFontSize = widget.isMobile ? 17 : 28;
-    final double descriptionFontSize = widget.isMobile ? 12 : 14;
-    final double contentPadding = widget.isMobile ? 16 : 32;
+    // PASS 5: content metrics tuned for the wide/short "horizontal" card
+    // shape — the icon badge sits to the left at a fixed size and the
+    // title/description sit to its right.
+    final double iconBoxSize = widget.isMobile ? 54 : 68;
+    final double iconSize = widget.isMobile ? 24 : 30;
+    final double titleFontSize = widget.isMobile ? 16 : 21;
+    final double descriptionFontSize = widget.isMobile ? 12 : 13.5;
+    final double contentPadding = widget.isMobile ? 16 : 24;
     // UI-ENHANCEMENT PASS 2: slim gold top-cap height, matching the Orders
     // screen's stat-card identity strip. Reserved from the card's own fixed
     // height so it never disturbs the existing content layout below it.
     const double topCapHeight = 3;
+
+    // PASS 23: resting-state (non-hovered) card colors, restyled to match
+    // the supplied reference screenshot exactly — a flat, soft blush-pink
+    // card, a plain pale-rose border, a light-blush icon circle with a
+    // thin gold ring, and a muted maroon-brown description tone. All
+    // values are still built only from existing `_Palette` fields (via
+    // `Color.lerp` or direct field references) — no `_Palette` fields
+    // were added, renamed, or removed.
+    //
+    // PASS 27: these resting colors are now used in BOTH states — the
+    // hover color theme was removed, so the card looks the same whether
+    // or not the cursor is over it.
+    final Color restingBg =
+        Color.lerp(_Palette.canvas, _Palette.paleRose, 0.55)!;
+    final Color restingBorder = _Palette.paleRose;
+    // PASS 24: the resting icon-badge ring is a touch more defined —
+    // opacity raised from `0.65` to `0.85` (width bumped below from `1.4`
+    // to `1.6`) so the gold outline reads as clear and deliberate, closer
+    // to the reference image, instead of a faint hairline. Still built
+    // only from the existing `lemonChiffonDeep` field.
+    final Color restingIconRing = _Palette.lemonChiffonDeep.withValues(
+      alpha: 0.85,
+    );
+    final Color restingDescriptionColor = Color.lerp(
+      _Palette.milanoRedDeep,
+      _Palette.textMuted,
+      0.55,
+    )!;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -823,12 +1466,13 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
           width: widget.width,
-          height: widget.height, // Now a tall rectangle, not a square
+          height: widget
+              .height, // Fixed height passed in by the parent (PASS 11: medium size)
           transform: _isHovered
               ? (Matrix4.identity()..translate(0.0, -6.0))
               : Matrix4.identity(),
           // NOTE: BoxDecoration only ever uses `gradient` here (never mixed
-          // with a plain `color`) so both hover states interpolate cleanly.
+          // with a plain `color`) so both states interpolate cleanly.
           // Mixing color + gradient across the two states is what threw
           // "Cannot provide both a color and a gradient" during the
           // hover animation before this fix.
@@ -836,18 +1480,23 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: _isHovered
-                  ? [
-                      _Palette.cardWhite,
-                      _Palette.lemonChiffon.withValues(alpha: 0.25),
-                    ]
-                  : [_Palette.cardWhite, _Palette.canvasDeep],
+              // PASS 27: the dark maroon hover gradient from PASS 26 was
+              // removed — the card background is the same normal resting
+              // fill whether hovered or not.
+              colors: [
+                restingBg,
+                restingBg,
+              ],
             ),
-            borderRadius: BorderRadius.circular(widget.isMobile ? 22 : 28),
+            borderRadius: BorderRadius.circular(widget.isMobile ? 20 : 26),
+            // PASS 27: same normal border in both states (no maroon hover
+            // border anymore).
             border: Border.all(
-              color: _isHovered ? _Palette.milanoRed : _Palette.paleRose,
-              width: _isHovered ? 1.4 : 1,
+              color: restingBorder,
+              width: 1.2,
             ),
+            // The hover lift (transform above) and elevated shadow are the
+            // only hover effects kept — no color theme change.
             boxShadow: _isHovered ? _Palette.glowShadow : _Palette.softShadow,
           ),
           // The card has a fixed width/height (passed in from the parent so
@@ -856,35 +1505,40 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
           // width/height, so they can bleed right up to the rounded edge
           // without any risk of overflowing outside the card.
           //
-          // The main content (icon + spacing + title + description + the
-          // hint row, which always reserves its height even at opacity 0)
-          // could add up to slightly more than the fixed height depending on
-          // text/font metrics — that mismatch is what produced the "BOTTOM
-          // OVERFLOWED BY 17 PIXELS" banner previously.
+          // PASS 5: the main content is a horizontal `Row` (icon badge on
+          // the left, an `Expanded` left-aligned `Column` of
+          // title/description/hint on the right).
           //
-          // Wrapping the content in a LayoutBuilder + SingleChildScrollView
-          // (non-scrollable in normal use) lets it report its own height
-          // safely instead of forcing it into the parent's constraints, so
-          // the same centered layout renders with zero overflow risk.
+          // PASS 6 — OVERFLOW FIX: that title/description `Column` is
+          // now wrapped in a left-aligned `FittedBox` (`BoxFit.scaleDown`).
+          // If the card's given height is ever tighter than the content
+          // needs (e.g. a very short or narrow device), the content simply
+          // scales down proportionally to fit — it can never overflow or
+          // throw a "RenderFlex overflowed" error. On any normal-sized
+          // screen the content already fits, so nothing visibly changes.
+          //
+          // PASS 23: a small always-visible trailing chevron was added as
+          // a final `Row` child (after the `Expanded` text column) so the
+          // card matches the reference image's persistent "›" on the
+          // right edge, replacing the old hover-only "Manage →" hint pill.
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(widget.isMobile ? 22 : 28),
+            borderRadius: BorderRadius.circular(widget.isMobile ? 20 : 26),
             child: Stack(
               children: [
                 // ── Decorative corner glow (purely cosmetic) ─────────────
+                // PASS 27: constant resting opacity (no stronger glow on
+                // hover).
                 Positioned(
                   top: -36,
                   right: -36,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
+                  child: Container(
                     width: 120,
                     height: 120,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          _Palette.lemonChiffon.withValues(
-                            alpha: _isHovered ? 0.45 : 0.18,
-                          ),
+                          _Palette.lemonChiffon.withValues(alpha: 0.18),
                           Colors.transparent,
                         ],
                       ),
@@ -912,32 +1566,33 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
                 // width of the card — echoes the Orders screen's stat-card
                 // color-coded identity strip. Purely decorative, sits above
                 // the corner glows and below the step-index tag.
+                //
+                // PASS 27: same resting gold cap in both states.
                 Positioned(
                   top: 0,
                   left: 0,
                   right: 0,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
+                  child: Container(
                     height: topCapHeight,
-                    color: _isHovered
-                        ? _Palette.milanoRed.withValues(alpha: 0.85)
-                        : _Palette.lemonChiffon.withValues(alpha: 0.75),
+                    color: _Palette.lemonChiffonDeep.withValues(alpha: 0.75),
                   ),
                 ),
                 // ── Step index tag, flush to the top-left corner ─────────
+                // PASS 23: solid dark-maroon fill with white numerals,
+                // matching the maroon badge shown in the reference image.
+                //
+                // PASS 27: same `milanoRedDeep` fill in both states (the
+                // darker `milanoRedDarkest` hover fill was removed).
                 Positioned(
                   top: 0,
                   left: 0,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
+                  child: Container(
                     padding: EdgeInsets.symmetric(
                       horizontal: widget.isMobile ? 11 : 14,
                       vertical: widget.isMobile ? 5 : 7,
                     ),
                     decoration: BoxDecoration(
-                      color: _isHovered
-                          ? _Palette.milanoRedDeep
-                          : _Palette.lemonChiffon.withValues(alpha: 0.55),
+                      color: _Palette.milanoRedDeep,
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(widget.isMobile ? 20 : 26),
                         bottomRight: Radius.circular(widget.isMobile ? 14 : 18),
@@ -949,170 +1604,229 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
                         fontSize: widget.isMobile ? 10 : 11,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.5,
-                        color:
-                            _isHovered ? Colors.white : _Palette.milanoRedDeep,
+                        color: Colors.white,
                       ),
                     ),
                   ),
                 ),
                 // ── Main content ──────────────────────────────────────────
                 Padding(
-                  padding: EdgeInsets.all(contentPadding),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return SingleChildScrollView(
-                        physics: const NeverScrollableScrollPhysics(),
-                        child: ConstrainedBox(
-                          constraints:
-                              BoxConstraints(minHeight: constraints.maxHeight),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              // ── Icon Container ─────────────────────────
-                              // Also gradient-only in both states (fixes the
-                              // same color/gradient interpolation crash as
-                              // above), now wrapped in a soft outer ring for
-                              // a more premium "badge" look.
-                              //
-                              // PASS 4: the resting ring/fill now uses the
-                              // PUREDINE Dusty Blush / Warm Gold pairing
-                              // instead of a flat gold tint, matching the
-                              // "Icon BG" spec used across the other admin
-                              // screens.
-                              AnimatedContainer(
-                                duration: const Duration(milliseconds: 300),
-                                padding:
-                                    EdgeInsets.all(widget.isMobile ? 5 : 6),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: _isHovered
-                                        ? _Palette.milanoRed
-                                            .withValues(alpha: 0.25)
-                                        : _Palette.lemonChiffon
-                                            .withValues(alpha: 0.5),
-                                    width: 1.4,
-                                  ),
-                                ),
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 300),
-                                  width: iconBoxSize,
-                                  height: iconBoxSize,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: _isHovered
-                                          ? [
-                                              _Palette.milanoRedDeep,
-                                              _Palette.milanoRed,
-                                            ]
-                                          : [
-                                              _Palette.dustyBlush,
-                                              _Palette.lemonChiffon
-                                                  .withValues(alpha: 0.5),
-                                            ],
-                                    ),
-                                    borderRadius: BorderRadius.circular(
-                                        widget.isMobile ? 16 : 20),
-                                    boxShadow: _isHovered
-                                        ? [
-                                            BoxShadow(
-                                              color: _Palette.milanoRed
-                                                  .withValues(alpha: 0.35),
-                                              blurRadius: 16,
-                                              offset: const Offset(0, 8),
-                                            ),
-                                          ]
-                                        : [
-                                            BoxShadow(
-                                              color: _Palette.lemonChiffonDeep
-                                                  .withValues(alpha: 0.18),
-                                              blurRadius: 10,
-                                              offset: const Offset(0, 4),
-                                            ),
-                                          ],
-                                  ),
-                                  child: Icon(
-                                    widget.icon,
-                                    color: _isHovered
-                                        ? Colors.white
-                                        : _Palette.milanoRedDeep,
-                                    size: iconSize,
-                                  ),
-                                ),
+                  padding: EdgeInsets.fromLTRB(
+                    contentPadding,
+                    contentPadding + (widget.isMobile ? 6 : 8),
+                    contentPadding,
+                    contentPadding,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // ── Icon Container (Avatar) ────────────────────────
+                      // Gradient-only fill, wrapped in a soft outer ring for
+                      // a more premium "badge" look.
+                      //
+                      // PASS 23: light blush tint with a `lemonChiffonDeep`
+                      // gold ring.
+                      //
+                      // PASS 24: a more defined gold ring (see
+                      // `restingIconRing` above), an always-on soft shadow
+                      // so the badge reads as raised/professional, and a
+                      // faint inner highlight ring for a subtle embossed
+                      // finish.
+                      //
+                      // PASS 25: the fill is a radial gradient built only
+                      // from the existing `dustyBlush`/`paleRose` `_Palette`
+                      // fields so the icon circle reads as the same blush-
+                      // pink family as the rest of the card. The inner
+                      // highlight ring is a semi-transparent white
+                      // (`alpha: 0.55`).
+                      //
+                      // PASS 27: the hover styling of this badge (dark
+                      // maroon fill, white glyph, gold-on-dark ring, no
+                      // inner ring, maroon glow shadow) was removed — the
+                      // badge looks the same whether hovered or not.
+                      Container(
+                        // Always-on soft shadow beneath the badge — a warm
+                        // gold glow plus a faint neutral drop shadow — so
+                        // the avatar reads as a raised, polished badge.
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: _Palette.lemonChiffonDeep
+                                  .withValues(alpha: 0.22),
+                              blurRadius: 14,
+                              offset: const Offset(0, 6),
+                            ),
+                            BoxShadow(
+                              color: Colors.black.withValues(
+                                alpha: 0.05,
                               ),
-                              SizedBox(height: widget.isMobile ? 16 : 28),
-                              // ── Title ───────────────────────────────────
-                              Text(
-                                widget.title,
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.playfairDisplay(
-                                  color: _Palette.milanoRedDeep,
-                                  fontSize: titleFontSize,
-                                  fontWeight: FontWeight.bold,
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Container(
+                          padding: EdgeInsets.all(widget.isMobile ? 5 : 6),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: restingIconRing,
+                              width: 1.6,
+                            ),
+                          ),
+                          child: Container(
+                            // PASS 24: thin inner highlight ring — a very
+                            // faint white stroke just inside the gold ring
+                            // — purely for polish, giving the avatar a
+                            // subtle "embossed" edge like a printed badge.
+                            // PASS 25: softened to `alpha: 0.55`.
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withValues(
+                                  alpha: 0.55,
                                 ),
+                                width: 1,
                               ),
-                              SizedBox(height: widget.isMobile ? 6 : 8),
-                              const _TitleDivider(),
-                              SizedBox(height: widget.isMobile ? 10 : 14),
-                              // ── Description ─────────────────────────────
-                              Text(
-                                widget.description,
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.inter(
-                                  color: _Palette.textMuted,
-                                  fontSize: descriptionFontSize,
-                                  height: 1.5,
+                            ),
+                            padding: const EdgeInsets.all(1.5),
+                            child: Container(
+                              width: iconBoxSize,
+                              height: iconBoxSize,
+                              decoration: BoxDecoration(
+                                gradient: RadialGradient(
+                                  center: Alignment.topLeft,
+                                  radius: 1.3,
+                                  colors: [
+                                    _Palette.dustyBlush,
+                                    _Palette.paleRose,
+                                  ],
                                 ),
-                              ),
-                              SizedBox(height: widget.isMobile ? 12 : 18),
-                              // ── Hint pill (appears on hover) ────────────
-                              AnimatedOpacity(
-                                duration: const Duration(milliseconds: 250),
-                                opacity: _isHovered ? 1 : 0,
-                                child: AnimatedSlide(
-                                  duration: const Duration(milliseconds: 250),
-                                  offset: _isHovered
-                                      ? Offset.zero
-                                      : const Offset(0, 0.3),
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: widget.isMobile ? 12 : 16,
-                                      vertical: widget.isMobile ? 6 : 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: _Palette.milanoRed
-                                          .withValues(alpha: 0.08),
-                                      borderRadius: BorderRadius.circular(100),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          'Manage',
-                                          style: GoogleFonts.inter(
-                                            color: _Palette.milanoRed,
-                                            fontSize: widget.isMobile ? 12 : 13,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Icon(
-                                          Icons.arrow_forward_rounded,
-                                          color: _Palette.milanoRed,
-                                          size: widget.isMobile ? 14 : 16,
-                                        ),
-                                      ],
-                                    ),
+                                borderRadius: BorderRadius.circular(
+                                    widget.isMobile ? 16 : 20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: _Palette.lemonChiffonDeep
+                                        .withValues(alpha: 0.18),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
                                   ),
-                                ),
+                                ],
                               ),
-                            ],
+                              child: Icon(
+                                widget.icon,
+                                color: _Palette.milanoRedDeep,
+                                size: iconSize,
+                              ),
+                            ),
                           ),
                         ),
-                      );
-                    },
+                      ),
+                      SizedBox(width: widget.isMobile ? 16 : 22),
+                      // ── Title + description, left-aligned ──────────────
+                      // PASS 6: wrapped in `Align` + `FittedBox` so this
+                      // block scales down instead of overflowing if the
+                      // card's given height/width is ever tighter than the
+                      // content needs. Same content, same order, same
+                      // styling — only a safety wrapper was added.
+                      //
+                      // PASS 23: the underline `_TitleDivider` beneath the
+                      // title was replaced with a short vertical maroon
+                      // accent bar placed to the LEFT of the title text
+                      // (the "| Billing Staff" look from the reference
+                      // image). The hover-only "Manage →" hint pill that
+                      // used to sit below the description has been
+                      // removed from this column entirely — its always-
+                      // visible replacement (a plain trailing chevron) now
+                      // sits as its own item at the end of the outer Row,
+                      // matching the reference image's persistent "›" on
+                      // the card's right edge.
+                      //
+                      // PASS 27: title, accent bar, and description use
+                      // their normal resting colors in every state (no
+                      // white-on-hover text anymore).
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 3,
+                                      height: titleFontSize * 0.85,
+                                      decoration: BoxDecoration(
+                                        color: _Palette.milanoRedDeep,
+                                        borderRadius: BorderRadius.circular(2),
+                                      ),
+                                    ),
+                                    SizedBox(width: widget.isMobile ? 7 : 9),
+                                    Text(
+                                      widget.title,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.playfairDisplay(
+                                        color: _Palette.milanoRedDeep,
+                                        fontSize: titleFontSize,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: widget.isMobile ? 8 : 10),
+                                // ── Description ─────────────────────────
+                                // PASS 26: on mobile, the description is
+                                // always solid black for a clearer, more
+                                // professional look on small screens.
+                                //
+                                // PASS 27: on desktop it now stays the
+                                // normal resting color/weight
+                                // (`restingDescriptionColor`, `w500`) even
+                                // while hovered.
+                                Text(
+                                  widget.description,
+                                  maxLines: widget.isMobile ? 2 : 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.inter(
+                                    color: widget.isMobile
+                                        ? Colors.black
+                                        : restingDescriptionColor,
+                                    fontSize: descriptionFontSize,
+                                    fontWeight: FontWeight.w500,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: widget.isMobile ? 8 : 12),
+                      // ── Trailing chevron ───────────────────────────────
+                      // PASS 23: always visible (not tied to `_isHovered`)
+                      // so it matches the persistent "›" shown on every
+                      // card in the reference image, and so touch-device
+                      // users — who never trigger hover at all — still see
+                      // the affordance. No callback lives here; the whole
+                      // card's `onTap` above is what performs the actual
+                      // navigation, exactly as before.
+                      //
+                      // PASS 27: same normal resting color in every state.
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: _Palette.milanoRedDeep,
+                        size: widget.isMobile ? 24 : 28,
+                      ),
+                    ],
                   ),
                 ),
               ],

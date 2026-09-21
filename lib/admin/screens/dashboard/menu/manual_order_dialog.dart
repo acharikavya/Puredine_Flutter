@@ -34,11 +34,11 @@ import 'package:restaurant_unified_app/admin/services/tables_service.dart';
 /// identity so the dialog read as "majorly white" overall, with maroon
 /// and gold used only as accents rather than a solid header fill.
 ///
-/// UI-ENHANCEMENT PASS 4 (this pass): presentation-only, exactly like
-/// every pass above — no provider/service call, table loading, order
-/// submission, validation, quantity, category/item navigation, or
-/// desktop/mobile layout logic was touched anywhere in this file, and no
-/// field, callback, or keyword was renamed.
+/// UI-ENHANCEMENT PASS 4: presentation-only, exactly like every pass
+/// above — no provider/service call, table loading, order submission,
+/// validation, quantity, category/item navigation, or desktop/mobile
+/// layout logic was touched anywhere in this file, and no field,
+/// callback, or keyword was renamed.
 ///   1. PALETTE — full PUREDINE mapping, mirroring the exact swap already
 ///      done on StaffScreen. Every field name inside `_Palette` is
 ///      unchanged on purpose (every widget in this file already reads
@@ -90,6 +90,32 @@ import 'package:restaurant_unified_app/admin/services/tables_service.dart';
 ///      supplied CTA gradient (`#6E1832 → #9B3E4E → #F3C564`) instead of a
 ///      flat fill — matching the "Login / CTA buttons" spec exactly. No
 ///      button's `onPressed` callback was touched.
+///
+/// UI-ENHANCEMENT PASS 5 (this pass): presentation-only, exactly like
+/// every pass above — no provider/service call, table loading, order
+/// submission, validation, quantity, or category/item navigation logic
+/// was touched anywhere in this file, and no field, callback, or
+/// keyword was renamed.
+///   1. MOBILE CATEGORY GRID: on mobile widths the category cards
+///      (`_CategoryCard`, inside `_buildCategoriesGrid`) were sized the
+///      same as desktop, which made them feel cramped and let longer
+///      names like "paneer pizza" wrap tightly right at the card edge.
+///      The grid now takes an `isDesktop` flag (threaded down from
+///      `_buildMenuSelection`, which is itself now passed the flag from
+///      `_buildDesktopBody` / `_buildMobileBody`) and, on mobile only,
+///      uses a taller `childAspectRatio`, more inter-card spacing, and a
+///      larger icon/label inside `_CategoryCard` so every box has more
+///      breathing room and the category name always has room to sit on
+///      two lines without crowding. Desktop's grid numbers are
+///      untouched.
+///   2. FOOTER BUTTONS: the primary CTA's label was shortened from
+///      "Submit Order" to just "Submit" (the button's `onPressed` is
+///      still exactly `_isSubmitting ? null : _submitOrder` — only the
+///      label text changed). Both the "Cancel" and the primary button
+///      now use a smaller, more rectangular corner radius on mobile
+///      widths (their desktop radius is unchanged) so they read as
+///      squared-off buttons on phone screens, matching the reference
+///      screenshot.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   // PUREDINE Maroon + Cream — field names unchanged on purpose (see the
@@ -344,7 +370,12 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
             // watermark emblem, a subtle diagonal glass sheen, and a
             // warm-gold hairline along the bottom edge. Same icon chip,
             // same title/subtitle copy, same gold underline accent, same
-            // `Navigator.pop(context)` close callback — presentation only.
+            // `Navigator.pop(context)` close callback. Only the copy's
+            // colors changed (white / soft-gold instead of maroon /
+            // taupe) and the icon chip + close button were restyled from
+            // Pass-3's maroon-on-white / cream-on-white "glass" look to a
+            // light glass-on-wine treatment so both read clearly against
+            // the new dark backdrop — presentation only.
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
@@ -660,6 +691,11 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
+                        // PASS 5: on mobile widths this button now uses a
+                        // smaller, more rectangular corner radius (6 vs
+                        // the desktop 12) so it reads as a squared-off
+                        // button on phone screens. `onPressed` and its
+                        // `Navigator.pop(context)` callback are unchanged.
                         OutlinedButton(
                           onPressed: _isSubmitting
                               ? null
@@ -675,7 +711,8 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                               vertical: isDesktop ? 18 : 14,
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius:
+                                  BorderRadius.circular(isDesktop ? 12 : 6),
                             ),
                           ),
                           child: Text(
@@ -688,7 +725,8 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                         Expanded(
                           child: DecoratedBox(
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius:
+                                  BorderRadius.circular(isDesktop ? 12 : 6),
                               gradient:
                                   _isSubmitting ? null : _Palette.ctaGradient,
                               color: _isSubmitting
@@ -724,7 +762,8 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                                   vertical: isDesktop ? 18 : 14,
                                 ),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius:
+                                      BorderRadius.circular(isDesktop ? 12 : 6),
                                 ),
                               ),
                               child: _isSubmitting
@@ -748,7 +787,11 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
                                           ),
                                           const SizedBox(width: 6),
                                           Text(
-                                            'Submit Order',
+                                            // PASS 5: label shortened from
+                                            // "Submit Order" to "Submit" —
+                                            // the onPressed callback above
+                                            // (_submitOrder) is unchanged.
+                                            'Submit',
                                             style: GoogleFonts.inter(
                                               color: Colors.white,
                                               fontWeight: FontWeight.bold,
@@ -819,7 +862,7 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
           child: Container(
             color: _Palette.canvas,
             child: SingleChildScrollView(
-              child: _buildMenuSelection(),
+              child: _buildMenuSelection(true),
             ),
           ),
         ),
@@ -841,7 +884,7 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
           ),
           Container(
             color: _Palette.canvas,
-            child: _buildMenuSelection(),
+            child: _buildMenuSelection(false),
           ),
         ],
       ),
@@ -1224,15 +1267,25 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
     );
   }
 
-  Widget _buildMenuSelection() {
+  // PASS 5: now takes `isDesktop` so `_buildCategoriesGrid` can size the
+  // category boxes differently on mobile vs desktop. `_buildItemsList`
+  // itself is unchanged — only how the categories grid lays out.
+  Widget _buildMenuSelection(bool isDesktop) {
     if (_viewMode == 'categories') {
-      return _buildCategoriesGrid();
+      return _buildCategoriesGrid(isDesktop);
     } else {
       return _buildItemsList();
     }
   }
 
-  Widget _buildCategoriesGrid() {
+  // PASS 5: takes `isDesktop` so the mobile grid can use a taller
+  // `childAspectRatio`, more spacing, and (via `_CategoryCard`'s new
+  // `isDesktop` flag) a larger icon/label — making each category box
+  // noticeably bigger and less cramped on phone screens. Desktop's
+  // numbers (padding 24, spacing 16, aspect ratio 1.4) are untouched.
+  // No navigation logic (`onTap` → `_viewMode`/`_activeCategory`) was
+  // changed.
+  Widget _buildCategoriesGrid(bool isDesktop) {
     return Column(
       children: [
         Container(
@@ -1265,20 +1318,21 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
           ),
         ),
         GridView.builder(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(isDesktop ? 24 : 18),
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 1.4,
+            crossAxisSpacing: isDesktop ? 16 : 14,
+            mainAxisSpacing: isDesktop ? 16 : 14,
+            childAspectRatio: isDesktop ? 1.4 : 1.0,
           ),
           itemCount: widget.categories.length,
           itemBuilder: (ctx, i) {
             final cat = widget.categories[i];
             return _CategoryCard(
               category: cat,
+              isDesktop: isDesktop,
               onTap: () {
                 setState(() {
                   _activeCategory = cat;
@@ -1583,8 +1637,17 @@ class _HeaderCloseButtonState extends State<_HeaderCloseButton> {
 class _CategoryCard extends StatefulWidget {
   final MenuCategory category;
   final VoidCallback onTap;
+  // PASS 5: new flag only — lets the card size its icon/label a little
+  // larger on mobile so boxes feel bigger and names don't crowd the
+  // edges. Defaults to true (desktop) so any other caller that doesn't
+  // pass it keeps the exact same look as before.
+  final bool isDesktop;
 
-  const _CategoryCard({required this.category, required this.onTap});
+  const _CategoryCard({
+    required this.category,
+    required this.onTap,
+    this.isDesktop = true,
+  });
 
   @override
   State<_CategoryCard> createState() => _CategoryCardState();
@@ -1595,6 +1658,7 @@ class _CategoryCardState extends State<_CategoryCard> {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = widget.isDesktop;
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
@@ -1606,6 +1670,7 @@ class _CategoryCardState extends State<_CategoryCard> {
           transform: _isHovered
               ? (Matrix4.identity()..scaleByDouble(1.02, 1.02, 1.0, 1.0))
               : Matrix4.identity(),
+          padding: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : 10),
           decoration: BoxDecoration(
             gradient: _isHovered
                 ? const LinearGradient(
@@ -1634,7 +1699,7 @@ class _CategoryCardState extends State<_CategoryCard> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(isDesktop ? 12 : 16),
                 decoration: BoxDecoration(
                   color: _isHovered
                       ? Colors.white.withValues(alpha: 0.18)
@@ -1645,16 +1710,25 @@ class _CategoryCardState extends State<_CategoryCard> {
                   Icons.restaurant_menu_rounded,
                   color:
                       _isHovered ? _Palette.lemonChiffon : _Palette.milanoRed,
-                  size: 28,
+                  size: isDesktop ? 28 : 32,
                 ),
               ),
-              const SizedBox(height: 12),
-              Text(
-                widget.category.name,
-                style: GoogleFonts.inter(
-                  fontWeight: _isHovered ? FontWeight.w800 : FontWeight.bold,
-                  fontSize: 14,
-                  color: _isHovered ? Colors.white : _Palette.textDark,
+              SizedBox(height: isDesktop ? 12 : 14),
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isDesktop ? 0 : 6,
+                ),
+                child: Text(
+                  widget.category.name,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: true,
+                  style: GoogleFonts.inter(
+                    fontWeight: _isHovered ? FontWeight.w800 : FontWeight.bold,
+                    fontSize: isDesktop ? 14 : 15,
+                    color: _isHovered ? Colors.white : _Palette.textDark,
+                  ),
                 ),
               ),
             ],

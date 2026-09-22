@@ -592,7 +592,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 ///      premium "selected" state instead of a faded one. (SUPERSEDED BY
 ///      PASS 27 below — the dark-maroon hover theme was removed.)
 ///
-/// UI-ENHANCEMENT PASS 27 (this pass): COLOR-ONLY — REMOVES THE HOVER
+/// UI-ENHANCEMENT PASS 27: COLOR-ONLY — REMOVES THE HOVER
 /// COLOR THEME ON DESKTOP. No navigation, tap callback, hover-STATE
 /// LOGIC (`_isHovered`, `MouseRegion`, `onEnter`/`onExit`), card-selection
 /// logic, sizing, spacing, positioning, copy, icons, or any field/
@@ -612,6 +612,42 @@ import 'package:flutter_animate/flutter_animate.dart';
 ///   Only the small non-color hover effects are kept exactly as they were:
 ///   the 6px upward lift (`transform`) and the elevated `glowShadow` on
 ///   the card. The `_isHovered` flag itself is still tracked as before.
+///
+/// UI-ENHANCEMENT PASS 28: FONT-SIZE-ONLY, SCOPED TO THE CARDS ONLY — no
+/// navigation, tap callback, hover state, card-selection logic, card
+/// height/width, spacing, colors, copy, icons, or any field/callback/
+/// route/keyword anywhere in this file was touched or renamed. The
+/// topbar (`_buildCustomHeader()`) — its "Staff Management" title and its
+/// "Select a role to manage credentials and access." subtitle — was
+/// deliberately left untouched at its original sizes
+/// (`isMobile ? 21 : 28` for the title, `isMobile ? 12.5 : 14` for the
+/// subtitle). Only the title and description text INSIDE the two role
+/// cards were made bigger.
+///   1. FONT SIZES INCREASED (inside `_StaffTypeCardState.build()`,
+///      i.e. only the card's own title/description, never the topbar):
+///        • `titleFontSize`        mobile 16   → 20,   desktop 21   → 26
+///        • `descriptionFontSize`  mobile 12   → 15,   desktop 13.5 → 16
+///      The vertical title-accent bar already scales from
+///      `titleFontSize`, so it grows with the title automatically.
+///   2. WHY A SMALL LAYOUT ADJUSTMENT WAS ALSO NEEDED (so the bigger
+///      font is actually VISIBLE): the card's text column sat inside a
+///      `FittedBox(BoxFit.scaleDown)`, and a `FittedBox` lays its child
+///      out with unlimited width — so the description never wrapped and
+///      was instead shrunk to squeeze onto one long line, which is why
+///      it looked tiny. Simply raising `fontSize` would have been
+///      shrunk right back down again. The text column is now given the
+///      real available width (read via a `LayoutBuilder` placed INSIDE
+///      the card, around plain `Text` widgets only — nothing animated is
+///      built in that callback, so the PASS 9 crash cannot recur), so
+///      the description wraps onto multiple lines at the full new size.
+///      The `FittedBox` is kept around it as the same overflow safety
+///      net as before (it now only ever scales down if the wrapped text
+///      would be taller than the card).
+///   3. SMALL SUPPORTING TWEAKS: the description's `maxLines` on mobile
+///      is `3` (was `2`) so the longer wrapped text is never cut off
+///      with "…" at the larger size, and the title `Text` is wrapped in
+///      a `Flexible` so a very narrow screen ellipsizes the title
+///      instead of throwing a RenderFlex overflow.
 /// ─────────────────────────────────────────────────────────────────────────
 
 /// PASS 9: a `ScrollBehavior` that never paints a scrollbar. Used only to
@@ -1104,6 +1140,12 @@ class StaffLandingScreen extends StatelessWidget {
   /// attached). Only the copy's colors changed so it reads clearly on the
   /// wine backdrop. No navigation, sizing, or any other logic was touched
   /// — presentation only.
+  ///
+  /// PASS 28: this header's title/subtitle font sizes were deliberately
+  /// left exactly as they were (`isMobile ? 21 : 28` for the title,
+  /// `isMobile ? 12.5 : 14` for the subtitle) — the font-size increase in
+  /// PASS 28 applies only to the two role cards below, never to this
+  /// topbar.
   Widget _buildCustomHeader(BuildContext context, bool isMobile) {
     return Container(
       width: double.infinity,
@@ -1204,6 +1246,9 @@ class StaffLandingScreen extends StatelessWidget {
                             'Staff Management',
                             style: GoogleFonts.playfairDisplay(
                               color: Colors.white,
+                              // PASS 28: left exactly as-is — topbar font
+                              // size is out of scope for the card-only
+                              // font-size increase.
                               fontSize: isMobile ? 21 : 28,
                               fontWeight: FontWeight.bold,
                             ),
@@ -1259,6 +1304,8 @@ class StaffLandingScreen extends StatelessWidget {
                     'Select a role to manage credentials and access.',
                     style: GoogleFonts.inter(
                       color: Colors.white.withValues(alpha: 0.75),
+                      // PASS 28: left exactly as-is — topbar font size is
+                      // out of scope for the card-only font-size increase.
                       fontSize: isMobile ? 12.5 : 14,
                     ),
                   ),
@@ -1420,8 +1467,14 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
     // title/description sit to its right.
     final double iconBoxSize = widget.isMobile ? 54 : 68;
     final double iconSize = widget.isMobile ? 24 : 30;
-    final double titleFontSize = widget.isMobile ? 16 : 21;
-    final double descriptionFontSize = widget.isMobile ? 12 : 13.5;
+    // PASS 28: title and description font sizes increased — SCOPED ONLY
+    // TO THE CARD (this is the card's own title/description, never the
+    // topbar's title/subtitle in `_buildCustomHeader()`, which stays at
+    // its original sizes):
+    //   card title:        mobile 16 → 20,   desktop 21   → 26
+    //   card description:  mobile 12 → 15,   desktop 13.5 → 16
+    final double titleFontSize = widget.isMobile ? 20 : 26;
+    final double descriptionFontSize = widget.isMobile ? 15 : 16;
     final double contentPadding = widget.isMobile ? 16 : 24;
     // UI-ENHANCEMENT PASS 2: slim gold top-cap height, matching the Orders
     // screen's stat-card identity strip. Reserved from the card's own fixed
@@ -1746,68 +1799,98 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
                       // PASS 27: title, accent bar, and description use
                       // their normal resting colors in every state (no
                       // white-on-hover text anymore).
+                      //
+                      // PASS 28: a `LayoutBuilder` (around plain widgets
+                      // only — nothing animated is built inside it) now
+                      // hands the text column its real available width via
+                      // a `SizedBox`, so the description wraps at the new
+                      // larger font size instead of being shrunk onto one
+                      // long line by the `FittedBox`. The `FittedBox`
+                      // stays as the same overflow safety net as before.
+                      // This affects only the card's own title/description
+                      // — the topbar in `_buildCustomHeader()` is untouched.
                       Expanded(
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.centerLeft,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      width: 3,
-                                      height: titleFontSize * 0.85,
-                                      decoration: BoxDecoration(
-                                        color: _Palette.milanoRedDeep,
-                                        borderRadius: BorderRadius.circular(2),
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            return Align(
+                              alignment: Alignment.centerLeft,
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: SizedBox(
+                                  width: constraints.maxWidth,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            width: 3,
+                                            height: titleFontSize * 0.85,
+                                            decoration: BoxDecoration(
+                                              color: _Palette.milanoRedDeep,
+                                              borderRadius:
+                                                  BorderRadius.circular(2),
+                                            ),
+                                          ),
+                                          SizedBox(
+                                              width: widget.isMobile ? 7 : 9),
+                                          Flexible(
+                                            child: Text(
+                                              widget.title,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style:
+                                                  GoogleFonts.playfairDisplay(
+                                                color: _Palette.milanoRedDeep,
+                                                fontSize: titleFontSize,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                    SizedBox(width: widget.isMobile ? 7 : 9),
-                                    Text(
-                                      widget.title,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.playfairDisplay(
-                                        color: _Palette.milanoRedDeep,
-                                        fontSize: titleFontSize,
-                                        fontWeight: FontWeight.bold,
+                                      SizedBox(
+                                          height: widget.isMobile ? 8 : 10),
+                                      // ── Description ─────────────────
+                                      // PASS 26: on mobile, the description
+                                      // is always solid black for a
+                                      // clearer, more professional look on
+                                      // small screens.
+                                      //
+                                      // PASS 27: on desktop it now stays
+                                      // the normal resting color/weight
+                                      // (`restingDescriptionColor`,
+                                      // `w500`) even while hovered.
+                                      //
+                                      // PASS 28: mobile `maxLines` is `3`
+                                      // (was `2`) so the larger, wrapped
+                                      // text is never cut off with "…".
+                                      Text(
+                                        widget.description,
+                                        maxLines: widget.isMobile ? 3 : 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: GoogleFonts.inter(
+                                          color: widget.isMobile
+                                              ? Colors.black
+                                              : restingDescriptionColor,
+                                          fontSize: descriptionFontSize,
+                                          fontWeight: FontWeight.w500,
+                                          height: 1.4,
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: widget.isMobile ? 8 : 10),
-                                // ── Description ─────────────────────────
-                                // PASS 26: on mobile, the description is
-                                // always solid black for a clearer, more
-                                // professional look on small screens.
-                                //
-                                // PASS 27: on desktop it now stays the
-                                // normal resting color/weight
-                                // (`restingDescriptionColor`, `w500`) even
-                                // while hovered.
-                                Text(
-                                  widget.description,
-                                  maxLines: widget.isMobile ? 2 : 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.inter(
-                                    color: widget.isMobile
-                                        ? Colors.black
-                                        : restingDescriptionColor,
-                                    fontSize: descriptionFontSize,
-                                    fontWeight: FontWeight.w500,
-                                    height: 1.4,
+                                    ],
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                       SizedBox(width: widget.isMobile ? 8 : 12),

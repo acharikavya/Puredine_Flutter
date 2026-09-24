@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:ui' show PointerDeviceKind;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
@@ -77,10 +79,10 @@ import 'package:restaurant_unified_app/admin/services/orders_service.dart';
 /// UI-ENHANCEMENT PASS 7: PUREDINE Maroon + Cream re-theme, plus a
 /// wine-gradient background on the top utility bar.
 ///
-/// UI-ENHANCEMENT PASS 8 (this pass): presentation-only, exactly like
-/// every pass above — no provider, data loading, filtering, sorting,
-/// status-update, dialog, or PDF/print logic anywhere in this file was
-/// touched, and no state field, callback, route, or keyword was renamed.
+/// UI-ENHANCEMENT PASS 8: presentation-only, exactly like every pass
+/// above — no provider, data loading, filtering, sorting, status-update,
+/// dialog, or PDF/print logic anywhere in this file was touched, and no
+/// state field, callback, route, or keyword was renamed.
 ///   1. TOP BAR REMOVED: the slim utility bar added in PASS 5 held only
 ///      two purely decorative things — the circular store avatar on the
 ///      left and the "Have a great day" line beside it. Neither carried
@@ -137,6 +139,57 @@ import 'package:restaurant_unified_app/admin/services/orders_service.dart';
 ///      keeps its own semantic color (blue = placed, orange = preparing,
 ///      purple = ready, teal = served, green = paid, red = cancelled) so
 ///      no status meaning changed.
+///
+/// FEATURE PASS 9: added TIME-RANGE FILTERING to the orders
+/// list — and nothing else. No existing provider call, data loading,
+/// search, status/payment/type filter, sorting, status-update, dialog, or
+/// PDF/print logic was changed, and no existing field, callback, route or
+/// keyword was renamed.
+///   1. NEW STATE (in `_OrdersScreenState`): `_timeFilter`,
+///      `_customTimeValue`, `_customTimeUnit` and a small
+///      `_customTimeController` for the custom-duration input.
+///   2. NEW FILTER RULE: `_timeCutoff` converts the chosen range into a
+///      "show orders created after this moment" cut-off, and `_filtered`
+///      gained one extra `matchTime` condition that is AND-ed with the
+///      existing four. When the range is "All Time" (default) the new
+///      condition is always true, so behaviour is identical to before.
+///   3. NEW UI: a "Time Range" block at the bottom of the Filters panel
+///      (`_buildTimeRangeSection`) with quick-pick chips — All Time,
+///      Last 1 Hour, Last 6 Hours, Last 12 Hours, Today, Last 1 Day,
+///      Last 1 Week, Last 1 Month — and a "Custom" chip that reveals a
+///      "Last [N] [Minutes / Hours / Days]" input. A small info pill
+///      shows the exact date/time the active range starts from.
+///
+/// FEATURE PASS 10: layout-only refinement of the Time Range
+/// block from PASS 9 — no logic, state, filtering rule or keyword changed.
+/// The time-range options previously wrapped onto two rows; they now sit
+/// on a SINGLE line inside a soft segmented pill track (`_timeChip` was
+/// restyled to match). If the screen is too narrow to show all options at
+/// once, the track scrolls sideways instead of wrapping.
+///
+/// FIX (PASS 10): added `import 'dart:ui' show PointerDeviceKind;` — the
+/// sideways-scroll drag settings on the Time Range track reference
+/// `PointerDeviceKind`, which `material.dart` does not export. This import
+/// is the only change; no logic was touched.
+///
+/// FEATURE PASS 11: layout/visual-only refinement of the Time
+/// Range block — no logic, state, filtering rule or keyword changed. The
+/// shared pill track from PASS 10 was removed; each time range is now its
+/// own separate, icon-badged box (`_timeChip`, plus a small `_timeChipIcon`
+/// helper), still on a single sideways-scrolling line.
+///
+/// FEATURE PASS 12 (this pass): colour/theme-only restyle of the ORDER
+/// DETAILS dialog (`_OrderDetailsDialog`) so it matches the Orders screen —
+/// no logic, state, callback, PDF/print code or keyword was changed.
+///   1. Dialog shell: Warm Off-White canvas, 24px corners, gold outline.
+///   2. Header: the same wine-gradient top bar as the screen (gold accent
+///      dots, white→gold title, gold hairline, watermark, glow, sheen) with
+///      a glass-style close button.
+///   3. Body: cream canvas with the screen's soft gold/wine/blush glows.
+///   4. Cards: Soft Cream gradient, Pale Rose border and the shared
+///      `_OrdersTheme.softShadow`; slate greys swapped for Muted Taupe /
+///      Deep Brown; the update-status button uses wine shades instead of
+///      blue/orange/purple/teal (status badges keep their semantic colours).
 /// -----------------------------------------------------------------------
 class _OrdersTheme {
   // Primary brand — the "PUREDINE Maroon + Cream" palette (see the
@@ -230,11 +283,39 @@ class _OrdersScreenState extends State<OrdersScreen> {
   String? _highlightedOrderId;
   final ScrollController _scrollController = ScrollController();
 
+  // ── Time-range filter (FEATURE PASS 9) ────────────────────────────────
+  // Quick-pick ranges shown as chips in the Filters panel. 'Custom' lets
+  // the user type their own "Last N Minutes / Hours / Days".
+  static const List<String> _timeFilterOptions = [
+    'All Time',
+    'Last 1 Hour',
+    'Last 6 Hours',
+    'Last 12 Hours',
+    'Today',
+    'Last 1 Day',
+    'Last 1 Week',
+    'Last 1 Month',
+    'Custom',
+  ];
+  static const List<String> _customTimeUnits = ['Minutes', 'Hours', 'Days'];
+
+  String _timeFilter = 'All Time';
+  int _customTimeValue = 1;
+  String _customTimeUnit = 'Hours';
+  final TextEditingController _customTimeController =
+      TextEditingController(text: '1');
+
   @override
   void initState() {
     super.initState();
     _loadOrders();
     _checkHighlight();
+  }
+
+  @override
+  void dispose() {
+    _customTimeController.dispose();
+    super.dispose();
   }
 
   void _checkHighlight() {
@@ -303,7 +384,44 @@ class _OrdersScreenState extends State<OrdersScreen> {
     }
   }
 
+  /// FEATURE PASS 9: turns the selected time range into a cut-off moment —
+  /// orders created BEFORE this instant are hidden. Returns `null` when no
+  /// time restriction applies ("All Time", or a "Custom" range whose number
+  /// is empty / zero), which makes the time condition a no-op.
+  DateTime? get _timeCutoff {
+    final now = DateTime.now();
+    switch (_timeFilter) {
+      case 'Last 1 Hour':
+        return now.subtract(const Duration(hours: 1));
+      case 'Last 6 Hours':
+        return now.subtract(const Duration(hours: 6));
+      case 'Last 12 Hours':
+        return now.subtract(const Duration(hours: 12));
+      case 'Today':
+        return DateTime(now.year, now.month, now.day);
+      case 'Last 1 Day':
+        return now.subtract(const Duration(days: 1));
+      case 'Last 1 Week':
+        return now.subtract(const Duration(days: 7));
+      case 'Last 1 Month':
+        return now.subtract(const Duration(days: 30));
+      case 'Custom':
+        if (_customTimeValue <= 0) return null;
+        switch (_customTimeUnit) {
+          case 'Minutes':
+            return now.subtract(Duration(minutes: _customTimeValue));
+          case 'Days':
+            return now.subtract(Duration(days: _customTimeValue));
+          default:
+            return now.subtract(Duration(hours: _customTimeValue));
+        }
+      default:
+        return null;
+    }
+  }
+
   List<OrderModel> get _filtered {
+    final cutoff = _timeCutoff;
     final filtered = _orders.where((o) {
       final matchSearch = _searchQuery.isEmpty ||
           o.id.toLowerCase().contains(_searchQuery.toLowerCase());
@@ -315,7 +433,20 @@ class _OrdersScreenState extends State<OrdersScreen> {
           o.orderType.toUpperCase().replaceAll('-', '_') ==
               _typeFilter.toUpperCase().replaceAll(' ', '_');
 
-      return matchSearch && matchStatus && matchPayment && matchType;
+      // FEATURE PASS 9: time-range condition. Always true when no range
+      // is active; otherwise the order must have a valid creation time
+      // that falls on/after the cut-off.
+      bool matchTime = true;
+      if (cutoff != null) {
+        final created = DateTime.tryParse(o.createdAt);
+        matchTime = created != null && !created.isBefore(cutoff);
+      }
+
+      return matchSearch &&
+          matchStatus &&
+          matchPayment &&
+          matchType &&
+          matchTime;
     }).toList();
 
     // Apply sorting
@@ -984,6 +1115,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
   /// space with the search field was simplified to fill that space
   /// instead. The panel's corner radius/border/shadow matches the Menu
   /// screen's card treatment (`_OrdersTheme.softShadow`).
+  ///
+  /// FEATURE PASS 9: a divider and the new "Time Range" block
+  /// (`_buildTimeRangeSection`) were appended at the bottom of this panel.
+  /// Everything above them is unchanged.
   Widget _buildFilterSection(bool isMobile) {
     return Container(
       padding: const EdgeInsets.all(24),
@@ -1119,8 +1254,305 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 ),
               ],
             ),
+
+          // ── FEATURE PASS 9: Time Range ──────────────────────────────────
+          const SizedBox(height: 22),
+          const Divider(height: 1, thickness: 1, color: _OrdersTheme.paleRose),
+          const SizedBox(height: 22),
+          _buildTimeRangeSection(isMobile),
         ],
       ),
+    );
+  }
+
+  /// FEATURE PASS 9: the "Time Range" block — a labelled row of quick-pick
+  /// chips, an optional custom "Last [N] [unit]" input, and an info pill
+  /// showing the exact moment the active range starts from.
+  Widget _buildTimeRangeSection(bool isMobile) {
+    final cutoff = _timeCutoff;
+    final isCustom = _timeFilter == 'Custom';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: _OrdersTheme.blushTint,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.schedule_rounded,
+                size: 18,
+                color: _OrdersTheme.milanoRed,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              'Time Range',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: _OrdersTheme.milanoRed,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        // FEATURE PASS 11: every time range is now its OWN box (card), still
+        // on a single line. The row scrolls sideways (touch, trackpad or
+        // mouse drag) when the screen is too narrow to show all nine boxes.
+        // The bottom padding leaves room for each box's soft shadow.
+        ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            scrollbars: false,
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.mouse,
+              PointerDeviceKind.trackpad,
+              PointerDeviceKind.stylus,
+            },
+          ),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(2, 4, 2, 14),
+            child: Row(
+              children: [
+                for (int i = 0; i < _timeFilterOptions.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 10),
+                  _timeChip(_timeFilterOptions[i]),
+                ],
+              ],
+            ),
+          ),
+        ),
+        if (isCustom) ...[
+          const SizedBox(height: 4),
+          _buildCustomTimeInput(),
+        ],
+        if (cutoff != null) ...[
+          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: _OrdersTheme.lemonChiffon.withValues(alpha: 0.28),
+              borderRadius: BorderRadius.circular(100),
+              border: Border.all(
+                color: _OrdersTheme.gold.withValues(alpha: 0.45),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.history_toggle_off_rounded,
+                  size: 14,
+                  color: _OrdersTheme.milanoRed,
+                ),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    'Orders since ${DateFormat('dd MMM yyyy, hh:mm a').format(cutoff)}',
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: _OrdersTheme.milanoRed,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// FEATURE PASS 9: a single selectable time-range chip.
+  ///
+  /// FEATURE PASS 11: now a standalone rounded box (card). Unselected boxes
+  /// are white with a Pale Rose border and a soft shadow; the selected box
+  /// fills with the Deep Wine Maroon gradient, gets a warm-gold border and a
+  /// maroon glow. Every box carries a small icon badge before its label.
+  Widget _timeChip(String label) {
+    final isSelected = _timeFilter == label;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => setState(() => _timeFilter = label),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            gradient: isSelected
+                ? const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      _OrdersTheme.milanoRed,
+                      _OrdersTheme.milanoRedLight,
+                    ],
+                  )
+                : null,
+            color: isSelected ? null : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isSelected
+                  ? _OrdersTheme.gold.withValues(alpha: 0.7)
+                  : _OrdersTheme.paleRose,
+              width: isSelected ? 1.4 : 1,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: _OrdersTheme.milanoRed.withValues(alpha: 0.30),
+                      blurRadius: 12,
+                      offset: const Offset(0, 5),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: _OrdersTheme.milanoRedDark.withValues(alpha: 0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isSelected
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : _OrdersTheme.blushTint,
+                ),
+                child: Icon(
+                  _timeChipIcon(label),
+                  size: 15,
+                  color: isSelected
+                      ? _OrdersTheme.lemonChiffon
+                      : _OrdersTheme.milanoRed,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                label,
+                maxLines: 1,
+                softWrap: false,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                  color: isSelected
+                      ? Colors.white
+                      : _OrdersTheme.milanoRedDarkest.withValues(alpha: 0.8),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// FEATURE PASS 11: the icon shown inside each time-range box.
+  IconData _timeChipIcon(String label) {
+    switch (label) {
+      case 'Last 1 Hour':
+        return Icons.timer_outlined;
+      case 'Last 6 Hours':
+        return Icons.hourglass_bottom_rounded;
+      case 'Last 12 Hours':
+        return Icons.hourglass_top_rounded;
+      case 'Today':
+        return Icons.today_rounded;
+      case 'Last 1 Day':
+        return Icons.calendar_today_rounded;
+      case 'Last 1 Week':
+        return Icons.date_range_rounded;
+      case 'Last 1 Month':
+        return Icons.calendar_month_rounded;
+      case 'Custom':
+        return Icons.tune_rounded;
+      default:
+        return Icons.all_inclusive_rounded;
+    }
+  }
+
+  /// FEATURE PASS 9: the "Last [N] [Minutes / Hours / Days]" input that
+  /// appears when the "Custom" chip is selected. Digits only, max 4 digits;
+  /// an empty or zero value simply applies no time restriction.
+  Widget _buildCustomTimeInput() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          'Last',
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: _OrdersTheme.mutedTaupe,
+          ),
+        ),
+        const SizedBox(width: 12),
+        SizedBox(
+          width: 96,
+          child: TextField(
+            controller: _customTimeController,
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(4),
+            ],
+            onChanged: (v) =>
+                setState(() => _customTimeValue = int.tryParse(v) ?? 0),
+            cursorColor: _OrdersTheme.milanoRed,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textDark,
+            ),
+            decoration: InputDecoration(
+              hintText: 'e.g. 3',
+              hintStyle: GoogleFonts.inter(color: _OrdersTheme.mutedTaupe),
+              filled: true,
+              fillColor: _OrdersTheme.canvasDeep.withValues(alpha: 0.5),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: _OrdersTheme.paleRose),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: _OrdersTheme.milanoRed,
+                  width: 1.4,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 200),
+            child: _buildDropdown(
+              _customTimeUnit,
+              _customTimeUnits,
+              (v) => setState(() => _customTimeUnit = v!),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -2235,12 +2667,13 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         side: BorderSide(
             color: _OrdersTheme.gold.withValues(alpha: 0.4), width: 1.2),
       ),
       elevation: 20,
-      backgroundColor: Colors.white,
+      clipBehavior: Clip.antiAlias,
+      backgroundColor: _OrdersTheme.canvas,
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: MediaQuery.of(context).size.width > 1000
@@ -2251,627 +2684,851 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(32, 24, 24, 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // Header — FEATURE PASS 12: the branded wine-gradient top bar,
+            // same language as the Orders screen header (gold accent dots,
+            // white→gold ShaderMask title, gold hairline, faint watermark
+            // emblem, warm-gold corner glow and a glass sheen).
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                gradient: _OrdersTheme.headerGradient,
+                border: Border(
+                  bottom: BorderSide(
+                    color: _OrdersTheme.lemonChiffon.withValues(alpha: 0.30),
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Stack(
                 children: [
-                  Text(
-                    'Order Details',
-                    style: GoogleFonts.playfairDisplay(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: _OrdersTheme.milanoRed,
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: ClipRect(
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              top: -70,
+                              right: -50,
+                              child: Container(
+                                width: 230,
+                                height: 230,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: RadialGradient(
+                                    colors: [
+                                      _OrdersTheme.lemonChiffon
+                                          .withValues(alpha: 0.16),
+                                      Colors.transparent,
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              right: -14,
+                              bottom: -18,
+                              child: Icon(
+                                Icons.receipt_long_rounded,
+                                size: 130,
+                                color: Colors.white.withValues(alpha: 0.05),
+                              ),
+                            ),
+                            Positioned.fill(
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Colors.white.withValues(alpha: 0.06),
+                                      Colors.transparent,
+                                      Colors.transparent,
+                                    ],
+                                    stops: const [0.0, 0.4, 1.0],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(28, 22, 16, 20),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 6),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: List.generate(
+                                    5,
+                                    (i) => Container(
+                                      margin: const EdgeInsets.only(right: 5),
+                                      width: 4,
+                                      height: 4,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: _OrdersTheme.lemonChiffon
+                                            .withValues(
+                                          alpha: i == 2 ? 0.95 : 0.4,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              ShaderMask(
+                                shaderCallback: (bounds) =>
+                                    const LinearGradient(
+                                  colors: [
+                                    Colors.white,
+                                    _OrdersTheme.lemonChiffon,
+                                  ],
+                                ).createShader(bounds),
+                                child: Text(
+                                  'Order Details',
+                                  style: GoogleFonts.playfairDisplay(
+                                    color: Colors.white,
+                                    fontSize:
+                                        MediaQuery.of(context).size.width < 600
+                                            ? 22
+                                            : 28,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Review and manage this order',
+                                style: GoogleFonts.inter(
+                                  color: Colors.white.withValues(alpha: 0.75),
+                                  fontSize: 13,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Container(
+                                width: 46,
+                                height: 3,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(4),
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      _OrdersTheme.lemonChiffon
+                                          .withValues(alpha: 0.95),
+                                      _OrdersTheme.lemonChiffon
+                                          .withValues(alpha: 0.15),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.14),
+                            border: Border.all(
+                              color: _OrdersTheme.lemonChiffon
+                                  .withValues(alpha: 0.35),
+                            ),
+                          ),
+                          child: IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Icons.close, color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-            const Divider(
-                height: 1, thickness: 1, color: _OrdersTheme.paleRose),
 
+            // Body — cream canvas with the same soft ambient glows the
+            // Orders screen uses, behind the scrolling content.
             Flexible(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Top Summary Card
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: _OrdersTheme.paleRose,
-                          width: 1.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 20,
-                            offset: const Offset(0, 4),
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            top: -60,
+                            right: -60,
+                            child: Container(
+                              width: 220,
+                              height: 220,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: RadialGradient(
+                                  colors: [
+                                    _OrdersTheme.lemonChiffon
+                                        .withValues(alpha: 0.35),
+                                    Colors.transparent,
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: -80,
+                            left: -70,
+                            child: Container(
+                              width: 240,
+                              height: 240,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: RadialGradient(
+                                  colors: [
+                                    _OrdersTheme.milanoRed
+                                        .withValues(alpha: 0.06),
+                                    Colors.transparent,
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 120,
+                            right: -70,
+                            child: Container(
+                              width: 200,
+                              height: 200,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: RadialGradient(
+                                  colors: [
+                                    _OrdersTheme.blushTint
+                                        .withValues(alpha: 0.45),
+                                    Colors.transparent,
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
                         ],
                       ),
-                      child: LayoutBuilder(builder: (context, constraints) {
-                        final useVertical = constraints.maxWidth < 600;
-                        final children = [
-                          _summaryItem(
-                            'Order ID',
-                            '#${_currentOrder.id.length > 8 ? _currentOrder.id.substring(0, 8) : _currentOrder.id}',
-                            isBold: true,
-                          ),
-                          _summaryItem(
-                            'Order Type',
-                            _currentOrder.orderType
-                                .replaceAll('_', ' ')
-                                .toUpperCase(),
-                            isBold: true,
-                          ),
-                          _summaryItem(
-                            'Status',
-                            _currentOrder.status.toUpperCase(),
-                            isBadge: true,
-                          ),
-                          _summaryItem(
-                            'Payment',
-                            _currentOrder.paymentStatus.toUpperCase(),
-                            isBadge: true,
-                          ),
-                        ];
-
-                        if (useVertical) {
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(child: children[0]),
-                                  Expanded(child: children[1]),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              Row(
-                                children: [
-                                  Expanded(child: children[2]),
-                                  Expanded(child: children[3]),
-                                ],
-                              ),
-                            ],
-                          );
-                        }
-
-                        return Row(
-                          children:
-                              children.map((c) => Expanded(child: c)).toList(),
-                        );
-                      }),
                     ),
-
-                    const SizedBox(height: 32),
-
-                    // Update Order Status Section
-                    Text(
-                      _currentOrder.status.toUpperCase() == 'PAID'
-                          ? 'ORDER COMPLETED'
-                          : 'UPDATE ORDER STATUS',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: _currentOrder.status.toUpperCase() == 'PAID'
-                            ? _OrdersTheme.successGreen
-                            : AppColors.slate600,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: _OrdersTheme.paleRose,
-                          width: 1.5,
-                        ),
-                        color: Colors.white,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (_currentOrder.status.toUpperCase() == 'PAID') ...[
-                            LayoutBuilder(
-                              builder: (context, constraints) {
-                                final useVertical = constraints.maxWidth < 450;
-                                final buttons = [
-                                  _actionButton(
-                                    context,
-                                    'Print Receipt',
-                                    Icons.print,
-                                    _OrdersTheme.milanoRedDarkest,
-                                    () {
-                                      final restaurantName = context
-                                              .read<RestaurantProvider>()
-                                              .restaurant
-                                              ?.name ??
-                                          'RESTAURANT';
-                                      _handlePrint(context, restaurantName);
-                                    },
-                                  ),
-                                  _actionButton(
-                                    context,
-                                    'Download Receipt',
-                                    Icons.file_download,
-                                    _OrdersTheme.milanoRedDark,
-                                    () {
-                                      final restaurantName = context
-                                              .read<RestaurantProvider>()
-                                              .restaurant
-                                              ?.name ??
-                                          'RESTAURANT';
-                                      _handleDownload(context, restaurantName);
-                                    },
-                                  ),
-                                ];
-
-                                if (useVertical) {
-                                  return Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      buttons[0],
-                                      const SizedBox(height: 12),
-                                      buttons[1],
-                                    ],
-                                  );
-                                }
-                                return Row(
-                                  children: [
-                                    Expanded(child: buttons[0]),
-                                    const SizedBox(width: 16),
-                                    Expanded(child: buttons[1]),
-                                  ],
-                                );
-                              },
+                  ),
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Top Summary Card
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Colors.white, _OrdersTheme.canvasDeep],
                             ),
-                          ] else if (_getButtonLabel() != '') ...[
-                            LayoutBuilder(
-                              builder: (context, constraints) {
-                                final useVertical = constraints.maxWidth < 550;
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: _OrdersTheme.paleRose,
+                              width: 1,
+                            ),
+                            boxShadow: _OrdersTheme.softShadow,
+                          ),
+                          child: LayoutBuilder(builder: (context, constraints) {
+                            final useVertical = constraints.maxWidth < 600;
+                            final children = [
+                              _summaryItem(
+                                'Order ID',
+                                '#${_currentOrder.id.length > 8 ? _currentOrder.id.substring(0, 8) : _currentOrder.id}',
+                                isBold: true,
+                              ),
+                              _summaryItem(
+                                'Order Type',
+                                _currentOrder.orderType
+                                    .replaceAll('_', ' ')
+                                    .toUpperCase(),
+                                isBold: true,
+                              ),
+                              _summaryItem(
+                                'Status',
+                                _currentOrder.status.toUpperCase(),
+                                isBadge: true,
+                              ),
+                              _summaryItem(
+                                'Payment',
+                                _currentOrder.paymentStatus.toUpperCase(),
+                                isBadge: true,
+                              ),
+                            ];
 
-                                if (_currentOrder.status.toUpperCase() ==
-                                    'BILLED') {
-                                  final buttons = [
-                                    _actionButton(
-                                      context,
-                                      'Proceed to Payment',
-                                      Icons.payment,
-                                      _OrdersTheme.milanoRed,
-                                      () {
-                                        _showPaymentDialog(context);
-                                      },
-                                    ),
-                                    _actionButton(
-                                      context,
-                                      'Print Receipt',
-                                      Icons.print,
-                                      _OrdersTheme.milanoRedDarkest,
-                                      () {
-                                        final restaurantName = context
-                                                .read<RestaurantProvider>()
-                                                .restaurant
-                                                ?.name ??
-                                            'RESTAURANT';
-                                        _handlePrint(context, restaurantName);
-                                      },
-                                    ),
-                                    _actionButton(
-                                      context,
-                                      'Download Receipt',
-                                      Icons.file_download,
-                                      _OrdersTheme.milanoRedDark,
-                                      () {
-                                        final restaurantName = context
-                                                .read<RestaurantProvider>()
-                                                .restaurant
-                                                ?.name ??
-                                            'RESTAURANT';
-                                        _handleDownload(
-                                          context,
-                                          restaurantName,
-                                        );
-                                      },
-                                    ),
-                                  ];
+                            if (useVertical) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(child: children[0]),
+                                      Expanded(child: children[1]),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      Expanded(child: children[2]),
+                                      Expanded(child: children[3]),
+                                    ],
+                                  ),
+                                ],
+                              );
+                            }
 
-                                  if (useVertical) {
-                                    return Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
+                            return Row(
+                              children: children
+                                  .map((c) => Expanded(child: c))
+                                  .toList(),
+                            );
+                          }),
+                        ),
+
+                        const SizedBox(height: 32),
+
+                        // Update Order Status Section
+                        Text(
+                          _currentOrder.status.toUpperCase() == 'PAID'
+                              ? 'ORDER COMPLETED'
+                              : 'UPDATE ORDER STATUS',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: _currentOrder.status.toUpperCase() == 'PAID'
+                                ? _OrdersTheme.successGreen
+                                : _OrdersTheme.mutedTaupe,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Colors.white, _OrdersTheme.canvasDeep],
+                            ),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: _OrdersTheme.paleRose,
+                              width: 1,
+                            ),
+                            boxShadow: _OrdersTheme.softShadow,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (_currentOrder.status.toUpperCase() ==
+                                  'PAID') ...[
+                                LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    final useVertical =
+                                        constraints.maxWidth < 450;
+                                    final buttons = [
+                                      _actionButton(
+                                        context,
+                                        'Print Receipt',
+                                        Icons.print,
+                                        _OrdersTheme.milanoRedDarkest,
+                                        () {
+                                          final restaurantName = context
+                                                  .read<RestaurantProvider>()
+                                                  .restaurant
+                                                  ?.name ??
+                                              'RESTAURANT';
+                                          _handlePrint(context, restaurantName);
+                                        },
+                                      ),
+                                      _actionButton(
+                                        context,
+                                        'Download Receipt',
+                                        Icons.file_download,
+                                        _OrdersTheme.milanoRedDark,
+                                        () {
+                                          final restaurantName = context
+                                                  .read<RestaurantProvider>()
+                                                  .restaurant
+                                                  ?.name ??
+                                              'RESTAURANT';
+                                          _handleDownload(
+                                              context, restaurantName);
+                                        },
+                                      ),
+                                    ];
+
+                                    if (useVertical) {
+                                      return Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          buttons[0],
+                                          const SizedBox(height: 12),
+                                          buttons[1],
+                                        ],
+                                      );
+                                    }
+                                    return Row(
                                       children: [
-                                        buttons[0],
-                                        const SizedBox(height: 12),
-                                        buttons[1],
-                                        const SizedBox(height: 12),
-                                        buttons[2],
+                                        Expanded(child: buttons[0]),
+                                        const SizedBox(width: 16),
+                                        Expanded(child: buttons[1]),
                                       ],
                                     );
-                                  }
-                                  return Row(
-                                    children: [
-                                      Expanded(child: buttons[0]),
-                                      const SizedBox(width: 12),
-                                      Expanded(child: buttons[1]),
-                                      const SizedBox(width: 12),
-                                      Expanded(child: buttons[2]),
-                                    ],
-                                  );
-                                } else {
-                                  return SizedBox(
-                                    width: double.infinity,
-                                    child: ElevatedButton.icon(
-                                      onPressed: _isUpdating
-                                          ? null
-                                          : () {
-                                              final next = _getNextStatus();
-                                              if (next != null) {
-                                                _handleStatusUpdate(next);
-                                              }
-                                            },
-                                      icon: _isUpdating
-                                          ? const SizedBox(
-                                              width: 16,
-                                              height: 16,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                color: Colors.white,
+                                  },
+                                ),
+                              ] else if (_getButtonLabel() != '') ...[
+                                LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    final useVertical =
+                                        constraints.maxWidth < 550;
+
+                                    if (_currentOrder.status.toUpperCase() ==
+                                        'BILLED') {
+                                      final buttons = [
+                                        _actionButton(
+                                          context,
+                                          'Proceed to Payment',
+                                          Icons.payment,
+                                          _OrdersTheme.milanoRed,
+                                          () {
+                                            _showPaymentDialog(context);
+                                          },
+                                        ),
+                                        _actionButton(
+                                          context,
+                                          'Print Receipt',
+                                          Icons.print,
+                                          _OrdersTheme.milanoRedDarkest,
+                                          () {
+                                            final restaurantName = context
+                                                    .read<RestaurantProvider>()
+                                                    .restaurant
+                                                    ?.name ??
+                                                'RESTAURANT';
+                                            _handlePrint(
+                                                context, restaurantName);
+                                          },
+                                        ),
+                                        _actionButton(
+                                          context,
+                                          'Download Receipt',
+                                          Icons.file_download,
+                                          _OrdersTheme.milanoRedDark,
+                                          () {
+                                            final restaurantName = context
+                                                    .read<RestaurantProvider>()
+                                                    .restaurant
+                                                    ?.name ??
+                                                'RESTAURANT';
+                                            _handleDownload(
+                                              context,
+                                              restaurantName,
+                                            );
+                                          },
+                                        ),
+                                      ];
+
+                                      if (useVertical) {
+                                        return Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.stretch,
+                                          children: [
+                                            buttons[0],
+                                            const SizedBox(height: 12),
+                                            buttons[1],
+                                            const SizedBox(height: 12),
+                                            buttons[2],
+                                          ],
+                                        );
+                                      }
+                                      return Row(
+                                        children: [
+                                          Expanded(child: buttons[0]),
+                                          const SizedBox(width: 12),
+                                          Expanded(child: buttons[1]),
+                                          const SizedBox(width: 12),
+                                          Expanded(child: buttons[2]),
+                                        ],
+                                      );
+                                    } else {
+                                      return SizedBox(
+                                        width: double.infinity,
+                                        child: ElevatedButton.icon(
+                                          onPressed: _isUpdating
+                                              ? null
+                                              : () {
+                                                  final next = _getNextStatus();
+                                                  if (next != null) {
+                                                    _handleStatusUpdate(next);
+                                                  }
+                                                },
+                                          icon: _isUpdating
+                                              ? const SizedBox(
+                                                  width: 16,
+                                                  height: 16,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                    color: Colors.white,
+                                                  ),
+                                                )
+                                              : Icon(_getButtonIcon(),
+                                                  size: 20),
+                                          label: Text(
+                                            _isUpdating
+                                                ? 'Updating...'
+                                                : _getButtonLabel(),
+                                            style: GoogleFonts.inter(
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: _getButtonColor(),
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 20,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                12,
                                               ),
-                                            )
-                                          : Icon(_getButtonIcon(), size: 20),
-                                      label: Text(
-                                        _isUpdating
-                                            ? 'Updating...'
-                                            : _getButtonLabel(),
-                                        style: GoogleFonts.inter(
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: 0.5,
-                                        ),
-                                      ),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: _getButtonColor(),
-                                        foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 20,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
+                                            ),
+                                            elevation: 0,
                                           ),
                                         ),
-                                        elevation: 0,
-                                      ),
-                                    ),
-                                  );
-                                }
-                              },
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 48),
-
-                    // Receipt Header
-                    Center(
-                      child: Column(
-                        children: [
-                          Consumer<RestaurantProvider>(
-                            builder: (context, provider, child) {
-                              return Text(
-                                (provider.restaurant?.name ?? 'RESTAURANT')
-                                    .toUpperCase(),
-                                style: GoogleFonts.inter(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w900,
-                                  color: _OrdersTheme.milanoRedDarkest,
-                                  letterSpacing: 2.0,
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'PAYMENT RECEIPT',
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.slate600,
-                              letterSpacing: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 32),
-                    const Divider(thickness: 1, color: _OrdersTheme.paleRose),
-                    const SizedBox(height: 24),
-
-                    // Bill Details
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: _OrdersTheme.paleRose,
-                          width: 1.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 20,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          _billDetailRow(
-                            'Bill Number',
-                            'BILL-${_currentOrder.id.toUpperCase()}',
-                          ),
-                          _billDetailRow(
-                            'Date',
-                            dateFormat.format(
-                              DateTime.tryParse(_currentOrder.createdAt) ??
-                                  DateTime.now(),
-                            ),
-                          ),
-                          _billDetailRow(
-                            'Payment Method',
-                            _currentOrder.paymentMethod ?? 'Cash',
-                          ),
-                          _billDetailRow(
-                            'Table',
-                            'Table ${_currentOrder.tableNumber ?? 't1'}',
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 40),
-
-                    Text(
-                      'ORDER ITEMS',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.slate900,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Items Table
-                    Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: _OrdersTheme.paleRose,
-                          width: 1.5,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.02),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                        color: Colors.white,
-                      ),
-                      child: Column(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 16,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _OrdersTheme.lemonChiffon
-                                  .withValues(alpha: 0.4),
-                              borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(12),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(flex: 3, child: _tableHeader('Item')),
-                                Expanded(
-                                  child: Center(child: _tableHeader('Qty')),
-                                ),
-                                Expanded(
-                                  child: Center(child: _tableHeader('Price')),
-                                ),
-                                Expanded(
-                                  child: Center(child: _tableHeader('Total')),
+                                      );
+                                    }
+                                  },
                                 ),
                               ],
-                            ),
+                            ],
                           ),
-                          ..._currentOrder.items.map(
-                            (item) => Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 20,
+                        ),
+
+                        const SizedBox(height: 48),
+
+                        // Receipt Header
+                        Center(
+                          child: Column(
+                            children: [
+                              Consumer<RestaurantProvider>(
+                                builder: (context, provider, child) {
+                                  return Text(
+                                    (provider.restaurant?.name ?? 'RESTAURANT')
+                                        .toUpperCase(),
+                                    style: GoogleFonts.inter(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w900,
+                                      color: _OrdersTheme.milanoRedDarkest,
+                                      letterSpacing: 2.0,
+                                    ),
+                                  );
+                                },
                               ),
-                              decoration: const BoxDecoration(
-                                border: Border(
-                                  top: BorderSide(
-                                    color: _OrdersTheme.canvasDeep,
+                              const SizedBox(height: 8),
+                              Text(
+                                'PAYMENT RECEIPT',
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: _OrdersTheme.mutedTaupe,
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 32),
+                        const Divider(
+                            thickness: 1, color: _OrdersTheme.paleRose),
+                        const SizedBox(height: 24),
+
+                        // Bill Details
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Colors.white, _OrdersTheme.canvasDeep],
+                            ),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: _OrdersTheme.paleRose,
+                              width: 1,
+                            ),
+                            boxShadow: _OrdersTheme.softShadow,
+                          ),
+                          child: Column(
+                            children: [
+                              _billDetailRow(
+                                'Bill Number',
+                                'BILL-${_currentOrder.id.toUpperCase()}',
+                              ),
+                              _billDetailRow(
+                                'Date',
+                                dateFormat.format(
+                                  DateTime.tryParse(_currentOrder.createdAt) ??
+                                      DateTime.now(),
+                                ),
+                              ),
+                              _billDetailRow(
+                                'Payment Method',
+                                _currentOrder.paymentMethod ?? 'Cash',
+                              ),
+                              _billDetailRow(
+                                'Table',
+                                'Table ${_currentOrder.tableNumber ?? 't1'}',
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 40),
+
+                        Text(
+                          'ORDER ITEMS',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: _OrdersTheme.mutedTaupe,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Items Table
+                        Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: _OrdersTheme.paleRose,
+                              width: 1,
+                            ),
+                            borderRadius: BorderRadius.circular(18),
+                            boxShadow: _OrdersTheme.softShadow,
+                            color: Colors.white,
+                          ),
+                          child: Column(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 16,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _OrdersTheme.lemonChiffon
+                                      .withValues(alpha: 0.4),
+                                  borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(17),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                        flex: 3, child: _tableHeader('Item')),
+                                    Expanded(
+                                      child: Center(child: _tableHeader('Qty')),
+                                    ),
+                                    Expanded(
+                                      child:
+                                          Center(child: _tableHeader('Price')),
+                                    ),
+                                    Expanded(
+                                      child:
+                                          Center(child: _tableHeader('Total')),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              ..._currentOrder.items.map(
+                                (item) => Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 20,
+                                  ),
+                                  decoration: const BoxDecoration(
+                                    border: Border(
+                                      top: BorderSide(
+                                        color: _OrdersTheme.canvasDeep,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 3,
+                                        child: Text(
+                                          item.name,
+                                          style: GoogleFonts.inter(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color:
+                                                _OrdersTheme.milanoRedDarkest,
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Center(
+                                          child: Text(
+                                            item.quantity.toString(),
+                                            style: GoogleFonts.inter(
+                                              fontSize: 14,
+                                              color: _OrdersTheme.mutedTaupe,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Center(
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: Text(
+                                              '₹${item.price.toStringAsFixed(0)}',
+                                              style: GoogleFonts.inter(
+                                                fontSize: 14,
+                                                color: _OrdersTheme.mutedTaupe,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Center(
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: Text(
+                                              '₹${(item.price * item.quantity).toStringAsFixed(0)}',
+                                              style: GoogleFonts.inter(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                                color: _OrdersTheme
+                                                    .milanoRedDarkest,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    flex: 3,
-                                    child: Text(
-                                      item.name,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                        color: AppColors.slate900,
-                                      ),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Center(
-                                      child: Text(
-                                        item.quantity.toString(),
-                                        style: GoogleFonts.inter(
-                                          fontSize: 14,
-                                          color: AppColors.slate700,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Center(
-                                      child: FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        child: Text(
-                                          '₹${item.price.toStringAsFixed(0)}',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 14,
-                                            color: AppColors.slate700,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Center(
-                                      child: FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        child: Text(
-                                          '₹${(item.price * item.quantity).toStringAsFixed(0)}',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.slate900,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Totals
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: _OrdersTheme.lemonChiffonSoft,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: _OrdersTheme.gold.withValues(alpha: 0.35),
-                          width: 1.5,
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.02),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          _priceRow(
-                            'Subtotal',
-                            _currentOrder.displaySubtotal.toStringAsFixed(0),
-                          ),
-                          if ((_currentOrder.taxAmount ?? 0) > 0) ...[
-                            const SizedBox(height: 12),
-                            _priceRow(
-                              'Tax',
-                              _currentOrder.taxAmount!.toStringAsFixed(0),
+
+                        const SizedBox(height: 24),
+
+                        // Totals
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: _OrdersTheme.lemonChiffonSoft,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: _OrdersTheme.gold.withValues(alpha: 0.35),
+                              width: 1.5,
                             ),
-                          ],
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            child: Divider(
-                              height: 1,
-                              color: _OrdersTheme.gold.withValues(alpha: 0.4),
-                            ),
+                            boxShadow: _OrdersTheme.softShadow,
                           ),
-                          _priceRow(
-                            'TOTAL',
-                            _currentOrder.totalAmount.toStringAsFixed(0),
-                            isTotal: true,
+                          child: Column(
+                            children: [
+                              _priceRow(
+                                'Subtotal',
+                                _currentOrder.displaySubtotal
+                                    .toStringAsFixed(0),
+                              ),
+                              if ((_currentOrder.taxAmount ?? 0) > 0) ...[
+                                const SizedBox(height: 12),
+                                _priceRow(
+                                  'Tax',
+                                  _currentOrder.taxAmount!.toStringAsFixed(0),
+                                ),
+                              ],
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                child: Divider(
+                                  height: 1,
+                                  color:
+                                      _OrdersTheme.gold.withValues(alpha: 0.4),
+                                ),
+                              ),
+                              _priceRow(
+                                'TOTAL',
+                                _currentOrder.totalAmount.toStringAsFixed(0),
+                                isTotal: true,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+
+                        const SizedBox(height: 48),
+
+                        // Bottom Info
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            final useVertical = constraints.maxWidth < 500;
+                            final card = _infoBox(
+                              Icons.credit_card,
+                              'Payment Information',
+                              [
+                                'Method: ${_currentOrder.paymentMethod ?? "N/A"}',
+                                'Status: ${_currentOrder.paymentStatus.toUpperCase()}',
+                              ],
+                              _OrdersTheme.blushTint.withValues(alpha: 0.45),
+                              _OrdersTheme.milanoRed,
+                            );
+                            final time = _infoBox(
+                              Icons.schedule,
+                              'Timestamps',
+                              [
+                                'Created: ${dateFormat.format(DateTime.tryParse(_currentOrder.createdAt) ?? DateTime.now())}',
+                                'Updated: ${_currentOrder.updatedAt != null ? dateFormat.format(DateTime.tryParse(_currentOrder.updatedAt!) ?? DateTime.now()) : "N/A"}',
+                              ],
+                              _OrdersTheme.mintBg,
+                              _OrdersTheme.successGreen,
+                            );
+
+                            if (useVertical) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  card,
+                                  const SizedBox(height: 16),
+                                  time
+                                ],
+                              );
+                            }
+                            return Row(
+                              children: [
+                                Expanded(child: card),
+                                const SizedBox(width: 24),
+                                Expanded(child: time),
+                              ],
+                            );
+                          },
+                        ),
+                      ],
                     ),
-
-                    const SizedBox(height: 48),
-
-                    // Bottom Info
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final useVertical = constraints.maxWidth < 500;
-                        final card = _infoBox(
-                          Icons.credit_card,
-                          'Payment Information',
-                          [
-                            'Method: ${_currentOrder.paymentMethod ?? "N/A"}',
-                            'Status: ${_currentOrder.paymentStatus.toUpperCase()}',
-                          ],
-                          _OrdersTheme.blushTint.withValues(alpha: 0.45),
-                          _OrdersTheme.milanoRed,
-                        );
-                        final time = _infoBox(
-                          Icons.schedule,
-                          'Timestamps',
-                          [
-                            'Created: ${dateFormat.format(DateTime.tryParse(_currentOrder.createdAt) ?? DateTime.now())}',
-                            'Updated: ${_currentOrder.updatedAt != null ? dateFormat.format(DateTime.tryParse(_currentOrder.updatedAt!) ?? DateTime.now()) : "N/A"}',
-                          ],
-                          _OrdersTheme.mintBg,
-                          _OrdersTheme.successGreen,
-                        );
-
-                        if (useVertical) {
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [card, const SizedBox(height: 16), time],
-                          );
-                        }
-                        return Row(
-                          children: [
-                            Expanded(child: card),
-                            const SizedBox(width: 24),
-                            Expanded(child: time),
-                          ],
-                        );
-                      },
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -2914,11 +3571,11 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
 
   Color _getButtonColor() {
     final s = _currentOrder.status.toUpperCase();
-    if (s == 'PLACED') return const Color(0xFF2563EB); // Blue
-    if (s == 'CONFIRMED') return const Color(0xFFF97316); // Orange
-    if (s == 'PREPARING') return const Color(0xFFA855F7); // Purple
-    if (s == 'READY') return const Color(0xFF0D9488); // Teal
-    if (s == 'SERVED') return _OrdersTheme.milanoRed; // Deep Wine Maroon
+    if (s == 'PLACED') return _OrdersTheme.milanoRed; // Deep Wine Maroon
+    if (s == 'CONFIRMED') return _OrdersTheme.milanoRedLight; // Wine
+    if (s == 'PREPARING') return _OrdersTheme.milanoRedDark; // Burgundy
+    if (s == 'READY') return _OrdersTheme.milanoRed; // Deep Wine Maroon
+    if (s == 'SERVED') return _OrdersTheme.milanoRedLight; // Wine
     return _OrdersTheme.milanoRedDarkest;
   }
 
@@ -3231,7 +3888,7 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
               style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: AppColors.slate900,
+                color: _OrdersTheme.milanoRedDarkest,
               ),
             ),
           ),
@@ -3306,7 +3963,7 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
             style: GoogleFonts.inter(
               fontWeight: isBold ? FontWeight.w900 : FontWeight.w500,
               fontSize: 16,
-              color: AppColors.slate900,
+              color: _OrdersTheme.milanoRedDarkest,
             ),
           ),
       ],
@@ -3322,7 +3979,9 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
           style: GoogleFonts.inter(
             fontSize: isTotal ? 18 : 14,
             fontWeight: isTotal ? FontWeight.w900 : FontWeight.w500,
-            color: isTotal ? AppColors.slate900 : AppColors.slate600,
+            color: isTotal
+                ? _OrdersTheme.milanoRedDarkest
+                : _OrdersTheme.mutedTaupe,
           ),
         ),
         Text(
@@ -3330,7 +3989,9 @@ class _OrderDetailsDialogState extends State<_OrderDetailsDialog> {
           style: GoogleFonts.inter(
             fontSize: isTotal ? 20 : 16,
             fontWeight: FontWeight.w900,
-            color: isTotal ? _OrdersTheme.milanoRedDark : AppColors.slate900,
+            color: isTotal
+                ? _OrdersTheme.milanoRedDark
+                : _OrdersTheme.milanoRedDarkest,
           ),
         ),
       ],

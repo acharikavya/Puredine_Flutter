@@ -124,7 +124,7 @@ import 'package:restaurant_unified_app/admin/services/orders_service.dart';
 ///        • `lemonChiffonSoft` → Soft Yellow `#FCE1AB` (gold highlight)
 ///        • `goldSoft`         → deeper gold `#D9A421` (derived companion)
 ///        • `successGreen`     → Fresh Green `#44AF70` (live / success)
-///        • `mintBg`           → Pale Mint `#EAF6EF` (success chip background)
+///        • `mintBg`           → Pale Mint `#EAF6EF` (success chip backgrounds)
 ///        • `mutedTaupe`       → Muted Taupe `#9B707A` (secondary text)
 ///      `primaryButtonGradient` uses the supplied CTA gradient exactly:
 ///      `#6E1832 → #9B3E4E → #F3C564`, and `headerGradient` the supplied
@@ -178,7 +178,7 @@ import 'package:restaurant_unified_app/admin/services/orders_service.dart';
 /// own separate, icon-badged box (`_timeChip`, plus a small `_timeChipIcon`
 /// helper), still on a single sideways-scrolling line.
 ///
-/// FEATURE PASS 12 (this pass): colour/theme-only restyle of the ORDER
+/// FEATURE PASS 12: colour/theme-only restyle of the ORDER
 /// DETAILS dialog (`_OrderDetailsDialog`) so it matches the Orders screen —
 /// no logic, state, callback, PDF/print code or keyword was changed.
 ///   1. Dialog shell: Warm Off-White canvas, 24px corners, gold outline.
@@ -190,6 +190,19 @@ import 'package:restaurant_unified_app/admin/services/orders_service.dart';
 ///      `_OrdersTheme.softShadow`; slate greys swapped for Muted Taupe /
 ///      Deep Brown; the update-status button uses wine shades instead of
 ///      blue/orange/purple/teal (status badges keep their semantic colours).
+///
+/// FEATURE PASS 13 (this pass): the "Orders since ..." golden
+/// info pill inside the Time Range block (`_buildTimeRangeSection`) now
+/// only appears when at least one order actually falls inside the
+/// selected time range. Previously it showed as soon as any range other
+/// than "All Time" was picked, even if zero orders matched — now it's
+/// hidden in that empty case and shown exactly as before whenever there
+/// is a matching order. This is checked with a new small helper,
+/// `_hasOrdersInTimeRange`, which looks at the same `createdAt` field and
+/// the same `_timeCutoff` the existing time filter already uses — no
+/// filtering rule, provider call, sorting, status-update, dialog, or
+/// PDF/print logic anywhere in this file was touched, and no existing
+/// field, callback, route or keyword was renamed.
 /// -----------------------------------------------------------------------
 class _OrdersTheme {
   // Primary brand — the "PUREDINE Maroon + Cream" palette (see the
@@ -418,6 +431,23 @@ class _OrdersScreenState extends State<OrdersScreen> {
       default:
         return null;
     }
+  }
+
+  /// FEATURE PASS 13: whether at least one order actually falls inside the
+  /// currently selected time range. Uses the exact same `createdAt`
+  /// parsing / cut-off comparison the real `matchTime` condition in
+  /// `_filtered` already uses, just checked against the full `_orders`
+  /// list (independent of the other filters) so the golden "Orders
+  /// since ..." pill only reflects whether the time range itself has any
+  /// orders in it. Returns `true` when there's no active cut-off, since in
+  /// that case the pill isn't shown anyway.
+  bool get _hasOrdersInTimeRange {
+    final cutoff = _timeCutoff;
+    if (cutoff == null) return true;
+    return _orders.any((o) {
+      final created = DateTime.tryParse(o.createdAt);
+      return created != null && !created.isBefore(cutoff);
+    });
   }
 
   List<OrderModel> get _filtered {
@@ -1268,6 +1298,14 @@ class _OrdersScreenState extends State<OrdersScreen> {
   /// FEATURE PASS 9: the "Time Range" block — a labelled row of quick-pick
   /// chips, an optional custom "Last [N] [unit]" input, and an info pill
   /// showing the exact moment the active range starts from.
+  ///
+  /// FEATURE PASS 13: that info pill (the golden "Orders since ..." box)
+  /// is now only shown when `_hasOrdersInTimeRange` is true — i.e. when at
+  /// least one order actually falls inside the selected range. If the
+  /// range has zero matching orders, the pill stays hidden entirely, the
+  /// same as if no range were picked. Everything else in this block —
+  /// chips, the custom-duration input, the cut-off calculation itself — is
+  /// unchanged.
   Widget _buildTimeRangeSection(bool isMobile) {
     final cutoff = _timeCutoff;
     final isCustom = _timeFilter == 'Custom';
@@ -1333,7 +1371,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
           const SizedBox(height: 4),
           _buildCustomTimeInput(),
         ],
-        if (cutoff != null) ...[
+        // FEATURE PASS 13: the golden "Orders since ..." pill now also
+        // requires `_hasOrdersInTimeRange` to be true — it no longer shows
+        // for a range with zero matching orders. The cut-off value itself
+        // and its formatting are unchanged.
+        if (cutoff != null && _hasOrdersInTimeRange) ...[
           const SizedBox(height: 4),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

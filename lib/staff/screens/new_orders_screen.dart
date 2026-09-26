@@ -28,8 +28,8 @@ import '../contexts/auth_provider.dart';
 /// status-transition logic was touched in that pass — only that one
 /// button's presentation changed.
 ///
-/// UI-ENHANCEMENT PASS 5 (this pass): `_ScreenHeader`'s bottom edge is now
-/// a straight, flat line instead of the previous rounded 32px corners —
+/// UI-ENHANCEMENT PASS 5 (previous pass): `_ScreenHeader`'s bottom edge is
+/// now a straight, flat line instead of the previous rounded 32px corners —
 /// matching the flat-bottom topbar treatment used on the Tables screen's
 /// header. The rounded `BorderRadius` on the header `Container`/`ClipRRect`
 /// was removed (so the banner is now a plain rectangle, using `ClipRect`
@@ -42,11 +42,53 @@ import '../contexts/auth_provider.dart';
 /// and all provider/sorting logic in `_NewOrdersScreenState`). Presentation
 /// only.
 ///
-/// NOTE: this is a private class redeclared identically to the ones in
-/// create_order_screen.dart / menu_screen.dart / dashboard_screen.dart /
-/// orders_screen.dart / order_details_screen.dart (private classes can't
-/// be shared across files without a new shared import, which would go
-/// beyond a pure UI-only change here).
+/// UI-ENHANCEMENT PASS 6 (this pass): RESPONSIVE LAYOUT PASS
+/// (MOBILE / TABLET / LAPTOP) — no navigation, provider/sorting logic,
+/// status-transition logic, callbacks, routes, copy, or any existing
+/// field/keyword anywhere in this file was renamed, removed, or otherwise
+/// touched. Previously `_ScreenHeader` only ever branched on a single
+/// `isMobile` check (`width < 800`), so every tablet was silently forced
+/// into either the cramped "mobile" numbers or the full "desktop" numbers
+/// depending only on which side of 800px it happened to fall on, and the
+/// scrollable body below the header had no tablet/laptop tier at all — its
+/// padding was a single fixed value and its content had no max-width cap,
+/// so cards could stretch unnaturally wide on a laptop/desktop screen.
+/// This pass fixes both:
+///   1. SHARED BREAKPOINTS: two new top-level constants,
+///      `_kTabletBreakpointWidth` (`600`) and `_kLaptopBreakpointWidth`
+///      (`1024`), are now used consistently by both `_ScreenHeader` and
+///      the scrollable body, replacing the header's old standalone `800`
+///      threshold. `isMobile` now means `width < 600` and a new `isTablet`
+///      flag covers `600–1023`; `1024` and above is laptop/desktop — the
+///      same three-tier split used elsewhere in the app.
+///   2. THREE-TIER SIZING: every metric that used to be a two-way
+///      `isMobile ? mobileValue : desktopValue` ternary in `_ScreenHeader`
+///      (padding, title font size, tagline font size, and the vertical
+///      gaps between the header's rows) is now a three-way
+///      `isMobile ? mobileValue : (isTablet ? tabletValue : desktopValue)`
+///      ternary, with the tablet number always sitting sensibly between
+///      the existing mobile and desktop numbers.
+///   3. BODY CONTENT — WIDTH CAP + TIERED PADDING: `_buildContent`'s
+///      `SingleChildScrollView` padding is now three-tier
+///      (mobile/tablet/laptop) instead of one fixed value, and its content
+///      `Column` is wrapped in a `Center` + `ConstrainedBox` capping the
+///      content at a sensible max width on tablet (`900`) and laptop
+///      (`1100`) — so on a wide laptop monitor the stats row and every
+///      order card read as a deliberate, centered, professional column
+///      instead of stretching edge-to-edge across the whole screen.
+///      Mobile is unaffected (`double.infinity`, i.e. the exact original
+///      behaviour) since phone screens are always narrower than either
+///      cap anyway.
+///   4. CARD / STAT-BOX POLISH ON TABLET & LAPTOP: `_StatBox` and
+///      `_OrderCard` both gained two new boolean inputs, `isMobile` and
+///      `isTablet` (new parameters added alongside the existing ones —
+///      nothing existing was renamed), used only to scale their own
+///      internal padding, icon sizes, and font sizes up a notch on tablet
+///      and laptop for a fuller, more professional feel on larger screens.
+///      The exact original mobile numbers are fully preserved; every
+///      order card keeps the exact same content, arrangement, status
+///      logic, accept/view-details buttons, and `onTap` callbacks as
+///      before — only sizing changed.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   // Primary / Topbar — Deep Wine Maroon
@@ -150,6 +192,14 @@ String _todayLabel() {
   return '${_kMonthNames[now.month - 1]} ${now.day}, ${now.year}';
 }
 
+// PASS 6: shared responsive breakpoints used by both `_ScreenHeader` and
+// the scrollable body content below it, so mobile / tablet / laptop all
+// get their own properly proportioned layout instead of tablets being
+// silently treated as either phones or laptops depending only on which
+// side of a single cutoff they happened to fall on.
+const double _kTabletBreakpointWidth = 600;
+const double _kLaptopBreakpointWidth = 1024;
+
 class NewOrdersScreen extends StatefulWidget {
   const NewOrdersScreen({super.key});
 
@@ -189,6 +239,13 @@ class _NewOrdersScreenState extends State<NewOrdersScreen> {
     );
 
     final acceptedCount = provider.activeOrders.length;
+
+    // PASS 6: shared mobile/tablet classification for the scrollable body
+    // below the header (the header computes its own copy internally using
+    // the same shared breakpoint constants).
+    final bodyWidth = MediaQuery.of(context).size.width;
+    final isMobileBody = bodyWidth < _kTabletBreakpointWidth;
+    final isTabletBody = !isMobileBody && bodyWidth < _kLaptopBreakpointWidth;
 
     return Scaffold(
       backgroundColor: _Palette.canvas,
@@ -350,7 +407,14 @@ class _NewOrdersScreenState extends State<NewOrdersScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Stats sidebar on large screens (shown inline on small)
-                    _buildContent(context, newOrders, acceptedCount, provider),
+                    _buildContent(
+                      context,
+                      newOrders,
+                      acceptedCount,
+                      provider,
+                      isMobileBody,
+                      isTabletBody,
+                    ),
                   ],
                 ),
               ),
@@ -366,71 +430,108 @@ class _NewOrdersScreenState extends State<NewOrdersScreen> {
     List<Order> newOrders,
     int acceptedCount,
     OrdersProvider provider,
+    bool isMobile,
+    bool isTablet,
   ) {
+    // PASS 6: tiered padding (mobile/tablet/laptop) instead of one fixed
+    // value, plus a content max-width cap on tablet/laptop so the stats
+    // row and order cards read as a deliberate, centered column instead
+    // of stretching edge-to-edge on a wide laptop monitor. Mobile is
+    // unaffected — `double.infinity` is the exact original behaviour.
+    final double horizontalPadding = isMobile ? 20 : (isTablet ? 32 : 40);
+    final double topPadding = isMobile ? 24 : (isTablet ? 28 : 32);
+    final double bottomPadding = isMobile ? 32 : (isTablet ? 36 : 40);
+    final double contentMaxWidth =
+        isMobile ? double.infinity : (isTablet ? 900 : 1100);
+    final double statSpacing = isMobile ? 16 : (isTablet ? 18 : 20);
+    final double statsBottomGap = isMobile ? 22 : (isTablet ? 26 : 28);
+
     return Expanded(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
-        child: Column(
-          children: [
-            // Stats row
-            Row(
+        padding: EdgeInsets.fromLTRB(
+          horizontalPadding,
+          topPadding,
+          horizontalPadding,
+          bottomPadding,
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: contentMaxWidth),
+            child: Column(
               children: [
-                Expanded(
-                  child: _StatBox(
-                    icon: Icons.notifications_outlined,
-                    iconColor: _Palette.milanoRedDeep,
-                    iconBg: _Palette.milanoRed.withValues(alpha: 0.10),
-                    accentColor: _Palette.milanoRed,
-                    label: 'New Orders',
-                    value: '${newOrders.length}',
-                  ).animate().fade().scale(
-                        curve: Curves.easeOutBack,
-                        duration: 400.ms,
-                      ),
+                // Stats row
+                Row(
+                  children: [
+                    Expanded(
+                      child: _StatBox(
+                        icon: Icons.notifications_outlined,
+                        iconColor: _Palette.milanoRedDeep,
+                        iconBg: _Palette.milanoRed.withValues(alpha: 0.10),
+                        accentColor: _Palette.milanoRed,
+                        label: 'New Orders',
+                        value: '${newOrders.length}',
+                        isMobile: isMobile,
+                        isTablet: isTablet,
+                      ).animate().fade().scale(
+                            curve: Curves.easeOutBack,
+                            duration: 400.ms,
+                          ),
+                    ),
+                    SizedBox(width: statSpacing),
+                    Expanded(
+                      child: _StatBox(
+                        icon: Icons.check_circle_outline,
+                        iconColor: _Palette.lemonChiffonDeep,
+                        iconBg:
+                            _Palette.lemonChiffonDeep.withValues(alpha: 0.14),
+                        accentColor: _Palette.gold,
+                        label: 'Accepted',
+                        value: '$acceptedCount',
+                        isMobile: isMobile,
+                        isTablet: isTablet,
+                      ).animate().fade().scale(
+                            curve: Curves.easeOutBack,
+                            duration: 400.ms,
+                            delay: 100.ms,
+                          ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _StatBox(
-                    icon: Icons.check_circle_outline,
-                    iconColor: _Palette.lemonChiffonDeep,
-                    iconBg: _Palette.lemonChiffonDeep.withValues(alpha: 0.14),
-                    accentColor: _Palette.gold,
-                    label: 'Accepted',
-                    value: '$acceptedCount',
-                  ).animate().fade().scale(
-                        curve: Curves.easeOutBack,
-                        duration: 400.ms,
-                        delay: 100.ms,
-                      ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 22),
+                SizedBox(height: statsBottomGap),
 
-            if (newOrders.isEmpty)
-              const EmptyState(
-                icon: Icons.receipt_long_outlined,
-                title: 'No orders yet',
-                subtitle: 'New customer orders will appear here',
-              ).animate().fade(duration: 400.ms).slideY(
-                    begin: 0.1,
-                    duration: 400.ms,
-                    curve: Curves.easeOutQuad,
-                  )
-            else
-              ...newOrders.asMap().entries.map(
-                    (entry) =>
-                        _OrderCard(order: entry.value, provider: provider)
+                if (newOrders.isEmpty)
+                  const EmptyState(
+                    icon: Icons.receipt_long_outlined,
+                    title: 'No orders yet',
+                    subtitle: 'New customer orders will appear here',
+                  ).animate().fade(duration: 400.ms).slideY(
+                        begin: 0.1,
+                        duration: 400.ms,
+                        curve: Curves.easeOutQuad,
+                      )
+                else
+                  ...newOrders.asMap().entries.map(
+                        (entry) => _OrderCard(
+                          order: entry.value,
+                          provider: provider,
+                          isMobile: isMobile,
+                          isTablet: isTablet,
+                        )
                             .animate()
-                            .fade(duration: 400.ms, delay: (entry.key * 100).ms)
+                            .fade(
+                              duration: 400.ms,
+                              delay: (entry.key * 100).ms,
+                            )
                             .slideX(
                               begin: 0.1,
                               end: 0,
                               duration: 400.ms,
                               curve: Curves.easeOutQuad,
                             ),
-                  ),
-          ],
+                      ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -452,6 +553,14 @@ class _NewOrdersScreenState extends State<NewOrdersScreen> {
 // `newOrdersCount` (already computed by the caller) purely as a text
 // format — no new logic. Same callbacks (onBack / onRefresh /
 // onToggleSort) as before — this is a purely presentational change.
+//
+// PASS 6: now classifies the screen into mobile / tablet / laptop using
+// the same shared `_kTabletBreakpointWidth` / `_kLaptopBreakpointWidth`
+// constants the body content uses (replacing the old standalone `800`
+// cutoff), and every previously two-way `isMobile ? a : b` size below is
+// now three-way `isMobile ? a : (isTablet ? c : b)` so tablets get their
+// own properly proportioned numbers instead of inheriting either the
+// phone or the laptop treatment.
 class _ScreenHeader extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -477,7 +586,9 @@ class _ScreenHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 800;
+    final width = MediaQuery.of(context).size.width;
+    final isMobile = width < _kTabletBreakpointWidth;
+    final isTablet = !isMobile && width < _kLaptopBreakpointWidth;
 
     return Container(
       width: double.infinity,
@@ -570,10 +681,10 @@ class _ScreenHeader extends StatelessWidget {
               bottom: false,
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
-                  isMobile ? 18 : 32,
-                  isMobile ? 14 : 20,
-                  isMobile ? 18 : 32,
-                  isMobile ? 24 : 30,
+                  isMobile ? 18 : (isTablet ? 26 : 32),
+                  isMobile ? 14 : (isTablet ? 17 : 20),
+                  isMobile ? 18 : (isTablet ? 26 : 32),
+                  isMobile ? 24 : (isTablet ? 27 : 30),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -589,7 +700,7 @@ class _ScreenHeader extends StatelessWidget {
                       ],
                     ),
 
-                    SizedBox(height: isMobile ? 16 : 20),
+                    SizedBox(height: isMobile ? 16 : (isTablet ? 18 : 20)),
 
                     // ── Title block: small icon + subtitle label, then
                     // the big title — matches the Create Order header's
@@ -621,7 +732,7 @@ class _ScreenHeader extends StatelessWidget {
                         Text(
                           title,
                           style: AppTheme.serif(
-                            size: isMobile ? 26 : 32,
+                            size: isMobile ? 26 : (isTablet ? 29 : 32),
                             weight: FontWeight.w900,
                             color: Colors.white,
                           ).copyWith(height: 1.1),
@@ -631,7 +742,7 @@ class _ScreenHeader extends StatelessWidget {
                       ],
                     ).animate().fade(duration: 500.ms).slideY(begin: -0.15),
 
-                    SizedBox(height: isMobile ? 16 : 20),
+                    SizedBox(height: isMobile ? 16 : (isTablet ? 18 : 20)),
 
                     // ── Tagline ───────────────────────────────────────
                     // No card, no border/drop-shadow, no icon badge — just
@@ -659,13 +770,13 @@ class _ScreenHeader extends StatelessWidget {
                             ),
                           ),
                         ),
-                        SizedBox(height: isMobile ? 8 : 10),
+                        SizedBox(height: isMobile ? 8 : (isTablet ? 9 : 10)),
                         Text(
                           newOrdersCount > 0
                               ? '$newOrdersCount new order${newOrdersCount == 1 ? '' : 's'} waiting for you.'
                               : 'All caught up — no new orders right now.',
                           style: AppTheme.serif(
-                            size: isMobile ? 15.5 : 18,
+                            size: isMobile ? 15.5 : (isTablet ? 16.5 : 18),
                             weight: FontWeight.w800,
                             color: _Palette.canvasDeep,
                           ).copyWith(height: 1.3, letterSpacing: 0.2),
@@ -677,7 +788,7 @@ class _ScreenHeader extends StatelessWidget {
                           begin: 0.1,
                         ),
 
-                    SizedBox(height: isMobile ? 14 : 18),
+                    SizedBox(height: isMobile ? 14 : (isTablet ? 16 : 18)),
 
                     // ── Date + Live row, with the sort-order toggle
                     // aligned to the right — same information as before,
@@ -694,7 +805,7 @@ class _ScreenHeader extends StatelessWidget {
                         Text(
                           dateLabel,
                           style: AppTheme.sans(
-                            size: isMobile ? 11.5 : 12.5,
+                            size: isMobile ? 11.5 : (isTablet ? 12 : 12.5),
                             weight: FontWeight.w600,
                             color: Colors.white.withValues(alpha: 0.85),
                           ),
@@ -712,7 +823,7 @@ class _ScreenHeader extends StatelessWidget {
                         Text(
                           'Live',
                           style: AppTheme.sans(
-                            size: isMobile ? 11 : 12,
+                            size: isMobile ? 11 : (isTablet ? 11.5 : 12),
                             weight: FontWeight.w700,
                             color: _Palette.success,
                             letterSpacing: 0.3,
@@ -729,7 +840,7 @@ class _ScreenHeader extends StatelessWidget {
                       ],
                     ),
 
-                    SizedBox(height: isMobile ? 10 : 12),
+                    SizedBox(height: isMobile ? 10 : (isTablet ? 11 : 12)),
 
                     // Thin gold gradient hairline underneath the date row.
                     Container(
@@ -961,6 +1072,12 @@ class _SortChipState extends State<_SortChip> {
 // ─── Stat box — carries a slim color-coded accent rail down the left
 // edge, giving each stat box an instant color cue tying it to its
 // meaning. Same content, same values — purely presentational.
+//
+// PASS 6: gained two new inputs, `isMobile` and `isTablet` (added
+// alongside the existing fields — nothing renamed), used only to scale
+// the box's own padding, icon size, and font sizes up a notch on tablet
+// and laptop for a fuller, more professional feel on larger screens. The
+// original mobile numbers are fully preserved.
 class _StatBox extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
@@ -968,6 +1085,8 @@ class _StatBox extends StatelessWidget {
   final Color accentColor;
   final String label;
   final String value;
+  final bool isMobile;
+  final bool isTablet;
 
   const _StatBox({
     required this.icon,
@@ -975,11 +1094,19 @@ class _StatBox extends StatelessWidget {
     required this.iconBg,
     required this.label,
     required this.value,
+    required this.isMobile,
+    required this.isTablet,
     this.accentColor = _Palette.gold,
   });
 
   @override
   Widget build(BuildContext context) {
+    final double iconContainerSize = isMobile ? 52 : (isTablet ? 56 : 60);
+    final double iconSize = isMobile ? 26 : (isTablet ? 27 : 29);
+    final double verticalPad = isMobile ? 22 : (isTablet ? 24 : 26);
+    final double horizontalPad = isMobile ? 18 : (isTablet ? 20 : 22);
+    final double valueFontSize = isMobile ? 34 : (isTablet ? 36 : 38);
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1011,12 +1138,15 @@ class _StatBox extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 18),
+            padding: EdgeInsets.symmetric(
+              vertical: verticalPad,
+              horizontal: horizontalPad,
+            ),
             child: Column(
               children: [
                 Container(
-                  width: 52,
-                  height: 52,
+                  width: iconContainerSize,
+                  height: iconContainerSize,
                   decoration: BoxDecoration(
                     color: iconBg,
                     shape: BoxShape.circle,
@@ -1025,7 +1155,7 @@ class _StatBox extends StatelessWidget {
                       width: 1,
                     ),
                   ),
-                  child: Icon(icon, color: iconColor, size: 26),
+                  child: Icon(icon, color: iconColor, size: iconSize),
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -1041,7 +1171,7 @@ class _StatBox extends StatelessWidget {
                 Text(
                   value,
                   style: AppTheme.serif(
-                    size: 34,
+                    size: valueFontSize,
                     weight: FontWeight.w900,
                     color: _Palette.textDark,
                   ),
@@ -1061,22 +1191,60 @@ class _StatBox extends StatelessWidget {
 // rail runs down the left edge — maroon while the order is still
 // new/unaccepted, brand gold once it's been accepted. Same data, same
 // callbacks — only sizing, radii, and color values changed.
+//
+// PASS 6: gained two new inputs, `isMobile` and `isTablet` (added
+// alongside the existing fields — nothing renamed), used only to scale
+// the card's own padding, thumbnail/icon sizes, and font sizes up a
+// notch on tablet and laptop for a fuller, more professional feel on
+// larger screens. The exact original mobile numbers are fully preserved,
+// and the card's content, arrangement, status logic, and the accept /
+// view-details buttons' `onTap` callbacks are all completely unchanged.
 class _OrderCard extends StatelessWidget {
   final Order order;
   final OrdersProvider provider;
+  final bool isMobile;
+  final bool isTablet;
 
-  const _OrderCard({required this.order, required this.provider});
+  const _OrderCard({
+    required this.order,
+    required this.provider,
+    required this.isMobile,
+    required this.isTablet,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isNew = order.status == OrderStatus.placed;
     final railColor = isNew ? _Palette.milanoRed : _Palette.success;
 
+    // PASS 6: three-tier sizing metrics — mobile numbers are the exact
+    // originals, tablet sits between mobile and laptop, laptop is a
+    // modest step up from the original desktop numbers for a fuller,
+    // more professional card on large screens.
+    final double cardMarginBottom = isMobile ? 22 : (isTablet ? 24 : 26);
+    final double cardRadius = isMobile ? 26 : (isTablet ? 28 : 30);
+    final double statusHPad = isMobile ? 22 : (isTablet ? 24 : 26);
+    final double statusVPad = isMobile ? 16 : (isTablet ? 17 : 18);
+    final double newOrderLabelFontSize = isMobile ? 16 : (isTablet ? 17 : 18);
+    final double acceptedLabelFontSize = isMobile ? 15 : (isTablet ? 15.5 : 16);
+    final double contentPad = isMobile ? 22 : (isTablet ? 24 : 26);
+    final double thumbSize = isMobile ? 62 : (isTablet ? 66 : 70);
+    final double thumbIconSize = isMobile ? 30 : (isTablet ? 32 : 34);
+    final double tableFontSize = isMobile ? 20 : (isTablet ? 21 : 22);
+    final double itemsCountFontSize = isMobile ? 13 : (isTablet ? 13.5 : 14);
+    final double totalFontSize = isMobile ? 25 : (isTablet ? 26 : 28);
+    final double customerBoxPad = isMobile ? 13 : (isTablet ? 14 : 15);
+    final double itemsBoxPad = isMobile ? 16 : (isTablet ? 17 : 18);
+    final double itemTextFontSize = isMobile ? 13 : (isTablet ? 13.5 : 14);
+    final double acceptBtnVPad = isMobile ? 17 : (isTablet ? 18 : 19);
+    final double acceptLabelFontSize = isMobile ? 15 : (isTablet ? 15.5 : 16);
+    final double viewBtnVPad = isMobile ? 15 : (isTablet ? 16 : 17);
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 22),
+      margin: EdgeInsets.only(bottom: cardMarginBottom),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(cardRadius),
         border: Border.all(
           color: isNew
               ? _Palette.milanoRed.withValues(alpha: 0.30)
@@ -1138,9 +1306,9 @@ class _OrderCard extends StatelessWidget {
                       : null,
                   color: isNew ? null : _Palette.successBg,
                 ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 22,
-                  vertical: 16,
+                padding: EdgeInsets.symmetric(
+                  horizontal: statusHPad,
+                  vertical: statusVPad,
                 ),
                 child: Row(
                   children: [
@@ -1168,7 +1336,7 @@ class _OrderCard extends StatelessWidget {
                             Text(
                               'NEW ORDER',
                               style: AppTheme.sans(
-                                size: 16,
+                                size: newOrderLabelFontSize,
                                 weight: FontWeight.w900,
                                 color: Colors.white,
                               ).copyWith(letterSpacing: 0.4),
@@ -1252,7 +1420,7 @@ class _OrderCard extends StatelessWidget {
                             Text(
                               'ACCEPTED',
                               style: AppTheme.sans(
-                                size: 15,
+                                size: acceptedLabelFontSize,
                                 weight: FontWeight.w900,
                                 color: _Palette.successDeep,
                               ).copyWith(letterSpacing: 0.3),
@@ -1299,15 +1467,20 @@ class _OrderCard extends StatelessWidget {
 
               // Content
               Padding(
-                padding: const EdgeInsets.fromLTRB(22, 22, 22, 22),
+                padding: EdgeInsets.fromLTRB(
+                  contentPad,
+                  contentPad,
+                  contentPad,
+                  contentPad,
+                ),
                 child: Column(
                   children: [
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
-                          width: 62,
-                          height: 62,
+                          width: thumbSize,
+                          height: thumbSize,
                           decoration: BoxDecoration(
                             color: _Palette.canvas,
                             borderRadius: BorderRadius.circular(18),
@@ -1317,10 +1490,10 @@ class _OrderCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.restaurant,
                             color: _Palette.milanoRedDeep,
-                            size: 30,
+                            size: thumbIconSize,
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -1331,7 +1504,7 @@ class _OrderCard extends StatelessWidget {
                               Text(
                                 order.table,
                                 style: AppTheme.serif(
-                                  size: 20,
+                                  size: tableFontSize,
                                   weight: FontWeight.w900,
                                   color: _Palette.textDark,
                                 ),
@@ -1342,7 +1515,7 @@ class _OrderCard extends StatelessWidget {
                               Text(
                                 '${order.items} items',
                                 style: AppTheme.sans(
-                                  size: 13,
+                                  size: itemsCountFontSize,
                                   color: _Palette.textMuted,
                                   weight: FontWeight.w500,
                                 ),
@@ -1354,7 +1527,7 @@ class _OrderCard extends StatelessWidget {
                         Text(
                           CurrencyUtils.format(order.total),
                           style: AppTheme.serif(
-                            size: 25,
+                            size: totalFontSize,
                             weight: FontWeight.w900,
                             color: _Palette.milanoRedDeep,
                           ),
@@ -1365,7 +1538,7 @@ class _OrderCard extends StatelessWidget {
                       const SizedBox(height: 14),
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.all(13),
+                        padding: EdgeInsets.all(customerBoxPad),
                         decoration: BoxDecoration(
                           color: _Palette.canvas,
                           borderRadius: BorderRadius.circular(14),
@@ -1411,7 +1584,7 @@ class _OrderCard extends StatelessWidget {
                     const SizedBox(height: 14),
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(itemsBoxPad),
                       decoration: BoxDecoration(
                         color: _Palette.canvas,
                         borderRadius: BorderRadius.circular(16),
@@ -1451,7 +1624,7 @@ class _OrderCard extends StatelessWidget {
                                         child: Text(
                                           item,
                                           style: AppTheme.sans(
-                                            size: 13,
+                                            size: itemTextFontSize,
                                             color: _Palette.textDark
                                                 .withValues(alpha: 0.85),
                                             weight: FontWeight.w500,
@@ -1498,7 +1671,8 @@ class _OrderCard extends StatelessWidget {
                         },
                         child: Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 17),
+                          padding:
+                              EdgeInsets.symmetric(vertical: acceptBtnVPad),
                           decoration: BoxDecoration(
                             // Darkened primary CTA: gradient now runs from
                             // the deeper gold tone into the base gold tone
@@ -1541,7 +1715,7 @@ class _OrderCard extends StatelessWidget {
                               Text(
                                 'ACCEPT ORDER',
                                 style: AppTheme.sans(
-                                  size: 15,
+                                  size: acceptLabelFontSize,
                                   weight: FontWeight.w900,
                                   color: Colors.white,
                                 ).copyWith(letterSpacing: 0.4),
@@ -1556,7 +1730,7 @@ class _OrderCard extends StatelessWidget {
                             context.push('/staff/order-details/${order.id}'),
                         child: Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 15),
+                          padding: EdgeInsets.symmetric(vertical: viewBtnVPad),
                           decoration: BoxDecoration(
                             color: _Palette.canvas,
                             borderRadius: BorderRadius.circular(15),

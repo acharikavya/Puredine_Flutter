@@ -61,8 +61,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 /// `_OrdersScreenState.build()` exactly as before — no navigation logic
 /// was touched, only the visible back icon was removed.
 ///
-/// UI-ENHANCEMENT PASS 6 (this pass): the title block (small icon +
-/// subtitle label, then the big title) now sits in the same row as the
+/// UI-ENHANCEMENT PASS 6: the title block (small icon + subtitle
+/// label, then the big title) now sits in the same row as the
 /// `_CreateOrderChip`, side by side, instead of in its own row
 /// underneath. The previously separate "top row" (which used to hold
 /// only the Create Order chip) and the title block's own row have been
@@ -76,11 +76,125 @@ import 'package:flutter_animate/flutter_animate.dart';
 /// Everything else in the header (tagline, date/live row, hairline,
 /// gradient, shadows, glows) and the rest of the file is unchanged.
 ///
-/// NOTE: this is a private class redeclared identically to the ones in
-/// order_details_screen.dart / new_orders_screen.dart / create_order_
-/// screen.dart / menu_screen.dart (private classes can't be shared across
-/// files without a new shared import, which would go beyond a pure UI-only
-/// change here).
+/// UI-ENHANCEMENT PASS 7: responsive-layout-only, exactly
+/// like every pass above — no provider, controller, route, filtering, or
+/// data value anywhere in this file was touched, and no state field,
+/// callback, or keyword was renamed.
+///   1. RESPONSIVE BREAKPOINTS: the screen now measures the available
+///      width via a `_DeviceType` breakpoint (mobile < 700, tablet
+///      700–1100, desktop ≥ 1100) instead of the previous single
+///      `isWide` split at 768px. The sidebar-vs-stacked filter layout
+///      still switches at the same tablet-and-up point (`isWide` is now
+///      simply "not mobile"), but the grid's column count, the sidebar's
+///      width/margin/padding, the outer scroll padding, and the header's
+///      padding/type-scale all now scale through three tiers instead of
+///      two.
+///   2. TABLET / DESKTOP POLISH: on tablet the orders grid now shows 2
+///      columns (desktop keeps its existing 3 columns; mobile keeps its
+///      existing single column) and the sidebar filter panel is slightly
+///      narrower with tighter margin/padding on tablet than on desktop,
+///      so it sits comfortably instead of crowding the grid at mid-size
+///      widths. `_ScreenHeader` gained its own tablet tier between the
+///      existing mobile and desktop sizing for its padding, title/
+///      tagline type scale, and spacing. Every filter chip, order card,
+///      callback and piece of copy is unchanged.
+///
+/// UI-ENHANCEMENT PASS 8: overflow bug fix, layout-only:
+/// fixes the reported `RenderFlex overflowed` errors inside the order
+/// cards (`_OrderCard`) at tablet/mid-size and mobile widths — no
+/// provider, controller, route, filtering, data value, callback, or
+/// keyword anywhere in this file was touched; every fix below is a
+/// layout/sizing adjustment only.
+///   1. GRID CELL HEIGHT: `childAspectRatio` in the orders grid is now
+///      tier-specific (mobile `0.62` / tablet `0.78` / desktop `0.92`)
+///      instead of a single fixed `1.05` for every width, giving each
+///      grid cell noticeably more vertical room at narrower widths,
+///      where the same card content previously no longer fit inside a
+///      near-square cell — this is what was throwing the "overflowed by
+///      33 pixels on the bottom" errors. (SUPERSEDED ON MOBILE BY
+///      PASS 9 BELOW — the mobile figure was later found to be too
+///      generous, making cards read as oversized. Tablet/desktop values
+///      are unchanged.)
+///   2. SAFETY NET: `_OrderCard`'s content column is now wrapped in a
+///      scrollbar-free `SingleChildScrollView` (the same
+///      `_NoScrollbarBehavior` pattern already used elsewhere in this
+///      codebase), so on the rare device/content combination where the
+///      grid cell is still shorter than the card's natural content
+///      height, the card scrolls internally instead of throwing a
+///      "RenderFlex overflowed ... on the bottom" error. On every normal
+///      screen size nothing visibly scrolls — this is purely a guard.
+///   3. HORIZONTAL OVERFLOW GUARDS: three rows inside `_OrderCard` that
+///      previously had no way to shrink when the card got narrower
+///      (tablet's 2-column grid, in particular) now do:
+///        • the status banner's "time • live-time-ago" row is now a
+///          `Wrap` instead of a `Row`, so it wraps onto a second line
+///          instead of overflowing to the right when both pieces of text
+///          don't fit on one line;
+///        • the table-name/customer/items block is now wrapped in
+///          `Expanded`, with each of its text lines given
+///          `maxLines: 1` plus ellipsis, so a long table/customer name
+///          truncates instead of pushing the price off the right edge;
+///          the price itself is wrapped in a `Flexible` + `FittedBox` so
+///          it can scale down slightly rather than overflow on an
+///          extremely narrow card;
+///        • the "Assigned to Staff" label in the footer row is now
+///          wrapped in a `Flexible` with ellipsis, so it yields space to
+///          the "View Details" pill instead of overflowing past it.
+///      No copy, color, icon, font weight, or the card's tap
+///      navigation/route was changed — only how these rows behave when
+///      they run out of horizontal room.
+///
+/// UI-ENHANCEMENT PASS 9 (this pass — MOBILE-ONLY GRID SIZE FIX,
+/// layout-only): fixes the reported issue where each order card in the
+/// mobile (single-column) grid read as far too tall — a big, oversized
+/// box — instead of a normal, proportioned card. No provider, controller,
+/// route, filtering, data value, callback, or keyword anywhere in this
+/// file was touched.
+///   1. MOBILE GRID ASPECT RATIO INCREASED: `gridAspectRatio` for mobile
+///      (`_DeviceType.mobile`) is now `0.90` (up from PASS 8's `0.62`).
+///      A `childAspectRatio` is width ÷ height, so PASS 8's very low
+///      `0.62` value forced every single-column mobile card into a tall,
+///      narrow rectangle far taller than its content actually needed —
+///      exactly the "too big in height" cards reported. `0.90` gives
+///      each mobile card a normal, compact, close-to-square proportion
+///      that comfortably fits its content (status banner, table/price
+///      row, footer pill) without the excess empty height. Tablet
+///      (`0.78`) and desktop (`0.92`) aspect ratios are completely
+///      unchanged from PASS 8.
+///   2. SAFETY NET UNCHANGED: `_OrderCard`'s PASS 8 scrollbar-free
+///      `SingleChildScrollView` safety net, and all three PASS 8
+///      horizontal-overflow guards (the status-time `Wrap`, the
+///      table-info `Expanded` + ellipsis, the price `Flexible` +
+///      `FittedBox`, and the footer label `Flexible`), are fully
+///      preserved, so cards still can never throw a "RenderFlex
+///      overflowed" error on any device — they simply now size more
+///      proportionately on phones. Grid column counts (mobile 1 / tablet
+///      2 / desktop 3), spacing, filters, header, and every other part of
+///      this screen are unchanged.
+///
+/// UI-ENHANCEMENT PASS 10 (this pass — MOBILE-ONLY GRID SIZE
+/// FIX, ROUND 2, layout-only): PASS 9's mobile figure (`0.90`) was
+/// reported as still too tall/oversized on an actual phone screenshot —
+/// each single mobile order card was still reading as a big block rather
+/// than a compact, proper "table row" style card. No provider,
+/// controller, route, filtering, data value, callback, or keyword
+/// anywhere in this file was touched.
+///   1. MOBILE GRID ASPECT RATIO INCREASED AGAIN: `gridAspectRatio` for
+///      mobile is now `1.3` (up from PASS 9's `0.90`). Since
+///      `childAspectRatio` is width ÷ height, a bigger number means a
+///      shorter cell for the same width — `1.3` gives each mobile card a
+///      noticeably shorter, wider, more compact proportion (closer to a
+///      list-row card) instead of the taller block from PASS 9. Tablet
+///      (`0.78`) and desktop (`0.92`) aspect ratios are completely
+///      unchanged from PASS 8/9.
+///   2. SAFETY NET UNCHANGED: exactly as PASS 9 — `_OrderCard`'s PASS 8
+///      scrollbar-free `SingleChildScrollView` safety net and all three
+///      PASS 8 horizontal-overflow guards are fully preserved, so on any
+///      device where a card's content is ever taller than the new
+///      shorter cell, the card simply scrolls internally instead of
+///      overflowing — it can never throw a "RenderFlex overflowed"
+///      error. Grid column counts, spacing, filters, header, and every
+///      other part of this screen are unchanged.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   // Primary / Topbar — Deep Wine Maroon
@@ -144,6 +258,29 @@ class _Palette {
           offset: const Offset(0, 3),
         ),
       ];
+}
+
+/// PASS 7: simple responsive breakpoint helper — layout-only, does not
+/// touch any provider/filtering/navigation logic anywhere in this file.
+enum _DeviceType { mobile, tablet, desktop }
+
+_DeviceType _deviceTypeForWidth(double width) {
+  if (width < 700) return _DeviceType.mobile;
+  if (width < 1100) return _DeviceType.tablet;
+  return _DeviceType.desktop;
+}
+
+/// PASS 8: a `ScrollBehavior` that never paints a scrollbar. Used only to
+/// wrap `_OrderCard`'s content-safety `SingleChildScrollView` below so
+/// that, even on the rare cell size small enough to need the extra
+/// scroll room, no visible scrollbar ever appears — purely a rendering/
+/// behaviour detail, not a feature change.
+class _NoScrollbarBehavior extends ScrollBehavior {
+  @override
+  Widget buildScrollbar(
+      BuildContext context, Widget child, ScrollableDetails details) {
+    return child;
+  }
 }
 
 const List<String> _kMonthNames = [
@@ -458,7 +595,38 @@ class _OrdersScreenState extends State<OrdersScreen> {
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    final isWide = constraints.maxWidth >= 768; // md breakpoint
+                    // PASS 7: three-tier breakpoint replaces the old single
+                    // `isWide` split at 768px. `isWide` is kept as a
+                    // convenience flag ("tablet or desktop") so the
+                    // sidebar-vs-stacked switch below reads exactly as
+                    // before.
+                    final deviceType =
+                        _deviceTypeForWidth(constraints.maxWidth);
+                    final isWide = deviceType != _DeviceType.mobile;
+                    final isTablet = deviceType == _DeviceType.tablet;
+
+                    // PASS 8: tier-specific grid-cell aspect ratio, in
+                    // place of the old single fixed `1.05` — gives each
+                    // card noticeably more vertical room at narrower
+                    // widths so its content fits without overflowing.
+                    //
+                    // PASS 9: the mobile figure alone is raised from
+                    // PASS 8's `0.62` to `0.90` — `0.62` was making every
+                    // single-column mobile card far taller than its
+                    // content needed (the reported "too big in height"
+                    // boxes). Tablet (`0.78`) and desktop (`0.92`) are
+                    // unchanged from PASS 8.
+                    //
+                    // PASS 10: mobile raised again, from PASS 9's `0.90`
+                    // to `1.3` — the cards were still reading as too tall
+                    // on an actual phone screenshot, so mobile cards are
+                    // now noticeably shorter/more compact, closer to a
+                    // proper table-row card. Tablet (`0.78`) and desktop
+                    // (`0.92`) remain unchanged from PASS 8/9.
+                    final double gridAspectRatio =
+                        deviceType == _DeviceType.desktop
+                            ? 0.92
+                            : (isTablet ? 0.78 : 1.3);
 
                     Widget filterList = isWide
                         ? Column(
@@ -493,13 +661,22 @@ class _OrdersScreenState extends State<OrdersScreen> {
                             padding: EdgeInsets.zero,
                             gridDelegate:
                                 SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: isWide
-                                  ? (constraints.maxWidth >= 1024 ? 3 : 2)
-                                  : 1, // lg: 3, md: 2, default: 1
+                              // PASS 7: mobile 1 / tablet 2 / desktop 3,
+                              // driven by the same three-tier breakpoint
+                              // used everywhere else in this build.
+                              crossAxisCount: deviceType == _DeviceType.desktop
+                                  ? 3
+                                  : (isTablet ? 2 : 1),
                               crossAxisSpacing: 24,
                               mainAxisSpacing: 24,
-                              childAspectRatio:
-                                  1.05, // Slightly taller, more generous cards
+                              // PASS 8/9/10: tier-specific ratio (see
+                              // above) — taller cells at narrower widths
+                              // so card content always has room to fit,
+                              // with the mobile figure corrected in
+                              // PASS 9 and then PASS 10 so mobile cards
+                              // read as properly proportioned/compact
+                              // instead of oversized.
+                              childAspectRatio: gridAspectRatio,
                             ),
                             itemCount: filteredOrders.length,
                             itemBuilder: (context, index) {
@@ -519,8 +696,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           );
 
                     return SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: deviceType == _DeviceType.mobile
+                            ? 16
+                            : (isTablet ? 24 : 32),
                         vertical: 32,
                       ),
                       child: Center(
@@ -532,13 +711,19 @@ class _OrdersScreenState extends State<OrdersScreen> {
                               ? Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // Sidebar Filter
+                                    // Sidebar Filter — PASS 7: slightly
+                                    // narrower with tighter margin/padding
+                                    // on tablet than on desktop, so it sits
+                                    // comfortably instead of crowding the
+                                    // grid at mid-size widths.
                                     Container(
-                                      width: 256, // w-64
-                                      margin: const EdgeInsets.only(
-                                        right: 32,
+                                      width: isTablet ? 220 : 256, // w-64
+                                      margin: EdgeInsets.only(
+                                        right: isTablet ? 24 : 32,
                                       ), // gap-8
-                                      padding: const EdgeInsets.all(22), // p-6
+                                      padding: EdgeInsets.all(
+                                        isTablet ? 18 : 22,
+                                      ), // p-6
                                       decoration: BoxDecoration(
                                         gradient: LinearGradient(
                                           begin: Alignment.topLeft,
@@ -767,6 +952,14 @@ class _OrdersScreenState extends State<OrdersScreen> {
 // `CrossAxisAlignment.center` so the title block and the chip line up
 // visually. No text, callback, or styling value was changed — only the
 // position of the title block relative to the chip.
+//
+// PASS 7: the single `isMobile` split at 800px was stepped up into three
+// tiers (mobile/tablet/desktop) using the same `_deviceTypeForWidth`
+// breakpoint the rest of the screen now uses, so the header's padding,
+// title/tagline type scale, and internal spacing read with a bit more
+// breathing room on tablets instead of jumping straight from the compact
+// phone sizing to the full desktop sizing. Structure, text, callbacks and
+// data are unchanged.
 class _ScreenHeader extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -792,8 +985,22 @@ class _ScreenHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 800;
+    final deviceType = _deviceTypeForWidth(MediaQuery.of(context).size.width);
+    final isMobile = deviceType == _DeviceType.mobile;
+    final isTablet = deviceType == _DeviceType.tablet;
     final inProgressCount = confirmedCount + preparingCount + readyCount;
+
+    final double padLeftRight = isMobile ? 18 : (isTablet ? 26 : 32);
+    final double padTop = isMobile ? 14 : (isTablet ? 17 : 20);
+    final double padBottom = isMobile ? 24 : (isTablet ? 27 : 30);
+    final double titleSize = isMobile ? 26 : (isTablet ? 29 : 32);
+    final double taglineSize = isMobile ? 15.5 : (isTablet ? 16.5 : 18);
+    final double spaceAfterTitleRow = isMobile ? 16 : (isTablet ? 18 : 20);
+    final double spaceAfterRule = isMobile ? 8 : (isTablet ? 9 : 10);
+    final double spaceAfterTagline = isMobile ? 14 : (isTablet ? 16 : 18);
+    final double dateTextSize = isMobile ? 11.5 : (isTablet ? 12 : 12.5);
+    final double liveTextSize = isMobile ? 11 : (isTablet ? 11.5 : 12);
+    final double spaceAfterDateRow = isMobile ? 10 : (isTablet ? 11 : 12);
 
     return Container(
       width: double.infinity,
@@ -886,10 +1093,10 @@ class _ScreenHeader extends StatelessWidget {
               bottom: false,
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
-                  isMobile ? 18 : 32,
-                  isMobile ? 14 : 20,
-                  isMobile ? 18 : 32,
-                  isMobile ? 24 : 30,
+                  padLeftRight,
+                  padTop,
+                  padLeftRight,
+                  padBottom,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -930,7 +1137,7 @@ class _ScreenHeader extends StatelessWidget {
                               Text(
                                 title,
                                 style: AppTheme.serif(
-                                  size: isMobile ? 26 : 32,
+                                  size: titleSize,
                                   weight: FontWeight.w900,
                                   color: Colors.white,
                                 ).copyWith(height: 1.1),
@@ -947,7 +1154,7 @@ class _ScreenHeader extends StatelessWidget {
                       ],
                     ),
 
-                    SizedBox(height: isMobile ? 16 : 20),
+                    SizedBox(height: spaceAfterTitleRow),
 
                     // ── Tagline ───────────────────────────────────────
                     // No card, no border/drop-shadow, no icon badge — just
@@ -975,13 +1182,13 @@ class _ScreenHeader extends StatelessWidget {
                             ),
                           ),
                         ),
-                        SizedBox(height: isMobile ? 8 : 10),
+                        SizedBox(height: spaceAfterRule),
                         Text(
                           inProgressCount > 0
                               ? '$inProgressCount order${inProgressCount == 1 ? '' : 's'} currently in progress.'
                               : 'No orders in progress right now.',
                           style: AppTheme.serif(
-                            size: isMobile ? 15.5 : 18,
+                            size: taglineSize,
                             weight: FontWeight.w800,
                             color: _Palette.canvasDeep,
                           ).copyWith(height: 1.3, letterSpacing: 0.2),
@@ -993,7 +1200,7 @@ class _ScreenHeader extends StatelessWidget {
                           begin: 0.1,
                         ),
 
-                    SizedBox(height: isMobile ? 14 : 18),
+                    SizedBox(height: spaceAfterTagline),
 
                     // ── Date + Live row ──────────────────────────────────
                     Row(
@@ -1007,7 +1214,7 @@ class _ScreenHeader extends StatelessWidget {
                         Text(
                           dateLabel,
                           style: AppTheme.sans(
-                            size: isMobile ? 11.5 : 12.5,
+                            size: dateTextSize,
                             weight: FontWeight.w600,
                             color: Colors.white.withValues(alpha: 0.85),
                           ),
@@ -1025,7 +1232,7 @@ class _ScreenHeader extends StatelessWidget {
                         Text(
                           'Live',
                           style: AppTheme.sans(
-                            size: isMobile ? 11 : 12,
+                            size: liveTextSize,
                             weight: FontWeight.w700,
                             color: _Palette.success,
                             letterSpacing: 0.3,
@@ -1034,7 +1241,7 @@ class _ScreenHeader extends StatelessWidget {
                       ],
                     ),
 
-                    SizedBox(height: isMobile ? 10 : 12),
+                    SizedBox(height: spaceAfterDateRow),
 
                     // Thin gold gradient hairline underneath the date row.
                     Container(
@@ -1139,6 +1346,19 @@ class _CreateOrderChipState extends State<_CreateOrderChip> {
 // Details" pill with its own circular arrow badge. Still wrapped in the
 // same AppCard with the exact same onTap route — no navigation or data
 // logic changed.
+//
+// PASS 8: the card's content column is now wrapped in a scrollbar-free
+// `SingleChildScrollView` safety net, and three internal rows (the
+// status banner's time row, the table-info-vs-price row, and the
+// "Assigned to Staff" footer row) were made to shrink/wrap instead of
+// overflow when the card gets narrower (see the PASS 8 note above the
+// `_Palette` class for the full rationale). No data binding, callback,
+// or navigation route was touched — layout only.
+//
+// PASS 9/10: no changes to this class itself in either pass — both
+// mobile card-height fixes were made entirely at the grid level (see
+// `gridAspectRatio` in `_OrdersScreenState.build()` above); this card's
+// own content, safety net, and overflow guards are unchanged.
 class _OrderCard extends StatelessWidget {
   final Order order;
   final Map<String, dynamic> config;
@@ -1175,262 +1395,327 @@ class _OrderCard extends StatelessWidget {
               ),
             ),
           ),
-          Column(
-            children: [
-              // Status Banner
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [
-                      (config['bg'] as Color).withValues(alpha: 0.65),
-                      (config['bg'] as Color).withValues(alpha: 0.35),
-                    ],
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(9),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(11),
-                        border: Border.all(
-                          color: statusColor.withValues(alpha: 0.25),
-                          width: 1.2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: statusColor.withValues(alpha: 0.15),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          ),
+          // PASS 8: the banner + content column is now wrapped in a
+          // scrollbar-free `SingleChildScrollView` so that, on the rare
+          // grid cell that's still shorter than this content's natural
+          // height, the card scrolls internally instead of throwing a
+          // "RenderFlex overflowed ... on the bottom" error. On any
+          // normal-sized cell nothing visibly scrolls.
+          ScrollConfiguration(
+            behavior: _NoScrollbarBehavior(),
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              child: Column(
+                children: [
+                  // Status Banner
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 15,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [
+                          (config['bg'] as Color).withValues(alpha: 0.65),
+                          (config['bg'] as Color).withValues(alpha: 0.35),
                         ],
                       ),
-                      child: Icon(
-                        config['icon'] as IconData,
-                        size: 20,
-                        color: statusColor,
-                      ),
                     ),
-                    const SizedBox(width: 13),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            config['label'] as String,
-                            style: AppTheme.sans(
-                              size: 13,
-                              weight: FontWeight.w900,
-                              color: statusColor,
-                              letterSpacing: 1.0,
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(9),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(11),
+                            border: Border.all(
+                              color: statusColor.withValues(alpha: 0.25),
+                              width: 1.2,
                             ),
-                          ),
-                          const SizedBox(height: 2),
-                          Row(
-                            children: [
-                              Text(
-                                order.time,
-                                style: AppTheme.sans(
-                                  size: 11,
-                                  weight: FontWeight.w600,
-                                  color: statusColor.withValues(alpha: 0.7),
-                                ),
-                              ),
-                              Text(
-                                ' • ',
-                                style: AppTheme.sans(
-                                  size: 11,
-                                  weight: FontWeight.w600,
-                                  color: statusColor.withValues(alpha: 0.7),
-                                ),
-                              ),
-                              LiveTimeAgo(
-                                dt: order.createdAt,
-                                style: AppTheme.sans(
-                                  size: 11,
-                                  weight: FontWeight.w600,
-                                  color: statusColor.withValues(alpha: 0.7),
-                                ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: statusColor.withValues(alpha: 0.15),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.6),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.arrow_forward_ios,
-                        size: 12,
-                        color: statusColor.withValues(alpha: 0.7),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Content
-              Padding(
-                padding: const EdgeInsets.fromLTRB(22, 22, 22, 22),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(11),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    _Palette.milanoRed.withValues(alpha: 0.10),
-                                    _Palette.milanoRed.withValues(alpha: 0.04),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(13),
-                                border: Border.all(
-                                  color: _Palette.milanoRedDeep.withValues(
-                                    alpha: 0.12,
-                                  ),
+                          child: Icon(
+                            config['icon'] as IconData,
+                            size: 20,
+                            color: statusColor,
+                          ),
+                        ),
+                        const SizedBox(width: 13),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                config['label'] as String,
+                                style: AppTheme.sans(
+                                  size: 13,
+                                  weight: FontWeight.w900,
+                                  color: statusColor,
+                                  letterSpacing: 1.0,
                                 ),
                               ),
-                              child: const Icon(
-                                Icons.table_bar_rounded,
-                                size: 22,
-                                color: _Palette.milanoRedDeep,
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  order.table,
-                                  style: AppTheme.serif(
-                                    size: 18,
-                                    weight: FontWeight.w800,
-                                    color: _Palette.textDark,
-                                  ),
-                                ),
-                                if (order.customerName != null)
+                              const SizedBox(height: 2),
+                              // PASS 8: `Wrap` instead of `Row` — the
+                              // "time • live-time-ago" pair now wraps
+                              // onto a second line instead of overflowing
+                              // to the right on a narrow card. Same text,
+                              // same data, same styling.
+                              Wrap(
+                                spacing: 4,
+                                runSpacing: 2,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
                                   Text(
-                                    order.customerName!,
+                                    order.time,
                                     style: AppTheme.sans(
-                                      size: 14,
-                                      weight: FontWeight.w700,
-                                      color: _Palette.textDark.withValues(
-                                        alpha: 0.8,
+                                      size: 11,
+                                      weight: FontWeight.w600,
+                                      color: statusColor.withValues(
+                                        alpha: 0.7,
                                       ),
                                     ),
                                   ),
-                                Text(
-                                  '${order.items} items ordered',
-                                  style: AppTheme.sans(
-                                    size: 13,
-                                    color: _Palette.textMuted,
-                                    weight: FontWeight.w500,
+                                  Text(
+                                    '•',
+                                    style: AppTheme.sans(
+                                      size: 11,
+                                      weight: FontWeight.w600,
+                                      color: statusColor.withValues(
+                                        alpha: 0.7,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                  LiveTimeAgo(
+                                    dt: order.createdAt,
+                                    style: AppTheme.sans(
+                                      size: 11,
+                                      weight: FontWeight.w600,
+                                      color: statusColor.withValues(
+                                        alpha: 0.7,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                        Text(
-                          CurrencyUtils.format(order.total),
-                          style: AppTheme.serif(
-                            size: 22,
-                            weight: FontWeight.w900,
-                            color: _Palette.milanoRedDeep,
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.6),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.arrow_forward_ios,
+                            size: 12,
+                            color: statusColor.withValues(alpha: 0.7),
                           ),
                         ),
                       ],
                     ),
+                  ),
 
-                    const SizedBox(height: 18),
-
-                    // Quick actions or more info could go here
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 13,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                          colors: [
-                            _Palette.canvas,
-                            _Palette.canvasDeep.withValues(alpha: 0.6),
+                  // Content
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(22, 22, 22, 22),
+                    child: Column(
+                      children: [
+                        // PASS 8: the table/customer/items block is now
+                        // wrapped in `Expanded` with each line given
+                        // `maxLines: 1` + ellipsis, and the price is
+                        // wrapped in a `Flexible` + `FittedBox`, so a long
+                        // table/customer name truncates and the price can
+                        // scale down slightly instead of either one
+                        // overflowing off the right edge of a narrow
+                        // card. Same data, same styling, same order.
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(11),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [
+                                          _Palette.milanoRed.withValues(
+                                            alpha: 0.10,
+                                          ),
+                                          _Palette.milanoRed.withValues(
+                                            alpha: 0.04,
+                                          ),
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(13),
+                                      border: Border.all(
+                                        color: _Palette.milanoRedDeep
+                                            .withValues(alpha: 0.12),
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      Icons.table_bar_rounded,
+                                      size: 22,
+                                      color: _Palette.milanoRedDeep,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          order.table,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: AppTheme.serif(
+                                            size: 18,
+                                            weight: FontWeight.w800,
+                                            color: _Palette.textDark,
+                                          ),
+                                        ),
+                                        if (order.customerName != null)
+                                          Text(
+                                            order.customerName!,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: AppTheme.sans(
+                                              size: 14,
+                                              weight: FontWeight.w700,
+                                              color: _Palette.textDark
+                                                  .withValues(alpha: 0.8),
+                                            ),
+                                          ),
+                                        Text(
+                                          '${order.items} items ordered',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: AppTheme.sans(
+                                            size: 13,
+                                            color: _Palette.textMuted,
+                                            weight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Flexible(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerRight,
+                                child: Text(
+                                  CurrencyUtils.format(order.total),
+                                  style: AppTheme.serif(
+                                    size: 22,
+                                    weight: FontWeight.w900,
+                                    color: _Palette.milanoRedDeep,
+                                  ),
+                                ),
+                              ),
+                            ),
                           ],
                         ),
-                        borderRadius: BorderRadius.circular(11),
-                        border: Border.all(
-                          color: _Palette.milanoRedDeep.withValues(
-                            alpha: 0.08,
+
+                        const SizedBox(height: 18),
+
+                        // Quick actions or more info could go here
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 13,
+                            vertical: 10,
                           ),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.person_outline,
-                            size: 14,
-                            color: _Palette.textMuted,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Assigned to Staff',
-                            style: AppTheme.sans(
-                              size: 11,
-                              weight: FontWeight.w600,
-                              color: _Palette.textMuted,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                              colors: [
+                                _Palette.canvas,
+                                _Palette.canvasDeep.withValues(alpha: 0.6),
+                              ],
                             ),
-                          ),
-                          const Spacer(),
-                          Text(
-                            'View Details',
-                            style: AppTheme.sans(
-                              size: 11,
-                              weight: FontWeight.w700,
-                              color: _Palette.milanoRedDeep,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Container(
-                            width: 18,
-                            height: 18,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
+                            borderRadius: BorderRadius.circular(11),
+                            border: Border.all(
                               color: _Palette.milanoRedDeep.withValues(
                                 alpha: 0.08,
                               ),
                             ),
-                            child: const Icon(
-                              Icons.chevron_right_rounded,
-                              size: 13,
-                              color: _Palette.milanoRedDeep,
-                            ),
                           ),
-                        ],
-                      ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.person_outline,
+                                size: 14,
+                                color: _Palette.textMuted,
+                              ),
+                              const SizedBox(width: 6),
+                              // PASS 8: wrapped in `Flexible` + ellipsis so
+                              // this label yields space to the "View
+                              // Details" pill instead of overflowing past
+                              // it on a narrow card.
+                              Flexible(
+                                child: Text(
+                                  'Assigned to Staff',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTheme.sans(
+                                    size: 11,
+                                    weight: FontWeight.w600,
+                                    color: _Palette.textMuted,
+                                  ),
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                'View Details',
+                                style: AppTheme.sans(
+                                  size: 11,
+                                  weight: FontWeight.w700,
+                                  color: _Palette.milanoRedDeep,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                width: 18,
+                                height: 18,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: _Palette.milanoRedDeep.withValues(
+                                    alpha: 0.08,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.chevron_right_rounded,
+                                  size: 13,
+                                  color: _Palette.milanoRedDeep,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ],
       ),

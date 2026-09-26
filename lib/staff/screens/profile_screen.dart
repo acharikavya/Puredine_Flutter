@@ -41,7 +41,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 /// without a new shared import, which would go beyond a pure UI-only
 /// change here).
 ///
-/// UI-ENHANCEMENT PASS (this pass — flat bottom edge to match Tables/
+/// UI-ENHANCEMENT PASS (flat bottom edge to match Tables/
 /// Create Order headers): `_ProfileHeroHeader`'s bottom edge is now a
 /// straight, flat line instead of the previous rounded bottom corners.
 /// The rounded `BorderRadius` on the header `Container`'s decoration was
@@ -54,6 +54,39 @@ import 'package:flutter_animate/flutter_animate.dart';
 /// other part of this file (`_SectionCard`, `_ProfileRow`, `_QuickLink`,
 /// `_SignOutButton`, and all provider/navigation/logout logic in
 /// `ProfileScreen`). Presentation only.
+///
+/// UI-ENHANCEMENT PASS (this pass — full three-tier responsive layout):
+/// responsive-layout-only — no provider, controller, route, callback, or
+/// keyword anywhere in this file was touched, and no field/callback was
+/// renamed.
+///   1. RESPONSIVE BREAKPOINTS: the screen now measures the available
+///      width via a `_DeviceType` breakpoint (mobile < 700, tablet
+///      700–1100, desktop ≥ 1100) — matching the same breakpoint already
+///      used on the Orders / Tables screens, so every staff screen
+///      switches layouts at identical widths — instead of the previous
+///      single `isMobile` split at 800px used only inside the header.
+///   2. CONTENT WIDTH: on tablet and desktop the scrollable card column
+///      is now capped to a comfortable reading width (860px tablet /
+///      1080px desktop) and centered, instead of stretching every card
+///      edge-to-edge across a wide tablet or laptop viewport. The hero
+///      header's inner content is centered to the same width so the
+///      avatar/name line up with the cards below it on larger screens.
+///      Mobile keeps the original full-width layout untouched.
+///   3. DESKTOP TWO-COLUMN LAYOUT: on desktop only, "Personal Details"
+///      now sits in a wider left column alongside a right column holding
+///      "Quick Access" and the App Info/Sign Out card stacked beneath it
+///      — a denser, more professional dashboard-style layout that makes
+///      better use of the extra horizontal space. Mobile and tablet keep
+///      the original single stacked column, in the original order,
+///      unchanged. Every card's own content, spacing between its
+///      internal rows, and all callbacks/logic inside each card are
+///      completely unchanged — only which column each whole card sits in
+///      changed on desktop.
+///   4. TYPE SCALE & SPACING: the hero header's padding, avatar size, and
+///      name type scale, plus each `_SectionCard`'s own padding, now have
+///      a dedicated tablet value between the existing mobile and desktop
+///      sizing, instead of jumping straight from phone sizing to laptop
+///      sizing.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   static const Color milanoRed =
@@ -129,6 +162,18 @@ class _Palette {
       ];
 }
 
+/// Simple responsive breakpoint helper — layout-only, does not touch any
+/// provider/navigation/logout logic anywhere in this file. Matches the
+/// same breakpoint values already used on the Orders / Tables screens so
+/// every staff screen switches layouts at exactly the same widths.
+enum _DeviceType { mobile, tablet, desktop }
+
+_DeviceType _deviceTypeForWidth(double width) {
+  if (width < 700) return _DeviceType.mobile;
+  if (width < 1100) return _DeviceType.tablet;
+  return _DeviceType.desktop;
+}
+
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -151,6 +196,275 @@ class ProfileScreen extends StatelessWidget {
         .take(2)
         .map((s) => s[0].toUpperCase())
         .join();
+
+    // Three-tier breakpoint (mobile / tablet / desktop) shared by the
+    // hero header and the scrollable card layout below, so both read the
+    // same device width and switch together.
+    final deviceType = _deviceTypeForWidth(MediaQuery.of(context).size.width);
+    final isTablet = deviceType == _DeviceType.tablet;
+    final isDesktop = deviceType == _DeviceType.desktop;
+
+    // Tablet/desktop content is capped to a comfortable reading width and
+    // centered, like the rest of the staff app's screens, instead of
+    // stretching every card edge-to-edge on a wide tablet or laptop
+    // viewport. Mobile keeps the original full-width behavior.
+    final double maxContentWidth =
+        isDesktop ? 1080 : (isTablet ? 860 : double.infinity);
+    final double outerPadding = isDesktop ? 28 : (isTablet ? 24 : 20);
+
+    // ── The three cards, built once so they can be arranged either as a
+    // single stacked column (mobile/tablet, original order) or split
+    // across two columns (desktop only) below — same widgets, same
+    // content, same animations, just placed differently.
+    final Widget personalDetailsCard = _SectionCard(
+      title: 'Personal Details',
+      icon: Icons.badge_rounded,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _ProfileRow(
+            icon: Icons.email_outlined,
+            label: 'Email',
+            value: user?.email ?? 'N/A',
+            iconColor: AppColors.info,
+            iconBg: AppColors.infoLight,
+          ),
+          const SizedBox(height: 14),
+          _ProfileRow(
+            icon: Icons.work_rounded,
+            label: 'Role',
+            value: roleLabel,
+            iconColor: accentColor,
+            iconBg: isBilling
+                ? AppColors.billingAccentLight
+                : AppColors.servingAccentLight,
+          ),
+          const SizedBox(height: 14),
+          _ProfileRow(
+            icon: Icons.restaurant_rounded,
+            label: 'Restaurant',
+            value: user?.restaurantName ?? 'PUREDINE',
+            iconColor: _Palette.milanoRedDeep,
+            iconBg: _Palette.milanoRed.withValues(
+              alpha: 0.08,
+            ),
+          ),
+          if (user?.phone != null) ...[
+            const SizedBox(height: 14),
+            _ProfileRow(
+              icon: Icons.phone_rounded,
+              label: 'Phone',
+              value: user!.phone!,
+              iconColor: AppColors.success,
+              iconBg: AppColors.successLight,
+            ),
+          ],
+          const SizedBox(height: 14),
+          _ProfileRow(
+            icon: Icons.calendar_today_rounded,
+            label: 'Joined On',
+            value: _formatDate(user?.createdAt),
+            iconColor: _Palette.textMuted,
+            iconBg: _Palette.canvasDeep,
+          ),
+        ],
+      ),
+    ).animate().fade(duration: 400.ms).slideY(
+          begin: 0.06,
+          duration: 400.ms,
+          curve: Curves.easeOutQuad,
+        );
+
+    final Widget quickAccessCard = _SectionCard(
+      title: 'Quick Access',
+      icon: Icons.bolt_rounded,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (!isBilling) ...[
+            _QuickLink(
+              icon: Icons.receipt_long_rounded,
+              label: 'View Active Orders',
+              accentColor: _Palette.milanoRedDeep,
+              onTap: () => context.push('/staff/orders'),
+            ),
+            Divider(
+              height: 20,
+              color: _Palette.milanoRedDeep.withValues(
+                alpha: 0.08,
+              ),
+            ),
+            _QuickLink(
+              icon: Icons.table_restaurant_rounded,
+              label: 'Floor Plan',
+              accentColor: AppColors.billingAccent,
+              onTap: () => context.push('/staff/tables'),
+            ),
+          ] else ...[
+            _QuickLink(
+              icon: Icons.account_balance_wallet_rounded,
+              label: 'Billing & Payments',
+              accentColor: AppColors.billingAccent,
+              onTap: () => context.push('/staff/billing'),
+            ),
+          ],
+        ],
+      ),
+    ).animate().fade(duration: 400.ms, delay: 80.ms).slideY(
+          begin: 0.06,
+          duration: 400.ms,
+          curve: Curves.easeOutQuad,
+        );
+
+    final Widget appInfoCard = _SectionCard(
+      title: null,
+      icon: null,
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          _Palette.milanoRedLight,
+                          _Palette.milanoRedDeep,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(11),
+                      border: Border.all(
+                        color: _Palette.gold.withValues(
+                          alpha: 0.5,
+                        ),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _Palette.milanoRedDeep.withValues(alpha: 0.20),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.restaurant_menu_rounded,
+                      size: 17,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'RestaurantOS',
+                        style: AppTheme.serif(
+                          size: 15,
+                          weight: FontWeight.w800,
+                          color: _Palette.textDark,
+                        ),
+                      ),
+                      Text(
+                        'Staff App v1.0.0',
+                        style: AppTheme.sans(
+                          size: 12,
+                          color: _Palette.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(
+                    alpha: 0.1,
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: accentColor.withValues(
+                      alpha: 0.2,
+                    ),
+                  ),
+                ),
+                child: Text(
+                  isBilling ? 'BILLING' : 'SERVING',
+                  style: AppTheme.sans(
+                    size: 10,
+                    weight: FontWeight.w800,
+                    color: accentColor,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          // Full-width logout button — soft hover/press
+          // lift, same async onTap logic.
+          _SignOutButton(
+            onTap: () async {
+              final navigator = GoRouter.of(context);
+              final rootAuth = context.read<AuthProvider>();
+              await auth.logout();
+              await rootAuth.logout();
+              navigator.go('/login');
+            },
+          ),
+        ],
+      ),
+    ).animate().fade(duration: 400.ms, delay: 160.ms).slideY(
+          begin: 0.06,
+          duration: 400.ms,
+          curve: Curves.easeOutQuad,
+        );
+
+    // On desktop only: "Personal Details" sits in a wider left column,
+    // "Quick Access" and the App Info/Sign Out card stack in a narrower
+    // right column beside it — a denser, more professional dashboard
+    // layout that makes use of the extra horizontal space. Mobile and
+    // tablet keep the original single stacked column, in the original
+    // order.
+    final Widget cardsLayout = isDesktop
+        ? Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 3,
+                child: personalDetailsCard,
+              ),
+              const SizedBox(width: 18),
+              Expanded(
+                flex: 2,
+                child: Column(
+                  children: [
+                    quickAccessCard,
+                    const SizedBox(height: 18),
+                    appInfoCard,
+                  ],
+                ),
+              ),
+            ],
+          )
+        : Column(
+            children: [
+              personalDetailsCard,
+              const SizedBox(height: 18),
+              quickAccessCard,
+              const SizedBox(height: 18),
+              appInfoCard,
+            ],
+          );
 
     return Scaffold(
       backgroundColor: _Palette.canvas,
@@ -295,233 +609,17 @@ class ProfileScreen extends StatelessWidget {
 
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      // ── Personal Details Card ──
-                      _SectionCard(
-                        title: 'Personal Details',
-                        icon: Icons.badge_rounded,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _ProfileRow(
-                              icon: Icons.email_outlined,
-                              label: 'Email',
-                              value: user?.email ?? 'N/A',
-                              iconColor: AppColors.info,
-                              iconBg: AppColors.infoLight,
-                            ),
-                            const SizedBox(height: 14),
-                            _ProfileRow(
-                              icon: Icons.work_rounded,
-                              label: 'Role',
-                              value: roleLabel,
-                              iconColor: accentColor,
-                              iconBg: isBilling
-                                  ? AppColors.billingAccentLight
-                                  : AppColors.servingAccentLight,
-                            ),
-                            const SizedBox(height: 14),
-                            _ProfileRow(
-                              icon: Icons.restaurant_rounded,
-                              label: 'Restaurant',
-                              value: user?.restaurantName ?? 'PUREDINE',
-                              iconColor: _Palette.milanoRedDeep,
-                              iconBg: _Palette.milanoRed.withValues(
-                                alpha: 0.08,
-                              ),
-                            ),
-                            if (user?.phone != null) ...[
-                              const SizedBox(height: 14),
-                              _ProfileRow(
-                                icon: Icons.phone_rounded,
-                                label: 'Phone',
-                                value: user!.phone!,
-                                iconColor: AppColors.success,
-                                iconBg: AppColors.successLight,
-                              ),
-                            ],
-                            const SizedBox(height: 14),
-                            _ProfileRow(
-                              icon: Icons.calendar_today_rounded,
-                              label: 'Joined On',
-                              value: _formatDate(user?.createdAt),
-                              iconColor: _Palette.textMuted,
-                              iconBg: _Palette.canvasDeep,
-                            ),
-                          ],
-                        ),
-                      ).animate().fade(duration: 400.ms).slideY(
-                            begin: 0.06,
-                            duration: 400.ms,
-                            curve: Curves.easeOutQuad,
-                          ),
-
-                      const SizedBox(height: 18),
-
-                      // ── Quick Access Card ──
-                      _SectionCard(
-                        title: 'Quick Access',
-                        icon: Icons.bolt_rounded,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (!isBilling) ...[
-                              _QuickLink(
-                                icon: Icons.receipt_long_rounded,
-                                label: 'View Active Orders',
-                                accentColor: _Palette.milanoRedDeep,
-                                onTap: () => context.push('/staff/orders'),
-                              ),
-                              Divider(
-                                height: 20,
-                                color: _Palette.milanoRedDeep.withValues(
-                                  alpha: 0.08,
-                                ),
-                              ),
-                              _QuickLink(
-                                icon: Icons.table_restaurant_rounded,
-                                label: 'Floor Plan',
-                                accentColor: AppColors.billingAccent,
-                                onTap: () => context.push('/staff/tables'),
-                              ),
-                            ] else ...[
-                              _QuickLink(
-                                icon: Icons.account_balance_wallet_rounded,
-                                label: 'Billing & Payments',
-                                accentColor: AppColors.billingAccent,
-                                onTap: () => context.push('/staff/billing'),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ).animate().fade(duration: 400.ms, delay: 80.ms).slideY(
-                            begin: 0.06,
-                            duration: 400.ms,
-                            curve: Curves.easeOutQuad,
-                          ),
-
-                      const SizedBox(height: 18),
-
-                      // ── App Info + Logout ──
-                      _SectionCard(
-                        title: null,
-                        icon: null,
-                        child: Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 36,
-                                      height: 36,
-                                      decoration: BoxDecoration(
-                                        gradient: const LinearGradient(
-                                          colors: [
-                                            _Palette.milanoRedLight,
-                                            _Palette.milanoRedDeep,
-                                          ],
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                        ),
-                                        borderRadius: BorderRadius.circular(11),
-                                        border: Border.all(
-                                          color: _Palette.gold.withValues(
-                                            alpha: 0.5,
-                                          ),
-                                        ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: _Palette.milanoRedDeep
-                                                .withValues(alpha: 0.20),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 3),
-                                          ),
-                                        ],
-                                      ),
-                                      child: const Icon(
-                                        Icons.restaurant_menu_rounded,
-                                        size: 17,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'RestaurantOS',
-                                          style: AppTheme.serif(
-                                            size: 15,
-                                            weight: FontWeight.w800,
-                                            color: _Palette.textDark,
-                                          ),
-                                        ),
-                                        Text(
-                                          'Staff App v1.0.0',
-                                          style: AppTheme.sans(
-                                            size: 12,
-                                            color: _Palette.textMuted,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: accentColor.withValues(
-                                      alpha: 0.1,
-                                    ),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: accentColor.withValues(
-                                        alpha: 0.2,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    isBilling ? 'BILLING' : 'SERVING',
-                                    style: AppTheme.sans(
-                                      size: 10,
-                                      weight: FontWeight.w800,
-                                      color: accentColor,
-                                      letterSpacing: 0.8,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                            // Full-width logout button — soft hover/press
-                            // lift, same async onTap logic.
-                            _SignOutButton(
-                              onTap: () async {
-                                final navigator = GoRouter.of(context);
-                                final rootAuth = context.read<AuthProvider>();
-                                await auth.logout();
-                                await rootAuth.logout();
-                                navigator.go('/login');
-                              },
-                            ),
-                          ],
-                        ),
-                      ).animate().fade(duration: 400.ms, delay: 160.ms).slideY(
-                            begin: 0.06,
-                            duration: 400.ms,
-                            curve: Curves.easeOutQuad,
-                          ),
-
-                      const SizedBox(height: 8),
-                    ],
+                  padding: EdgeInsets.all(outerPadding),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: maxContentWidth),
+                      child: Column(
+                        children: [
+                          cardsLayout,
+                          const SizedBox(height: 8),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -584,6 +682,10 @@ class _TitleDivider extends StatelessWidget {
 // from the warm off-white canvas into the Soft Cream card tone, a solid
 // Pale Rose (#EFD7DA) border, and a Dusty Blush (#F3D9DC) icon chip — same
 // card footprint and content as before, colors only.
+//
+// UI-ENHANCEMENT PASS: padding now has a dedicated tablet value (between
+// the existing mobile and desktop sizing) instead of a single fixed value
+// for every width. Same content, same structure.
 class _SectionCard extends StatelessWidget {
   final String? title;
   final IconData? icon;
@@ -594,9 +696,14 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final deviceType = _deviceTypeForWidth(MediaQuery.of(context).size.width);
+    final isMobile = deviceType == _DeviceType.mobile;
+    final isTablet = deviceType == _DeviceType.tablet;
+    final double cardPadding = isMobile ? 20 : (isTablet ? 24 : 26);
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(22),
+      padding: EdgeInsets.all(cardPadding),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -692,13 +799,23 @@ class _SectionCard extends StatelessWidget {
 // signatures touched (onBack is still accepted, still not rendered,
 // exactly as before).
 //
-// UI-ENHANCEMENT PASS (this pass): the bottom edge is now a straight,
+// UI-ENHANCEMENT PASS: the bottom edge is now a straight,
 // flat line instead of the previous rounded bottom corners — matching the
 // flat-bottom topbar treatment used on the Tables / Create Order screens'
 // headers. The rounded `BorderRadius` was removed from this Container's
 // decoration and a thin warm-gold hairline border was added along the
 // bottom edge, mirroring those screens' own bottom-edge accent. The
 // gradient, shadow stack, avatar, name, and badges are all unchanged.
+//
+// UI-ENHANCEMENT PASS (this pass — three-tier responsive): the single
+// `isMobile` split at 800px is now a three-tier `_DeviceType` breakpoint
+// (mobile/tablet/desktop), matching the rest of the staff app, so the
+// header's padding, avatar size, and name type scale each get a
+// dedicated tablet value instead of jumping straight from phone sizing to
+// desktop sizing. The header's inner content is also centered to the
+// same max content width used by the scrollable cards below it, so the
+// avatar/name line up with the cards on tablet/desktop. Structure, text,
+// callbacks and data are unchanged.
 class _ProfileHeroHeader extends StatelessWidget {
   final String name;
   final String initials;
@@ -718,7 +835,19 @@ class _ProfileHeroHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 800;
+    final deviceType = _deviceTypeForWidth(MediaQuery.of(context).size.width);
+    final isMobile = deviceType == _DeviceType.mobile;
+    final isTablet = deviceType == _DeviceType.tablet;
+    final isDesktop = deviceType == _DeviceType.desktop;
+
+    final double horizontalPadding = isMobile ? 16 : (isTablet ? 20 : 24);
+    final double topPadding = isMobile ? 20 : (isTablet ? 22 : 24);
+    final double bottomPadding = isMobile ? 26 : (isTablet ? 28 : 30);
+    final double avatarSize = isMobile ? 72 : (isTablet ? 78 : 84);
+    final double avatarFontSize = isMobile ? 26 : (isTablet ? 28 : 30);
+    final double nameSize = isMobile ? 20 : (isTablet ? 21 : 22);
+    final double maxContentWidth =
+        isDesktop ? 1080 : (isTablet ? 860 : double.infinity);
 
     return ClipRect(
       child: Container(
@@ -748,185 +877,190 @@ class _ProfileHeroHeader extends StatelessWidget {
           children: [
             SafeArea(
               bottom: false,
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  isMobile ? 16 : 24,
-                  20,
-                  isMobile ? 16 : 24,
-                  26,
-                ),
-                child: Row(
-                  children: [
-                    // Initials Avatar with gold ring
-                    Stack(
-                      children: [
-                        Container(
-                          width: 72,
-                          height: 72,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [
-                                _Palette.milanoRed,
-                                _Palette.milanoRedDeep,
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: _Palette.gold.withValues(
-                                alpha: 0.85,
-                              ),
-                              width: 2.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: _Palette.gold.withValues(
-                                  alpha: 0.3,
-                                ),
-                                blurRadius: 16,
-                                offset: const Offset(0, 6),
-                              ),
-                            ],
-                          ),
-                          child: Center(
-                            child: Text(
-                              initials,
-                              style: AppTheme.serif(
-                                size: 26,
-                                weight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                        // Online status dot
-                        Positioned(
-                          bottom: 2,
-                          right: 2,
-                          child: Container(
-                            width: 16,
-                            height: 16,
-                            decoration: BoxDecoration(
-                              color: _Palette.successGreen,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: _Palette.milanoRedDeep,
-                                width: 2,
-                              ),
-                            ),
-                          )
-                              .animate(
-                                onPlay: (c) => c.repeat(reverse: true),
-                              )
-                              .scale(
-                                begin: const Offset(0.85, 0.85),
-                                end: const Offset(1.1, 1.1),
-                                duration: 1500.ms,
-                                curve: Curves.easeInOut,
-                              ),
-                        ),
-                      ],
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: maxContentWidth),
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      horizontalPadding,
+                      topPadding,
+                      horizontalPadding,
+                      bottomPadding,
                     ),
-
-                    const SizedBox(width: 20),
-
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            name,
-                            style: AppTheme.serif(
-                              size: isMobile ? 20 : 22,
-                              weight: FontWeight.w800,
-                              color: Colors.white,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 8),
-                          const _TitleDivider(),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            spacing: 8,
-                            runSpacing: 6,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
+                    child: Row(
+                      children: [
+                        // Initials Avatar with gold ring
+                        Stack(
+                          children: [
+                            Container(
+                              width: avatarSize,
+                              height: avatarSize,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    _Palette.milanoRed,
+                                    _Palette.milanoRedDeep,
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: _Palette.lemonChiffon.withValues(
-                                    alpha: 0.2,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: _Palette.gold.withValues(
+                                    alpha: 0.85,
                                   ),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
+                                  width: 2.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
                                     color: _Palette.gold.withValues(
-                                      alpha: 0.55,
+                                      alpha: 0.3,
                                     ),
+                                    blurRadius: 16,
+                                    offset: const Offset(0, 6),
                                   ),
-                                ),
+                                ],
+                              ),
+                              child: Center(
                                 child: Text(
-                                  roleLabel.toUpperCase(),
-                                  style: AppTheme.sans(
-                                    size: 10,
+                                  initials,
+                                  style: AppTheme.serif(
+                                    size: avatarFontSize,
                                     weight: FontWeight.w800,
-                                    color: _Palette.lemonChiffon,
-                                    letterSpacing: 0.8,
+                                    color: Colors.white,
                                   ),
                                 ),
                               ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
+                            ),
+                            // Online status dot
+                            Positioned(
+                              bottom: 2,
+                              right: 2,
+                              child: Container(
+                                width: 16,
+                                height: 16,
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(
-                                    alpha: 0.14,
-                                  ),
-                                  borderRadius: BorderRadius.circular(8),
+                                  color: _Palette.successGreen,
+                                  shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: Colors.white.withValues(
-                                      alpha: 0.2,
-                                    ),
+                                    color: _Palette.milanoRedDeep,
+                                    width: 2,
                                   ),
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      width: 6,
-                                      height: 6,
-                                      decoration: const BoxDecoration(
-                                        color: _Palette.successGreen,
-                                        shape: BoxShape.circle,
+                              )
+                                  .animate(
+                                    onPlay: (c) => c.repeat(reverse: true),
+                                  )
+                                  .scale(
+                                    begin: const Offset(0.85, 0.85),
+                                    end: const Offset(1.1, 1.1),
+                                    duration: 1500.ms,
+                                    curve: Curves.easeInOut,
+                                  ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(width: 20),
+
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                name,
+                                style: AppTheme.serif(
+                                  size: nameSize,
+                                  weight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 8),
+                              const _TitleDivider(),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                spacing: 8,
+                                runSpacing: 6,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _Palette.lemonChiffon.withValues(
+                                        alpha: 0.2,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: _Palette.gold.withValues(
+                                          alpha: 0.55,
+                                        ),
                                       ),
                                     ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      'ACTIVE NOW',
+                                    child: Text(
+                                      roleLabel.toUpperCase(),
                                       style: AppTheme.sans(
                                         size: 10,
-                                        weight: FontWeight.w700,
-                                        color: Colors.white,
+                                        weight: FontWeight.w800,
+                                        color: _Palette.lemonChiffon,
+                                        letterSpacing: 0.8,
                                       ),
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.14,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.2,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          width: 6,
+                                          height: 6,
+                                          decoration: const BoxDecoration(
+                                            color: _Palette.successGreen,
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'ACTIVE NOW',
+                                          style: AppTheme.sans(
+                                            size: 10,
+                                            weight: FontWeight.w700,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
-                )
-                    .animate()
-                    .fade(duration: 400.ms)
-                    .slideX(begin: -0.05, curve: Curves.easeOutQuad),
+                        ),
+                      ],
+                    )
+                        .animate()
+                        .fade(duration: 400.ms)
+                        .slideX(begin: -0.05, curve: Curves.easeOutQuad),
+                  ),
+                ),
               ),
             ),
           ],

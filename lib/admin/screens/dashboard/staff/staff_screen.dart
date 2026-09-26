@@ -37,8 +37,8 @@ import 'package:restaurant_unified_app/admin/services/staff_service.dart';
 ///      underline accent.
 ///   2. PALETTE: `canvas` was brightened to a true, near-white tone.
 ///
-/// UI-ENHANCEMENT PASS 4 (this pass): presentation-only, exactly like
-/// every pass above — no provider/service call, dialog, filtering, search,
+/// UI-ENHANCEMENT PASS 4: presentation-only, exactly like every pass
+/// above — no provider/service call, dialog, filtering, search,
 /// toggle/delete logic, table rendering, or navigation target anywhere in
 /// this file was touched, and no field, callback, route, or keyword was
 /// renamed.
@@ -93,6 +93,35 @@ import 'package:restaurant_unified_app/admin/services/staff_service.dart';
 ///      icon-BG, and an extra soft blush glow was added low in the
 ///      backdrop so the bottom of a long scroll keeps the same warm tint
 ///      as the top.
+///
+/// UI-ENHANCEMENT PASS 5 (this pass): RESPONSIVE LAYOUT + TABLET/LAPTOP
+/// POLISH ONLY. No provider/service call, dialog, filtering, search,
+/// toggle/delete logic, table rendering logic, field, callback, route, or
+/// keyword anywhere in this file was touched or renamed.
+///   1. BREAKPOINTS: the screen previously only understood two sizes
+///      (`isMobile` true/false, split at 800px), so a real tablet
+///      (~700–1100px) fell awkwardly between the two. `build()` now
+///      computes three tiers — `isMobile` (<700), `isTablet`
+///      (700–1099), `isDesktop` (≥1100) — and threads `isTablet` down
+///      into `_buildHeader`, `_buildStatsRow`, `_buildStatCard`,
+///      `_buildFiltersBar`, `_buildStaffList`, and
+///      `_buildStaffMobileCard` as a new *optional, defaulted* parameter,
+///      so every existing call site and every existing behaviour keeps
+///      working exactly as before.
+///   2. TABLET LIST: the six-column staff table was cramped below
+///      ~1100px, so tablet widths now reuse the exact same per-member
+///      card widget the phone layout already uses (`_buildStaffMobileCard`
+///      — identical data, identical edit/delete/toggle callbacks), laid
+///      out as a two-column `Wrap` instead of one long column, so tablets
+///      get a proper grid instead of a squeezed table or an empty-feeling
+///      single column.
+///   3. FIT-AND-FINISH: header padding/title size, stat-card padding and
+///      value size, page padding, and card padding now step through
+///      mobile → tablet → desktop instead of jumping straight from phone
+///      sizing to desktop sizing, and the stat-card label got
+///      `maxLines`/`overflow` protection so it can never wrap awkwardly
+///      at in-between widths. Purely cosmetic sizing — no widget was
+///      removed, reordered, or given new behaviour.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   _Palette._();
@@ -876,7 +905,17 @@ class _StaffScreenState extends State<StaffScreen> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final isMobile = size.width < 800;
+    // PASS 5 — RESPONSIVE LAYOUT: three-tier breakpoint system (mobile /
+    // tablet / laptop-desktop) replaces the old single isMobile flag, so
+    // every section below can size itself correctly for tablets and
+    // laptops instead of snapping straight from "mobile" to "desktop" at
+    // one cutoff. Presentation only — no provider/service call, dialog,
+    // filtering, toggle/delete logic, table rendering logic, or
+    // navigation target was touched anywhere in this file.
+    final width = size.width;
+    final isMobile = width < 700;
+    final isTablet = width >= 700 && width < 1100;
+    final isDesktop = width >= 1100;
     final mediaQuery = MediaQuery.of(context);
 
     // Extra bottom inset (home indicator / gesture bar) so the scrollable
@@ -891,7 +930,7 @@ class _StaffScreenState extends State<StaffScreen> {
           // ── Header Section ───────────────────────────────────────────────
           // Fixed at the top, exactly like MenuScreen/AdminDashboardScreen —
           // it no longer scrolls away with the content beneath it.
-          _buildHeader(isMobile),
+          _buildHeader(isMobile, isTablet: isTablet),
 
           // ── Main Body Section ────────────────────────────────────────────
           Expanded(
@@ -1058,20 +1097,22 @@ class _StaffScreenState extends State<StaffScreen> {
                       )
                     : SingleChildScrollView(
                         padding: EdgeInsets.fromLTRB(
-                          isMobile ? 16 : 40,
+                          isMobile ? 16 : (isTablet ? 28 : 40),
                           28,
-                          isMobile ? 16 : 40,
+                          isMobile ? 16 : (isTablet ? 28 : 40),
                           100 + bottomSafePad, // Extra bottom padding
                         ),
                         child: Center(
                           child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 1200),
+                            constraints: BoxConstraints(
+                              maxWidth: isDesktop ? 1200 : double.infinity,
+                            ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _buildStatsRow(isMobile),
+                                _buildStatsRow(isMobile, isTablet: isTablet),
                                 const SizedBox(height: 24),
-                                _buildFiltersBar(isMobile),
+                                _buildFiltersBar(isMobile, isTablet: isTablet),
                                 const SizedBox(height: 24),
                                 Row(
                                   children: [
@@ -1095,7 +1136,7 @@ class _StaffScreenState extends State<StaffScreen> {
                                   ],
                                 ),
                                 const SizedBox(height: 16),
-                                _buildStaffList(isMobile),
+                                _buildStaffList(isMobile, isTablet: isTablet),
                               ],
                             ),
                           ),
@@ -1124,7 +1165,12 @@ class _StaffScreenState extends State<StaffScreen> {
   /// icon button (still `_showAddDialog`). Only the copy's colors changed
   /// so it reads clearly on the wine backdrop. No navigation, dialog, or
   /// any other logic was touched — presentation only.
-  Widget _buildHeader(bool isMobile) {
+  ///
+  /// PASS 5: accepts an optional `isTablet` flag so title size and
+  /// padding can step through mobile → tablet → desktop instead of
+  /// jumping straight from phone sizing to desktop sizing. Same
+  /// structure, same callbacks, same content — sizing only.
+  Widget _buildHeader(bool isMobile, {bool isTablet = false}) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -1169,7 +1215,7 @@ class _StaffScreenState extends State<StaffScreen> {
                       bottom: isMobile ? -20 : -16,
                       child: Icon(
                         Icons.groups_2_rounded,
-                        size: isMobile ? 120 : 160,
+                        size: isMobile ? 120 : (isTablet ? 138 : 160),
                         color: Colors.white.withValues(alpha: 0.05),
                       ),
                     ),
@@ -1198,10 +1244,10 @@ class _StaffScreenState extends State<StaffScreen> {
             bottom: false,
             child: Padding(
               padding: EdgeInsets.fromLTRB(
-                isMobile ? 18 : 32,
-                isMobile ? 16 : 22,
-                isMobile ? 18 : 32,
-                isMobile ? 18 : 24,
+                isMobile ? 18 : (isTablet ? 26 : 32),
+                isMobile ? 16 : (isTablet ? 20 : 22),
+                isMobile ? 18 : (isTablet ? 26 : 32),
+                isMobile ? 18 : (isTablet ? 22 : 24),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1226,7 +1272,7 @@ class _StaffScreenState extends State<StaffScreen> {
                             _roleLabel,
                             style: GoogleFonts.playfairDisplay(
                               color: Colors.white,
-                              fontSize: isMobile ? 21 : 28,
+                              fontSize: isMobile ? 21 : (isTablet ? 24 : 28),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -1252,7 +1298,7 @@ class _StaffScreenState extends State<StaffScreen> {
                     _roleSubtitle,
                     style: GoogleFonts.inter(
                       color: Colors.white.withValues(alpha: 0.75),
-                      fontSize: isMobile ? 12.5 : 14,
+                      fontSize: isMobile ? 12.5 : (isTablet ? 13 : 14),
                     ),
                   ),
                   SizedBox(height: isMobile ? 12 : 14),
@@ -1329,7 +1375,13 @@ class _StaffScreenState extends State<StaffScreen> {
     );
   }
 
-  Widget _buildStatsRow(bool isMobile) {
+  /// PASS 5: accepts an optional `isTablet` flag. Mobile keeps its
+  /// horizontal-scroll row exactly as before; tablet and desktop share
+  /// the same three-across `Row`, with tablet using a tighter 16px gutter
+  /// (instead of desktop's 24px) so the cards keep comfortable internal
+  /// padding without crowding a narrower tablet width. Same data, same
+  /// colors, same icons as before.
+  Widget _buildStatsRow(bool isMobile, {bool isTablet = false}) {
     final total = _allStaff.length;
     final active = _allStaff.where((s) => s.isActive).length;
     final inactive = total - active;
@@ -1375,22 +1427,25 @@ class _StaffScreenState extends State<StaffScreen> {
           _Palette.milanoRed,
           false,
           Icons.groups_2_outlined,
+          isTablet: isTablet,
         ),
-        const SizedBox(width: 24),
+        SizedBox(width: isTablet ? 16 : 24),
         _buildStatCard(
           'Active',
           active.toString(),
           _Palette.success,
           false,
           Icons.check_circle_outline,
+          isTablet: isTablet,
         ),
-        const SizedBox(width: 24),
+        SizedBox(width: isTablet ? 16 : 24),
         _buildStatCard(
           'Inactive',
           inactive.toString(),
           _Palette.milanoRedDeep,
           false,
           Icons.pause_circle_outline,
+          isTablet: isTablet,
         ),
       ],
     );
@@ -1401,8 +1456,9 @@ class _StaffScreenState extends State<StaffScreen> {
     String value,
     Color color,
     bool isMobile,
-    IconData icon,
-  ) {
+    IconData icon, {
+    bool isTablet = false,
+  }) {
     // Wrapped in a clipped Column with a slim color-coded top cap,
     // matching the Orders screen's stat-card treatment, so each figure
     // carries its own subtle identity at a glance. Same
@@ -1412,6 +1468,11 @@ class _StaffScreenState extends State<StaffScreen> {
     // PASS 4: the card body now sits on a white → Soft Cream wash with a
     // Pale Rose border, matching the PUREDINE card spec — decoration
     // only, no data changed.
+    //
+    // PASS 5: padding and value font size now step through mobile →
+    // tablet → desktop, and the label gained maxLines/overflow
+    // protection so it can never wrap awkwardly at in-between widths —
+    // sizing/safety only, no data or callback changed.
     Widget cardContent = Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
@@ -1423,7 +1484,7 @@ class _StaffScreenState extends State<StaffScreen> {
         children: [
           Container(height: 3, color: color.withValues(alpha: 0.7)),
           Container(
-            padding: EdgeInsets.all(isMobile ? 16 : 24),
+            padding: EdgeInsets.all(isMobile ? 16 : (isTablet ? 20 : 24)),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
@@ -1441,6 +1502,8 @@ class _StaffScreenState extends State<StaffScreen> {
                     children: [
                       Text(
                         label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
                           color: _Palette.textMuted,
                           fontSize: 12,
@@ -1453,7 +1516,7 @@ class _StaffScreenState extends State<StaffScreen> {
                         value,
                         style: GoogleFonts.inter(
                           color: color,
-                          fontSize: isMobile ? 24 : 32,
+                          fontSize: isMobile ? 24 : (isTablet ? 28 : 32),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -1473,7 +1536,11 @@ class _StaffScreenState extends State<StaffScreen> {
                     ),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Icon(icon, color: color, size: isMobile ? 18 : 22),
+                  child: Icon(
+                    icon,
+                    color: color,
+                    size: isMobile ? 18 : (isTablet ? 20 : 22),
+                  ),
                 ),
               ],
             ),
@@ -1489,9 +1556,14 @@ class _StaffScreenState extends State<StaffScreen> {
     return Expanded(child: cardContent);
   }
 
-  Widget _buildFiltersBar(bool isMobile) {
+  /// PASS 5: accepts an optional `isTablet` flag purely to fine-tune the
+  /// container's own padding and the gap before the status dropdown;
+  /// the mobile stacked layout and the row layout (now shared by tablet
+  /// and desktop) are structurally unchanged — same search field, same
+  /// status dropdown, same `_applyFilters` wiring.
+  Widget _buildFiltersBar(bool isMobile, {bool isTablet = false}) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(isMobile ? 12 : (isTablet ? 14 : 16)),
       decoration: BoxDecoration(
         color: _Palette.cardWhite,
         borderRadius: BorderRadius.circular(18),
@@ -1567,7 +1639,7 @@ class _StaffScreenState extends State<StaffScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: isTablet ? 12 : 16),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
@@ -1606,7 +1678,15 @@ class _StaffScreenState extends State<StaffScreen> {
     );
   }
 
-  Widget _buildStaffList(bool isMobile) {
+  /// PASS 5: accepts an optional `isTablet` flag. Mobile keeps its single
+  /// scrolling column of cards exactly as before. Tablet now also uses
+  /// the same per-member card widget (instead of the six-column table,
+  /// which is cramped below ~1100px) laid out as a two-column `Wrap`, so
+  /// tablets get a proper grid instead of a squeezed table. Desktop keeps
+  /// the exact same table as before. No filtering, toggle/delete, or
+  /// navigation logic was touched — only which layout wraps the same
+  /// `StaffMember` data.
+  Widget _buildStaffList(bool isMobile, {bool isTablet = false}) {
     if (_filteredStaff.isEmpty) {
       return Container(
         width: double.infinity,
@@ -1653,6 +1733,31 @@ class _StaffScreenState extends State<StaffScreen> {
         itemCount: _filteredStaff.length,
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (ctx, i) => _buildStaffMobileCard(_filteredStaff[i]),
+      );
+    }
+
+    if (isTablet) {
+      // Same per-member card as mobile (identical data + callbacks),
+      // arranged as a two-column Wrap so tablets get a proper grid
+      // instead of the six-column table squeezing to fit, and without
+      // forcing a fixed card height (Wrap sizes each card by its own
+      // natural content height, so nothing can overflow/clip).
+      return LayoutBuilder(
+        builder: (ctx, constraints) {
+          final cardWidth = (constraints.maxWidth - 12) / 2;
+          return Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: _filteredStaff
+                .map(
+                  (s) => SizedBox(
+                    width: cardWidth,
+                    child: _buildStaffMobileCard(s, isTablet: true),
+                  ),
+                )
+                .toList(),
+          );
+        },
       );
     }
 
@@ -1704,9 +1809,15 @@ class _StaffScreenState extends State<StaffScreen> {
     );
   }
 
-  Widget _buildStaffMobileCard(StaffMember s) {
+  /// PASS 5: accepts an optional `isTablet` flag purely to give the card
+  /// slightly more breathing room (20px padding instead of 16px) when
+  /// it's used inside the tablet two-column grid from `_buildStaffList`.
+  /// Same avatar, same name/email, same phone row, same edit/delete
+  /// buttons, same `_toggleStaff`/`_showEditDialog`/`_deleteStaff`
+  /// callbacks as before.
+  Widget _buildStaffMobileCard(StaffMember s, {bool isTablet = false}) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isTablet ? 20 : 16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,

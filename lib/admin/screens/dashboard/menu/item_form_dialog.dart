@@ -20,62 +20,65 @@ import 'package:restaurant_unified_app/admin/services/menu_service.dart';
 /// save/submit, image-cleaning logic, dialog structure, or spacing was
 /// touched — presentation only.
 ///
-/// UI-ENHANCEMENT PASS 4 (this pass — PUREDINE re-skin + StaffScreen-style
-/// header): zero changes to form fields, validation, save/submit,
-/// image-cleaning logic, category selection, availability toggle, or
-/// dialog-dismiss behavior anywhere in this file — palette and header
-/// presentation only.
-///   1. HEADER: rebuilt again — away from the Pass-3 majority-white header
-///      and into the SAME structural/visual pattern used by
-///      `StaffScreen._buildHeader()` (and, for consistency, the sibling
-///      `CategoryFormDialog`): a medium-depth (not near-black) PUREDINE
-///      Deep Wine Maroon → Wine diagonal gradient band (`#742A3C →
-///      #813244`) filling the whole header, with the same ambient
-///      dressing — a soft warm-gold corner glow, a large very faint
-///      watermark emblem tucked behind the copy, a subtle diagonal glass
-///      sheen, and a warm-gold hairline along the bottom edge. A small
-///      gold accent-dot row sits above an icon block + two-tone
-///      `ShaderMask` title + subtitle row, all recolored (white / soft
-///      gold) to read clearly on the dark backdrop. The close button is
-///      now the same circular "glass" button StaffScreen/CategoryForm-
-///      Dialog use — its `onPressed` callback
-///      (`Navigator.of(context).pop(false)`, gated on `_isLoading`) is
-///      completely unchanged, only the look changed. The icon shown
-///      (edit vs. add) and the title/subtitle copy still follow the same
-///      `isEditing` condition as before.
-///   2. PALETTE: `_Palette` was swapped to the exact PUREDINE Maroon +
-///      Cream palette supplied by the user:
-///        • `milanoRed`        → Deep Wine Maroon `#742A3C` (primary / topbar)
-///        • `milanoRedLight`   → Wine `#813244` (topbar lighter gradient)
-///        • `milanoRedDeep`    → Burgundy `#8A183F` (primary accent)
-///        • `milanoRedDarkest` → Deep Brown/Black `#2E0D16`
-///        • `canvas`           → Warm Off-White `#FBF8F5` (main background)
-///        • `canvasDeep`       → Soft Cream `#F7F1ED` (card/field background)
-///        • `lemonChiffon`     → Warm Gold `#F3C564` (gold accent)
-///        • `lemonChiffonDeep` → deeper gold `#D9A421` (derived companion)
-///        • `textDark`         → Deep Brown/Black `#2E0D16`
-///        • `textMuted`        → Muted Taupe `#9B707A`
-///        • `success`          → Fresh Green `#44AF70`
-///        • `danger` is kept as a clear alert red (not part of the
-///          supplied palette) so error/invalid states stay legible.
-///      Four supporting PUREDINE tones were added — `dustyBlush`
-///      (`#F3D9DC`, icon backgrounds), `paleRose` (`#EFD7DA`, field/card
-///      borders), `softYellow` (`#FCE1AB`, gold highlight / "OPTIONAL"
-///      chip) and `paleMint` (`#EAF6EF`, success backgrounds; kept for
-///      parity). `headerGradient` now holds the supplied header gradient
-///      exactly (`#742A3C → #813244`), and a new `ctaGradient` field
-///      holds the supplied CTA gradient exactly (`#6E1832 → #9B3E4E →
-///      #F3C564`) — kept for palette-shape parity with the other admin
-///      screens, not referenced elsewhere in this file today.
-///   3. TOP-TO-BOTTOM CONSISTENCY: the form-body panel, every text field,
-///      the category dropdown, the image-preview box, the "OPTIONAL"
-///      chips, the availability switch card, and the action row all
-///      follow the PUREDINE card spec — Soft Cream field fills, Pale Rose
-///      borders, Dusty Blush/Warm Gold accents — so the whole dialog
-///      reads as one brand from the header to the bottom action row. The
-///      "No Category Found" fallback dialog was recolored the same way.
-///      No form fields, validation, save/submit, image-cleaning logic, or
-///      dialog-dismiss behavior was touched.
+/// UI-ENHANCEMENT PASS 4 (PUREDINE re-skin + StaffScreen-style header):
+/// zero changes to form fields, validation, save/submit, image-cleaning
+/// logic, category selection, availability toggle, or dialog-dismiss
+/// behavior anywhere in this file — palette and header presentation only.
+///
+/// RESPONSIVE PASS 5 (mobile / tablet / laptop layout fix + narrower
+/// submit button):
+///   1. Introduced a lightweight `_Responsive` helper that reads the
+///      current screen size and derives sizing tokens (dialog max
+///      width/height, inset padding, header padding, icon sizes, font
+///      sizes, form-body padding/gaps, action-row sizing) across three
+///      breakpoints — mobile (<600), tablet (600–1024) and
+///      desktop/laptop (≥1024). The dialog card, header type scale,
+///      form-field spacing, and image-preview box all now scale with the
+///      breakpoint instead of only branching on a single `isMobile`
+///      flag, so tablet and laptop get their own intentionally larger,
+///      better-proportioned spacing rather than reusing the desktop-ish
+///      540px layout at every non-mobile size.
+///   2. The action row's submit button ("Add Item" / "Save Changes") no
+///      longer stretches to `Expanded(flex: 2)` — it is now a
+///      breakpoint-scaled fixed width (visibly narrower than before),
+///      right-aligned in the row, while the Cancel button expands to
+///      fill the remaining space. On very narrow widths the two buttons
+///      still automatically stack vertically (each full width) instead
+///      of being squeezed, so nothing clips or overflows.
+///   3. The existing `SingleChildScrollView` scrollable body and overall
+///      max-height clamp against the viewport are preserved and now use
+///      the same responsive padding tokens as the header/actions, so the
+///      whole dialog reads as one consistent, professional surface at
+///      every size.
+///
+/// ACTIONS-ROW PASS 6 (equal-size, smaller, right-aligned buttons): the
+/// Cancel and Add Item/Save Changes buttons no longer use the Pass-5
+/// `Expanded(cancel)` + fixed-width-submit split. Both buttons now share
+/// ONE fixed `actionButtonWidth` sizing token (smaller than Pass 5's
+/// `submitButtonWidth`, per breakpoint) and the row is right-aligned via
+/// `MainAxisAlignment.end`. The same fixed width is reused in the narrow
+/// "stacked" layout, right-aligned there too via
+/// `CrossAxisAlignment.end`, instead of stretching to `double.infinity`.
+/// Nothing else in the actions row — button styles, colors, icons, text,
+/// loading spinner, `onPressed` callbacks, or the stacked/row breakpoint
+/// logic — was changed.
+///
+/// ZERO changes were made to `_formKey`, `_submit`, `_cleanImageUrl`,
+/// validators, `onSaved`/`onChanged` callbacks, `MenuService` calls,
+/// `Navigator.of(context).pop(...)` calls, the availability switch logic,
+/// the "No Category Found" fallback dialog's logic, or any other
+/// business logic — this pass is layout/sizing only.
+///
+/// SAME-LINE PASS 9 (mobile buttons on one line): previously, below
+/// `_Responsive.stackedActionsBreakpoint` (360px), the actions
+/// `LayoutBuilder` dropped Cancel and Add Item/Save Changes into a
+/// `Column` so they appeared on two separate lines on very narrow/mobile
+/// widths. That stacking branch was removed — the two buttons now always
+/// render side-by-side in one `Row`, right-aligned, on mobile as well as
+/// tablet/desktop. The buttons' shared `actionButtonWidth` sizing,
+/// `MainAxisAlignment.end` alignment, styles, icons, text, loading
+/// spinner, and `onPressed` callbacks are all unchanged — only the
+/// narrow-width stacking branch was removed.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   // NOTE: field names are unchanged from the previous themes on purpose —
@@ -164,6 +167,97 @@ class _Palette {
           offset: const Offset(0, 4),
         ),
       ];
+}
+
+/// ─────────────────────────────────────────────────────────────────────────
+/// RESPONSIVE PASS 5: small, self-contained sizing helper. Pure UI sizing
+/// math derived from the current viewport — touches no business logic.
+/// Breakpoints: mobile < 600, tablet 600–1024, desktop/laptop ≥ 1024.
+/// ─────────────────────────────────────────────────────────────────────────
+class _Responsive {
+  final double width;
+  final double height;
+
+  _Responsive(this.width, this.height);
+
+  bool get isMobile => width < 600;
+  bool get isTablet => width >= 600 && width < 1024;
+  bool get isDesktop => width >= 1024;
+
+  /// Outer margin between the dialog card and the screen edges.
+  EdgeInsets get insetPadding {
+    if (isDesktop) {
+      return const EdgeInsets.symmetric(horizontal: 60, vertical: 40);
+    }
+    if (isTablet) {
+      return const EdgeInsets.symmetric(horizontal: 40, vertical: 32);
+    }
+    return const EdgeInsets.symmetric(horizontal: 20, vertical: 24);
+  }
+
+  /// The dialog card's max width, capped by both an ideal per-breakpoint
+  /// width AND whatever space is actually left after [insetPadding].
+  double get dialogMaxWidth {
+    final available = width - insetPadding.horizontal;
+    final ideal = isDesktop
+        ? 640.0
+        : isTablet
+            ? 580.0
+            : width * 0.94;
+    return available < ideal ? available : ideal;
+  }
+
+  /// The dialog card's max height, so it never overflows short viewports
+  /// — the form body scrolls internally instead.
+  double get dialogMaxHeight => height * (isMobile ? 0.88 : 0.86);
+
+  // ── Header ──────────────────────────────────────────────────────────
+  double get headerHPad => isDesktop ? 32 : (isTablet ? 28 : 24);
+  double get headerTopPad => isDesktop ? 30 : (isTablet ? 27 : 24);
+  double get headerRightPad => isDesktop ? 22 : (isTablet ? 18 : 16);
+  double get headerBottomPad => isDesktop ? 24 : (isTablet ? 22 : 20);
+
+  double get iconBlockSize => isDesktop ? 56 : (isTablet ? 52 : 48);
+  double get iconBlockRadius => isDesktop ? 16 : (isTablet ? 15 : 14);
+  double get iconSize => isDesktop ? 26 : (isTablet ? 24 : 22);
+
+  double get titleGap => isDesktop ? 18 : (isTablet ? 16 : 14);
+  double get titleFontSize => isDesktop ? 24 : (isTablet ? 22 : 19);
+  double get subtitleFontSize => isDesktop ? 13.5 : (isTablet ? 13 : 12.5);
+  double get subtitleGap => isDesktop ? 7 : 6;
+
+  double get closeButtonSize => isDesktop ? 40 : (isTablet ? 38 : 36);
+  double get closeIconSize => isDesktop ? 20 : (isTablet ? 19 : 18);
+
+  double get hairlineGap => isDesktop ? 18 : (isTablet ? 17 : 16);
+
+  // ── Form body ───────────────────────────────────────────────────────
+  double get bodyHPad => isDesktop ? 32 : (isTablet ? 28 : 24);
+  double get bodyTopPad => isDesktop ? 30 : (isTablet ? 28 : 26);
+  double get bodyBottomPad => isDesktop ? 12 : (isTablet ? 10 : 8);
+
+  double get sectionGap => isDesktop ? 26 : (isTablet ? 24 : 22);
+  double get imagePreviewHeight => isDesktop ? 160 : (isTablet ? 145 : 130);
+
+  // ── Actions ─────────────────────────────────────────────────────────
+  double get actionsHPad => isDesktop ? 32 : (isTablet ? 28 : 24);
+  double get actionsTopPad => isDesktop ? 18 : (isTablet ? 17 : 16);
+  double get actionsBottomPad => isDesktop ? 26 : (isTablet ? 25 : 24);
+  double get actionGap => isDesktop ? 14 : (isTablet ? 13 : 12);
+  double get actionVerticalPad => isDesktop ? 17 : (isTablet ? 15.5 : 14);
+  double get actionFontSize => isDesktop ? 15.5 : (isTablet ? 15 : 14.5);
+
+  /// ACTIONS-ROW PASS 6: fixed width shared by BOTH the Cancel and the
+  /// Add Item/Save Changes buttons, per breakpoint. Smaller than Pass
+  /// 5's `submitButtonWidth` so the pair reads as a compact,
+  /// equally-sized button group instead of Cancel stretching to fill the
+  /// row.
+  double get actionButtonWidth => isDesktop ? 132 : (isTablet ? 122 : 110);
+
+  /// Below this width the Cancel / Submit row is cramped, so the actions
+  /// stack vertically instead (tiny phones only — normal mobile widths
+  /// stay as a row).
+  static const double stackedActionsBreakpoint = 360;
 }
 
 class ItemFormDialog extends StatefulWidget {
@@ -478,17 +572,17 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
     }
 
     final size = MediaQuery.of(context).size;
-    final isMobile = size.width < 600;
+    final r = _Responsive(size.width, size.height);
+    final isMobile = r.isMobile;
     final isEditing = widget.item != null;
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      insetPadding: r.insetPadding,
       child: ConstrainedBox(
-        constraints:
-            BoxConstraints(maxWidth: isMobile ? size.width * 0.94 : 540),
+        constraints: BoxConstraints(maxWidth: r.dialogMaxWidth),
         child: Container(
-          constraints: BoxConstraints(maxHeight: size.height * 0.88),
+          constraints: BoxConstraints(maxHeight: r.dialogMaxHeight),
           decoration: BoxDecoration(
             color: _Palette.cardWhite,
             borderRadius: BorderRadius.circular(26),
@@ -501,15 +595,11 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // ── Header (mini navbar) ─────────────────────────────────
-              // PASS 4: rebuilt into the same structural/visual pattern
-              // StaffScreen._buildHeader() (and CategoryFormDialog's
-              // header) use — a medium-depth PUREDINE Deep Wine Maroon →
-              // Wine diagonal gradient band with a soft warm-gold corner
-              // glow, a large very faint watermark emblem, a subtle
-              // diagonal glass sheen, and a warm-gold hairline along the
-              // bottom edge. The accent-dot row, the icon block, the
-              // two-tone ShaderMask title, the subtitle, and the hairline
-              // beneath it are all recolored for the dark backdrop. No
+              // PASS 4/5: PUREDINE Deep Wine Maroon → Wine diagonal
+              // gradient band with a soft warm-gold corner glow, a large
+              // very faint watermark emblem, a subtle diagonal glass
+              // sheen, and a warm-gold hairline along the bottom edge.
+              // Sizing now scales per breakpoint via `_Responsive`. No
               // form fields, validation, save/submit, image-cleaning
               // logic, or dialog-dismiss behavior was touched.
               Container(
@@ -587,7 +677,12 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 24, 16, 20),
+                      padding: EdgeInsets.fromLTRB(
+                        r.headerHPad,
+                        r.headerTopPad,
+                        r.headerRightPad,
+                        r.headerBottomPad,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -622,11 +717,12 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                               // backdrop. Icon still follows the same
                               // isEditing condition as before.
                               Container(
-                                width: 48,
-                                height: 48,
+                                width: r.iconBlockSize,
+                                height: r.iconBlockSize,
                                 decoration: BoxDecoration(
                                   color: Colors.white.withValues(alpha: 0.14),
-                                  borderRadius: BorderRadius.circular(14),
+                                  borderRadius:
+                                      BorderRadius.circular(r.iconBlockRadius),
                                   border: Border.all(
                                     color: _Palette.lemonChiffon.withValues(
                                       alpha: 0.55,
@@ -639,10 +735,10 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                                       ? Icons.edit_rounded
                                       : Icons.add_box_rounded,
                                   color: Colors.white,
-                                  size: 22,
+                                  size: r.iconSize,
                                 ),
                               ),
-                              const SizedBox(width: 14),
+                              SizedBox(width: r.titleGap),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -662,8 +758,10 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                                         isEditing
                                             ? 'Edit Menu Item'
                                             : 'Add Menu Item',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                         style: GoogleFonts.playfairDisplay(
-                                          fontSize: isMobile ? 19 : 22,
+                                          fontSize: r.titleFontSize,
                                           fontWeight: FontWeight.bold,
                                           color: Colors.white,
                                           height: 1.1,
@@ -671,13 +769,15 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(height: 6),
+                                    SizedBox(height: r.subtitleGap),
                                     Text(
                                       isEditing
                                           ? 'Update the details for this item'
                                           : 'Add a new dish to your menu',
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
                                       style: GoogleFonts.inter(
-                                        fontSize: 12.5,
+                                        fontSize: r.subtitleFontSize,
                                         color: Colors.white.withValues(
                                           alpha: 0.75,
                                         ),
@@ -700,8 +800,8 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                                       ? null
                                       : () => Navigator.of(context).pop(false),
                                   child: Container(
-                                    width: 36,
-                                    height: 36,
+                                    width: r.closeButtonSize,
+                                    height: r.closeButtonSize,
                                     alignment: Alignment.center,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
@@ -714,17 +814,17 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                                         width: 1.2,
                                       ),
                                     ),
-                                    child: const Icon(
+                                    child: Icon(
                                       Icons.close_rounded,
                                       color: Colors.white,
-                                      size: 18,
+                                      size: r.closeIconSize,
                                     ),
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          SizedBox(height: r.hairlineGap),
                           // Thin gold gradient hairline — same soft
                           // divider language used across the rest of the
                           // app's headers.
@@ -760,7 +860,12 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                 child: Container(
                   color: _Palette.canvas,
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(24, 26, 24, 8),
+                    padding: EdgeInsets.fromLTRB(
+                      r.bodyHPad,
+                      r.bodyTopPad,
+                      r.bodyHPad,
+                      r.bodyBottomPad,
+                    ),
                     child: Form(
                       key: _formKey,
                       child: Column(
@@ -799,7 +904,7 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                                   val == null ? 'Required' : null,
                             ),
                           ),
-                          const SizedBox(height: 22),
+                          SizedBox(height: r.sectionGap),
                           _fieldLabel('Item Name'),
                           Container(
                             decoration: BoxDecoration(
@@ -823,7 +928,7 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                               onSaved: (val) => _name = val!.trim(),
                             ),
                           ),
-                          const SizedBox(height: 22),
+                          SizedBox(height: r.sectionGap),
                           _fieldLabel('Price'),
                           Container(
                             decoration: BoxDecoration(
@@ -852,7 +957,7 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                               onSaved: (val) => _price = val!.trim(),
                             ),
                           ),
-                          const SizedBox(height: 22),
+                          SizedBox(height: r.sectionGap),
                           _fieldLabel('Image URL', badge: 'OPTIONAL'),
                           Container(
                             decoration: BoxDecoration(
@@ -902,7 +1007,7 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                           const SizedBox(height: 12),
                           // --- Image Preview Section ---
                           Container(
-                            height: 130,
+                            height: r.imagePreviewHeight,
                             width: double.infinity,
                             decoration: BoxDecoration(
                               color: _Palette.canvasDeep,
@@ -990,7 +1095,7 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
                                 ],
                               ),
                             ),
-                          const SizedBox(height: 22),
+                          SizedBox(height: r.sectionGap),
                           _fieldLabel('Description', badge: 'OPTIONAL'),
                           Container(
                             decoration: BoxDecoration(
@@ -1053,99 +1158,149 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
               ),
 
               // ── Actions ───────────────────────────────────────────────
+              // ACTIONS-ROW PASS 6: Cancel and Add Item/Save Changes are
+              // both wrapped to the SAME fixed `r.actionButtonWidth`
+              // (smaller than Pass 5's `submitButtonWidth`), and the row
+              // is right-aligned instead of Cancel stretching via
+              // `Expanded`. Everything else here — styles, icons, text,
+              // loading spinner, onPressed callbacks, and the
+              // stacked/row breakpoint logic — is unchanged.
               Container(
                 color: _Palette.canvas,
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: _isLoading
-                            ? null
-                            : () => Navigator.of(context).pop(false),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: _Palette.textMuted,
-                          backgroundColor: Colors.white,
-                          side: const BorderSide(color: _Palette.paleRose),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                padding: EdgeInsets.fromLTRB(
+                  r.actionsHPad,
+                  r.actionsTopPad,
+                  r.actionsHPad,
+                  r.actionsBottomPad,
+                ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final cancelButton = OutlinedButton(
+                      onPressed: _isLoading
+                          ? null
+                          : () => Navigator.of(context).pop(false),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _Palette.textMuted,
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(color: _Palette.paleRose),
+                        padding: EdgeInsets.symmetric(
+                          vertical: r.actionVerticalPad,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w700,
+                          fontSize: r.actionFontSize,
+                        ),
+                      ),
+                    );
+
+                    final submitButton = DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: _isLoading
+                            ? const []
+                            : [
+                                BoxShadow(
+                                  color: _Palette.milanoRed
+                                      .withValues(alpha: 0.32),
+                                  blurRadius: 18,
+                                  offset: const Offset(0, 8),
+                                ),
+                                BoxShadow(
+                                  color: _Palette.lemonChiffon
+                                      .withValues(alpha: 0.12),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                      ),
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _submit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _Palette.milanoRed,
+                          disabledBackgroundColor:
+                              _Palette.milanoRed.withValues(alpha: 0.6),
+                          elevation: 0,
+                          padding: EdgeInsets.symmetric(
+                            vertical: r.actionVerticalPad,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: Text(
-                          'Cancel',
-                          style: GoogleFonts.inter(fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      flex: 2,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: _isLoading
-                              ? const []
-                              : [
-                                  BoxShadow(
-                                    color: _Palette.milanoRed
-                                        .withValues(alpha: 0.32),
-                                    blurRadius: 18,
-                                    offset: const Offset(0, 8),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    isEditing
+                                        ? Icons.save_rounded
+                                        : Icons.add_rounded,
+                                    size: 18,
+                                    color: _Palette.lemonChiffon,
                                   ),
-                                  BoxShadow(
-                                    color: _Palette.lemonChiffon
-                                        .withValues(alpha: 0.12),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                        ),
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _submit,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _Palette.milanoRed,
-                            disabledBackgroundColor:
-                                _Palette.milanoRed.withValues(alpha: 0.6),
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: _isLoading
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      isEditing
-                                          ? Icons.save_rounded
-                                          : Icons.add_rounded,
-                                      size: 18,
-                                      color: _Palette.lemonChiffon,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
                                       isEditing ? 'Save Changes' : 'Add Item',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                       style: GoogleFonts.inter(
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
+                                        fontSize: r.actionFontSize,
                                       ),
                                     ),
-                                  ],
-                                ),
-                        ),
+                                  ),
+                                ],
+                              ),
                       ),
-                    ),
-                  ],
+                    );
+
+                    // Both buttons now share one fixed, smaller width so
+                    // they render as an equally-sized pair instead of
+                    // Cancel stretching to fill the row.
+                    final sizedCancelButton = SizedBox(
+                      width: r.actionButtonWidth,
+                      child: cancelButton,
+                    );
+                    final sizedSubmitButton = SizedBox(
+                      width: r.actionButtonWidth,
+                      child: submitButton,
+                    );
+
+                    // SAME-LINE PASS 9: previously, below
+                    // `_Responsive.stackedActionsBreakpoint`, the two
+                    // buttons dropped into a `Column` (two lines) on very
+                    // narrow/mobile widths. Cancel and Add Item/Save
+                    // Changes now always render side-by-side in one
+                    // `Row`, on mobile as well as tablet/desktop — the
+                    // fixed `actionButtonWidth` sizing, right alignment,
+                    // button styles, icons, text, loading spinner, and
+                    // `onPressed` callbacks are all unchanged.
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        sizedCancelButton,
+                        SizedBox(width: r.actionGap),
+                        sizedSubmitButton,
+                      ],
+                    );
+                  },
                 ),
               ),
             ],

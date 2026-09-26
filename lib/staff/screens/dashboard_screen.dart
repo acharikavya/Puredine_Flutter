@@ -161,9 +161,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 /// `_StatsRow`/`_StatCard` widgets, same padding/max-width treatment —
 /// only which container it lives inside (fixed vs. scrollable) changed.
 ///
-/// UI-ENHANCEMENT PASS 12 (this pass — straight-bottomed top bar,
-/// matching MenuScreen's header): a single, purely presentational change
-/// to `_DashboardHero`'s own outer `Container` — no data, provider,
+/// UI-ENHANCEMENT PASS 12 (straight-bottomed top bar, matching
+/// MenuScreen's header): a single, purely presentational change to
+/// `_DashboardHero`'s own outer `Container` — no data, provider,
 /// navigation, prop, or callback anywhere in this file was touched, and
 /// nothing about `_StatsRow`, the Quick Actions grid, or the Active
 /// Orders section changed.
@@ -191,6 +191,38 @@ import 'package:flutter_animate/flutter_animate.dart';
 ///     gold hairline beneath it — is completely unchanged: same text,
 ///     same values (`greeting`, `firstName`, `dateLabel`), same layout,
 ///     same animations.
+///
+/// UI-ENHANCEMENT PASS 13 (this pass — proper mobile / tablet / desktop
+/// responsiveness): purely layout/sizing tuning — no provider, data,
+/// navigation, prop name, callback, or route anywhere in this file was
+/// touched.
+///   Previously almost every size in this file was keyed off a single
+///   `isMobile = width < 600` flag, so every width from 600px up to a
+///   very wide laptop/monitor screen (tablets included) received the
+///   exact same padding/spacing/font sizes as full desktop. A proper
+///   middle "tablet" tier (`600 <= width < 1024`) has been added
+///   alongside the existing mobile (`< 600`) and desktop (`>= 1024`)
+///   tiers, and threaded through:
+///     • `DashboardScreen.build()`'s scroll padding, the spacing below
+///       `_StatsRow`, the Quick Actions grid's spacing/aspect ratio, and
+///       the Active Orders panel's padding and heading sizes.
+///     • `_DashboardHero`'s own padding, first-name size, avatar size,
+///       and tagline banner sizing (it already computed its own
+///       `isMobile` locally from `MediaQuery`, so it now also computes
+///       `isTablet` the same way — no new required constructor prop was
+///       added).
+///     • `_StatsRow` / `_StatCard`'s inter-card spacing and internal
+///       icon/typography sizing.
+///     • `_FeatureCard`'s own internal `isSmall`/`isTablet` sizing (it
+///       already computed its sizing locally from `MediaQuery`, same
+///       pattern as the hero).
+///   Every value that used to jump straight from a mobile size to a
+///   desktop size now has a deliberate, proportioned tablet value in
+///   between, so tablets and laptops both get their own tuned,
+///   professional-looking layout instead of tablets simply inheriting
+///   the desktop numbers unmodified. Column counts, grid item counts, and
+///   which values feed which widget are unchanged — only the numbers
+///   themselves were tuned per breakpoint.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   // Primary brand — PUREDINE Maroon + Cream. Field names are unchanged on
@@ -385,7 +417,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final rawName = auth.user?.name.trim() ?? '';
     final userName = rawName.isNotEmpty ? rawName : 'Staff';
     final firstName = userName.split(' ').first;
-    final isMobile = MediaQuery.of(context).size.width < 600;
+
+    // ── PASS 13: Responsive breakpoints ────────────────────────────────
+    // Three explicit tiers instead of the old binary `isMobile` split, so
+    // tablets (600–1024) get their own tuned spacing instead of simply
+    // inheriting the desktop numbers unmodified. `isMobile` keeps its
+    // original name/meaning so every existing call site below still
+    // compiles unchanged; `isTablet` is new and additive.
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+    final isTablet = screenWidth >= 600 && screenWidth < 1024;
 
     return Scaffold(
       backgroundColor: _Palette.canvas,
@@ -526,11 +567,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
               // content below (see the comment above the scroll view) so
               // the scrollable area begins exactly where the three stat
               // boxes start.
-              // PASS 12: the hero itself is now a straight, flat-bottomed
-              // band (no rounded corners, no bleeding drop shadow),
-              // matching MenuScreen's `_buildCustomHeader()` shape — see
-              // the Pass 12 note above `_Palette` for details. Its props
-              // (`greeting`, `firstName`, `dateLabel`) are unchanged.
+              // PASS 12: the hero itself is a straight, flat-bottomed band
+              // (no rounded corners, no bleeding drop shadow), matching
+              // MenuScreen's `_buildCustomHeader()` shape.
+              // PASS 13: the hero now also tunes its own internal sizing
+              // for a tablet breakpoint (see the Pass 13 note above
+              // `_Palette`). Its props (`greeting`, `firstName`,
+              // `dateLabel`) are unchanged.
               _DashboardHero(
                 greeting: _getGreeting(),
                 firstName: firstName,
@@ -543,12 +586,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               // scrollbar/scrollable region starts right where the three
               // stat boxes start, and they scroll together with Quick
               // Actions / Active Orders beneath them.
+              // PASS 13: padding now has a dedicated tablet value between
+              // the existing mobile and desktop numbers.
               Expanded(
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
                   padding: EdgeInsets.symmetric(
-                    horizontal: isMobile ? 16 : 24,
-                    vertical: isMobile ? 16 : 28,
+                    horizontal: isMobile ? 16 : (isTablet ? 20 : 24),
+                    vertical: isMobile ? 16 : (isTablet ? 22 : 28),
                   ),
                   child: Center(
                     child: ConstrainedBox(
@@ -569,7 +614,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             availableTablesCount: availableTablesCount,
                             isMobile: isMobile,
                           ),
-                          SizedBox(height: isMobile ? 24 : 32),
+                          SizedBox(
+                              height: isMobile ? 24 : (isTablet ? 28 : 32)),
 
                           // ── Section label ──
                           Row(
@@ -624,23 +670,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           // Cards are now shorter (higher aspect ratio) and
                           // individually restyled inside _FeatureCard for a
                           // more compact, premium tile look.
+                          // PASS 13: crossAxisCount thresholds are
+                          // unchanged (still 2 columns below 1024px, 4 at
+                          // or above it, so the 4 quick-action tiles keep
+                          // their clean 2x2 / 1x4 arrangement), but spacing
+                          // and aspect ratio now get a dedicated tablet
+                          // value based on this same local `width`.
                           LayoutBuilder(
                             builder: (context, constraints) {
                               final width = constraints.maxWidth;
                               int crossAxisCount = 2;
+                              final bool gridIsTablet =
+                                  width >= 600 && width < 1024;
                               if (width >= 1024) {
                                 crossAxisCount = 4;
                               } else if (width >= 600) {
                                 crossAxisCount = 2;
                               }
 
+                              final double gridSpacing =
+                                  isMobile ? 12 : (gridIsTablet ? 16 : 20);
+                              final double gridAspectRatio =
+                                  isMobile ? 1.15 : (gridIsTablet ? 1.2 : 1.05);
+
                               return GridView.count(
                                 crossAxisCount: crossAxisCount,
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
-                                crossAxisSpacing: isMobile ? 12 : 20,
-                                mainAxisSpacing: isMobile ? 12 : 20,
-                                childAspectRatio: isMobile ? 1.15 : 1.05,
+                                crossAxisSpacing: gridSpacing,
+                                mainAxisSpacing: gridSpacing,
+                                childAspectRatio: gridAspectRatio,
                                 children: [
                                   _FeatureCard(
                                     icon: Icons.add_shopping_cart_rounded,
@@ -732,6 +791,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           const SizedBox(height: 40),
 
                           // ── Active Orders Section ─────────────────────────
+                          // PASS 13: panel padding and heading sizes now
+                          // get a dedicated tablet value.
                           Container(
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.7),
@@ -749,7 +810,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                               boxShadow: _Palette.softShadow,
                             ),
-                            padding: EdgeInsets.all(isMobile ? 20 : 32),
+                            padding: EdgeInsets.all(
+                              isMobile ? 20 : (isTablet ? 26 : 32),
+                            ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -781,7 +844,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                 'Active Orders',
                                                 style: AppTextStyles.headline(
                                                   color: _Palette.textDark,
-                                                  size: isMobile ? 20 : 24,
+                                                  size: isMobile
+                                                      ? 20
+                                                      : (isTablet ? 22 : 24),
                                                 ),
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
@@ -816,7 +881,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                             'Live dining room updates',
                                             style: AppTheme.sans(
                                               color: _Palette.textMuted,
-                                              size: isMobile ? 12 : 13,
+                                              size: isMobile
+                                                  ? 12
+                                                  : (isTablet ? 12.5 : 13),
                                               weight: FontWeight.w500,
                                             ),
                                             maxLines: 1,
@@ -855,6 +922,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         cols = 2;
                                       }
 
+                                      // PASS 13: a dedicated in-between
+                                      // aspect ratio for the 600–900px
+                                      // tablet range, instead of jumping
+                                      // straight from the mobile ratio to
+                                      // the full desktop ratio.
+                                      final double aspectRatio = isMobile
+                                          ? 2.1
+                                          : (constraints.maxWidth < 900
+                                              ? 1.8
+                                              : 1.6);
+
                                       return GridView.builder(
                                         shrinkWrap: true,
                                         physics:
@@ -864,8 +942,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                           crossAxisCount: cols,
                                           mainAxisSpacing: 16,
                                           crossAxisSpacing: 16,
-                                          childAspectRatio:
-                                              isMobile ? 2.1 : 1.6,
+                                          childAspectRatio: aspectRatio,
                                         ),
                                         itemCount: recentOrders.length,
                                         itemBuilder: (ctx, i) => _MiniOrderCard(
@@ -917,17 +994,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
 // PASS 10: renders as a fully self-contained banner with no overlap from
 // anything beneath it — `_StatsRow` is now a plain sibling below the hero
 // (see `DashboardScreen.build()`), not positioned over its edge.
-// PASS 12: the outer band is now straight-bottomed (no rounded corners, no
+// PASS 12: the outer band is straight-bottomed (no rounded corners, no
 // bleeding `heroShadow`) to match `MenuScreen._buildCustomHeader()`'s flat
-// top-bar shape — see the Pass 12 note above `_Palette` for the full
-// rationale. Everything else about the hero is unchanged from PASS 8: a
-// rich dark maroon-to-wine gradient banner — a greeting row (sun icon +
-// "Good Morning" in gold, bold serif first name in white, top-right avatar
-// with a white ring and a small live/green status dot), a floating cream
-// tagline pill with a photo badge, and a light date/live row with a gold
-// hairline beneath it. No data, provider, or navigation logic lives in
-// this widget, same as every prior pass — the avatar's halo glow (already
-// defined in `_Palette`) is applied for a touch more depth.
+// top-bar shape.
+// PASS 13: the hero already computed its own `isMobile` locally from
+// `MediaQuery`; it now also computes `isTablet` the same way and uses it
+// to tune its own padding, first-name size, avatar size, and tagline
+// banner sizing — no new required constructor prop was added, and every
+// value/prop (`greeting`, `firstName`, `dateLabel`) is unchanged. The
+// avatar's halo glow (already defined in `_Palette`) is still applied for
+// a touch more depth.
 class _DashboardHero extends StatelessWidget {
   final String greeting;
   final String firstName;
@@ -941,7 +1017,9 @@ class _DashboardHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 600;
+    final width = MediaQuery.of(context).size.width;
+    final isMobile = width < 600;
+    final isTablet = width >= 600 && width < 1024;
 
     return Container(
       width: double.infinity,
@@ -1032,15 +1110,15 @@ class _DashboardHero extends StatelessWidget {
               bottom: false,
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
-                  isMobile ? 18 : 32,
-                  isMobile ? 14 : 20,
-                  isMobile ? 18 : 32,
+                  isMobile ? 18 : (isTablet ? 26 : 32),
+                  isMobile ? 14 : (isTablet ? 18 : 20),
+                  isMobile ? 18 : (isTablet ? 26 : 32),
                   // PASS 10: a normal, comfortable bottom padding — the
                   // hero no longer needs to reserve extra room for an
                   // overlapping stats row beneath it, since `_StatsRow`
                   // now sits fully outside/below the hero as a plain
                   // sibling.
-                  isMobile ? 24 : 30,
+                  isMobile ? 24 : (isTablet ? 27 : 30),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1078,7 +1156,8 @@ class _DashboardHero extends StatelessWidget {
                                 firstName,
                                 style: GoogleFonts.playfairDisplay(
                                   color: Colors.white,
-                                  fontSize: isMobile ? 30 : 36,
+                                  fontSize:
+                                      isMobile ? 30 : (isTablet ? 33 : 36),
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: -0.3,
                                   height: 1.1,
@@ -1109,7 +1188,7 @@ class _DashboardHero extends StatelessWidget {
                               ),
                               padding: const EdgeInsets.all(2.5),
                               child: CircleAvatar(
-                                radius: isMobile ? 24 : 27,
+                                radius: isMobile ? 24 : (isTablet ? 26 : 27),
                                 backgroundColor:
                                     Colors.white.withValues(alpha: 0.12),
                                 child: Text(
@@ -1117,7 +1196,8 @@ class _DashboardHero extends StatelessWidget {
                                       ? firstName[0].toUpperCase()
                                       : '?',
                                   style: GoogleFonts.playfairDisplay(
-                                    fontSize: isMobile ? 19 : 21,
+                                    fontSize:
+                                        isMobile ? 19 : (isTablet ? 20 : 21),
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                   ),
@@ -1145,7 +1225,7 @@ class _DashboardHero extends StatelessWidget {
                       ],
                     ).animate().fade(duration: 500.ms).slideY(begin: -0.15),
 
-                    SizedBox(height: isMobile ? 16 : 20),
+                    SizedBox(height: isMobile ? 16 : (isTablet ? 18 : 20)),
 
                     // ── Tagline banner ──────────────────────────────────────
                     // Floating cream pill on the dark maroon backdrop —
@@ -1157,8 +1237,8 @@ class _DashboardHero extends StatelessWidget {
                     Container(
                       width: double.infinity,
                       padding: EdgeInsets.symmetric(
-                        horizontal: isMobile ? 12 : 18,
-                        vertical: isMobile ? 10 : 14,
+                        horizontal: isMobile ? 12 : (isTablet ? 15 : 18),
+                        vertical: isMobile ? 10 : (isTablet ? 12 : 14),
                       ),
                       decoration: BoxDecoration(
                         color: _Palette.canvasDeep.withValues(alpha: 0.96),
@@ -1175,8 +1255,8 @@ class _DashboardHero extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Container(
-                            width: isMobile ? 36 : 42,
-                            height: isMobile ? 36 : 42,
+                            width: isMobile ? 36 : (isTablet ? 39 : 42),
+                            height: isMobile ? 36 : (isTablet ? 39 : 42),
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
                               color: _Palette.dustyBlush,
@@ -1184,27 +1264,28 @@ class _DashboardHero extends StatelessWidget {
                             ),
                             child: Icon(
                               Icons.restaurant_rounded,
-                              size: isMobile ? 17 : 19,
+                              size: isMobile ? 17 : (isTablet ? 18 : 19),
                               color: _Palette.milanoRedDeep,
                             ),
                           ),
-                          SizedBox(width: isMobile ? 10 : 14),
+                          SizedBox(width: isMobile ? 10 : (isTablet ? 12 : 14)),
                           Expanded(
                             child: Text(
                               'Serve every table, seamlessly.',
                               style: GoogleFonts.playfairDisplay(
                                 color: _Palette.textDark,
-                                fontSize: isMobile ? 14.5 : 17,
+                                fontSize:
+                                    isMobile ? 14.5 : (isTablet ? 16 : 17),
                                 fontWeight: FontWeight.w700,
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          SizedBox(width: isMobile ? 10 : 14),
+                          SizedBox(width: isMobile ? 10 : (isTablet ? 12 : 14)),
                           Container(
-                            width: isMobile ? 40 : 48,
-                            height: isMobile ? 40 : 48,
+                            width: isMobile ? 40 : (isTablet ? 44 : 48),
+                            height: isMobile ? 40 : (isTablet ? 44 : 48),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
@@ -1243,7 +1324,7 @@ class _DashboardHero extends StatelessWidget {
                           begin: 0.1,
                         ),
 
-                    SizedBox(height: isMobile ? 14 : 18),
+                    SizedBox(height: isMobile ? 14 : (isTablet ? 16 : 18)),
 
                     // ── Date + Live row ──────────────────────────────────────
                     Row(
@@ -1257,7 +1338,7 @@ class _DashboardHero extends StatelessWidget {
                         Text(
                           dateLabel,
                           style: GoogleFonts.inter(
-                            fontSize: isMobile ? 11.5 : 12.5,
+                            fontSize: isMobile ? 11.5 : (isTablet ? 12 : 12.5),
                             fontWeight: FontWeight.w600,
                             color: Colors.white.withValues(alpha: 0.85),
                           ),
@@ -1275,7 +1356,7 @@ class _DashboardHero extends StatelessWidget {
                         Text(
                           'Live',
                           style: GoogleFonts.inter(
-                            fontSize: isMobile ? 11 : 12,
+                            fontSize: isMobile ? 11 : (isTablet ? 11.5 : 12),
                             fontWeight: FontWeight.w700,
                             color: _Palette.freshGreen,
                             letterSpacing: 0.3,
@@ -1284,7 +1365,7 @@ class _DashboardHero extends StatelessWidget {
                       ],
                     ),
 
-                    SizedBox(height: isMobile ? 10 : 12),
+                    SizedBox(height: isMobile ? 10 : (isTablet ? 11 : 12)),
 
                     // Thin gold gradient hairline underneath the date row.
                     Container(
@@ -1317,9 +1398,13 @@ class _DashboardHero extends StatelessWidget {
 // around three `_StatCard`s.
 // PASS 10: `DashboardScreen.build()` now places it as a plain sibling
 // directly below the hero (no `Stack`/`Positioned`/negative offset), so it
-// sits entirely on the white canvas with zero overlap of the top bar. Same
-// three values, same order, same semantics as before: no data, provider,
-// or navigation logic lives here.
+// sits entirely on the white canvas with zero overlap of the top bar.
+// PASS 13: `_StatsRow` now also computes its own `isTablet` locally from
+// `MediaQuery` (the same pattern `_DashboardHero` already used for
+// `isMobile`) purely to tune the spacing between the three cards and to
+// pass a little extra sizing down into `_StatCard`. The `isMobile`
+// constructor prop and every value/order passed into the three
+// `_StatCard`s below is unchanged.
 class _StatsRow extends StatelessWidget {
   final int activeOrdersCount;
   final int newOrdersCount;
@@ -1335,6 +1420,10 @@ class _StatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final isTablet = width >= 600 && width < 1024;
+    final double gap = isMobile ? 10 : (isTablet ? 12 : 14);
+
     return Row(
       children: [
         Expanded(
@@ -1344,9 +1433,10 @@ class _StatsRow extends StatelessWidget {
             label: 'Active',
             iconBg: _Palette.paleRose,
             iconColor: _Palette.milanoRedDeep,
+            isTablet: isTablet,
           ),
         ),
-        SizedBox(width: isMobile ? 10 : 14),
+        SizedBox(width: gap),
         Expanded(
           child: _StatCard(
             icon: Icons.notifications_active_rounded,
@@ -1355,9 +1445,10 @@ class _StatsRow extends StatelessWidget {
             isAlert: newOrdersCount > 0,
             iconBg: _Palette.lemonChiffonDeep,
             iconColor: _Palette.textDark,
+            isTablet: isTablet,
           ),
         ),
-        SizedBox(width: isMobile ? 10 : 14),
+        SizedBox(width: gap),
         Expanded(
           child: _StatCard(
             icon: Icons.grid_view_rounded,
@@ -1365,6 +1456,7 @@ class _StatsRow extends StatelessWidget {
             label: 'Tables Free',
             iconBg: _Palette.dustyBlush,
             iconColor: _Palette.milanoRedDeep,
+            isTablet: isTablet,
           ),
         ),
       ],
@@ -1379,6 +1471,10 @@ class _StatsRow extends StatelessWidget {
 // warm-gold) rounded card with a floating drop shadow — designed to read
 // clearly whether it's sitting over the dark hero or the white canvas
 // beneath it.
+// PASS 13: added an optional `isTablet` flag (defaults to `false`, so any
+// other caller that doesn't pass it keeps the exact same look as before)
+// purely to nudge the icon badge and typography sizing up a touch on
+// tablet widths.
 class _StatCard extends StatelessWidget {
   final IconData icon;
   final String value;
@@ -1386,6 +1482,7 @@ class _StatCard extends StatelessWidget {
   final Color iconBg;
   final Color iconColor;
   final bool isAlert;
+  final bool isTablet;
 
   const _StatCard({
     required this.icon,
@@ -1394,12 +1491,20 @@ class _StatCard extends StatelessWidget {
     required this.iconBg,
     required this.iconColor,
     this.isAlert = false,
+    this.isTablet = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final double iconBoxSize = isTablet ? 40 : 38;
+    final double iconSize = isTablet ? 18 : 17;
+    final double valueFontSize = isTablet ? 20 : 19;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      padding: EdgeInsets.symmetric(
+        horizontal: isTablet ? 13 : 12,
+        vertical: isTablet ? 15 : 14,
+      ),
       decoration: BoxDecoration(
         color: isAlert
             ? _Palette.lemonChiffon.withValues(alpha: 0.65)
@@ -1417,8 +1522,8 @@ class _StatCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 38,
-            height: 38,
+            width: iconBoxSize,
+            height: iconBoxSize,
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
@@ -1426,7 +1531,7 @@ class _StatCard extends StatelessWidget {
             ),
             child: Icon(
               icon,
-              size: 17,
+              size: iconSize,
               color: iconColor,
             ),
           ),
@@ -1439,7 +1544,7 @@ class _StatCard extends StatelessWidget {
                 Text(
                   value,
                   style: AppTheme.sans(
-                    size: 19,
+                    size: valueFontSize,
                     weight: FontWeight.w900,
                     color: _Palette.textDark,
                   ),
@@ -1482,6 +1587,11 @@ class _StatCard extends StatelessWidget {
 //   • Title + description tightened to a single compact block.
 // No data, callback, or navigation logic changed — onTap, badge value, and
 // every color/icon are still exactly what DashboardScreen passes in.
+// PASS 13: this card already computed its own `isSmall` locally from
+// `MediaQuery`; it now also computes `isTablet` the same way and uses it
+// to nudge the icon badge and padding up a touch between the mobile and
+// desktop sizes, for a more deliberate tablet/laptop look. No constructor
+// prop, callback, or value changed.
 class _FeatureCard extends StatefulWidget {
   final IconData icon;
   final Color iconColor;
@@ -1513,9 +1623,16 @@ class _FeatureCardState extends State<_FeatureCard> {
 
   @override
   Widget build(BuildContext context) {
-    final isSmall = MediaQuery.of(context).size.width < 400;
+    final width = MediaQuery.of(context).size.width;
+    final isSmall = width < 400;
+    final isTablet = width >= 600 && width < 1024;
     final bool isElevated = _isHovered || _isPressed;
     final Color accent = widget.badgeColor ?? widget.iconColor;
+
+    final double iconBadgeSize = isSmall ? 42 : (isTablet ? 52 : 50);
+    final double iconGlyphSize = isSmall ? 20 : (isTablet ? 23 : 24);
+    final double titleFontSize = isSmall ? 14 : (isTablet ? 16 : 17);
+    final double descFontSize = isSmall ? 10.5 : (isTablet ? 11.5 : 12);
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -1599,10 +1716,10 @@ class _FeatureCardState extends State<_FeatureCard> {
 
                 Padding(
                   padding: EdgeInsets.fromLTRB(
-                    isSmall ? 14 : 20,
-                    isSmall ? 16 : 20,
-                    isSmall ? 14 : 20,
-                    isSmall ? 12 : 16,
+                    isSmall ? 14 : (isTablet ? 18 : 20),
+                    isSmall ? 16 : (isTablet ? 18 : 20),
+                    isSmall ? 14 : (isTablet ? 18 : 20),
+                    isSmall ? 12 : (isTablet ? 14 : 16),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1616,8 +1733,8 @@ class _FeatureCardState extends State<_FeatureCard> {
                             clipBehavior: Clip.none,
                             children: [
                               Container(
-                                width: isSmall ? 42 : 50,
-                                height: isSmall ? 42 : 50,
+                                width: iconBadgeSize,
+                                height: iconBadgeSize,
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
                                     begin: Alignment.topLeft,
@@ -1648,7 +1765,7 @@ class _FeatureCardState extends State<_FeatureCard> {
                                 child: Icon(
                                   widget.icon,
                                   color: widget.iconColor,
-                                  size: isSmall ? 20 : 24,
+                                  size: iconGlyphSize,
                                 ),
                               ),
                               // Overlapping count/status chip — replaces the
@@ -1711,8 +1828,8 @@ class _FeatureCardState extends State<_FeatureCard> {
                                   ? Offset.zero
                                   : const Offset(-0.15, 0),
                               child: Container(
-                                width: isSmall ? 24 : 28,
-                                height: isSmall ? 24 : 28,
+                                width: isSmall ? 24 : (isTablet ? 26 : 28),
+                                height: isSmall ? 24 : (isTablet ? 26 : 28),
                                 alignment: Alignment.center,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
@@ -1723,7 +1840,7 @@ class _FeatureCardState extends State<_FeatureCard> {
                                 ),
                                 child: Icon(
                                   Icons.arrow_outward_rounded,
-                                  size: isSmall ? 13 : 15,
+                                  size: isSmall ? 13 : (isTablet ? 14 : 15),
                                   color: accent,
                                 ),
                               ),
@@ -1732,7 +1849,7 @@ class _FeatureCardState extends State<_FeatureCard> {
                         ],
                       ),
 
-                      SizedBox(height: isSmall ? 10 : 14),
+                      SizedBox(height: isSmall ? 10 : (isTablet ? 12 : 14)),
 
                       // Text content — title + single-line description,
                       // tightened up so the whole tile needs less height.
@@ -1740,7 +1857,7 @@ class _FeatureCardState extends State<_FeatureCard> {
                         widget.title,
                         style: AppTextStyles.title(
                           color: _Palette.textDark,
-                          size: isSmall ? 14 : 17,
+                          size: titleFontSize,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -1750,7 +1867,7 @@ class _FeatureCardState extends State<_FeatureCard> {
                         widget.description,
                         style: AppTextStyles.body(
                           color: _Palette.textMuted,
-                          size: isSmall ? 10.5 : 12,
+                          size: descFontSize,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

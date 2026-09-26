@@ -33,65 +33,44 @@ import 'package:restaurant_unified_app/admin/core/models/restaurant_model.dart';
 /// UI-ENHANCEMENT PASS 4: a GPay-style light top bar + majority-white
 /// "Milano Red/Wine × Golden Chiffon" re-tune.
 ///
-/// UI-ENHANCEMENT PASS 5 (this pass — PUREDINE re-skin + StaffScreen-style
-/// top bar): zero changes to provider, form, save, contact-add/delete, or
-/// logout logic anywhere in this file — palette and presentation only.
-///   1. TOP BAR: `_buildCustomHeader()` is rebuilt again — away from the
-///      Pass-4 light GPay-style pill bar and into the SAME structural
-///      pattern used by `StaffScreen._buildHeader()`: a flat, full-width
-///      bar (no rounded corners) carrying the PUREDINE Deep Wine Maroon →
-///      Wine diagonal gradient (`#742A3C → #813244`), a medium-depth (not
-///      near-black) maroon band, with the same ambient dressing — a soft
-///      warm-gold corner glow, a large very faint watermark emblem, a
-///      subtle diagonal glass sheen, and a warm-gold hairline along the
-///      bottom edge. The title ("Restaurant Profile") is a white → gold
-///      `ShaderMask`, the date text (desktop only) sits in soft gold, the
-///      subtitle ("Manage your business identity") is white at reduced
-///      opacity, and a thin gold underline accent sits beneath it — all
-///      exactly mirroring StaffScreen's header layout. In place of
-///      StaffScreen's back-chevron / "add" icon button, this header keeps
-///      this screen's own single action — Logout — restyled into the same
-///      circular gold icon-button shape StaffScreen uses for its "add"
-///      action. The `onPressed` logic
-///      (`context.read<AuthProvider>().logout()` then
-///      `context.go('/admin/login')`) is completely unchanged — only its
-///      look and position changed.
-///   2. PALETTE: `_Palette` was swapped to the exact PUREDINE Maroon +
-///      Cream palette supplied by the user:
-///        • `milanoRed`        → Deep Wine Maroon `#742A3C` (primary / topbar)
-///        • `milanoRedLight`   → Wine `#813244` (topbar lighter gradient)
-///        • `milanoRedDeep`    → Burgundy `#8A183F` (primary accent)
-///        • `milanoRedDarkest` → Deep Brown/Black `#2E0D16`
-///        • `canvas`           → Warm Off-White `#FBF8F5` (main background)
-///        • `canvasDeep`       → Soft Cream `#F7F1ED` (card background)
-///        • `lemonChiffon`     → Warm Gold `#F3C564` (gold accent)
-///        • `lemonChiffonDeep` → deeper gold `#D9A421` (derived companion)
-///        • `textDark`         → Deep Brown/Black `#2E0D16`
-///        • `textMuted`        → Muted Taupe `#9B707A`
-///        • `success`          → Fresh Green `#44AF70`
-///        • `warning` (inactive-status accent, not part of the original
-///          field list) is mapped onto the supplied deeper gold so it stays
-///          inside the given palette instead of introducing a new hue.
-///        • `danger` is kept as a clear alert red (not part of the
-///          supplied palette) so delete/error states stay legible;
-///          `dangerDeep` kept defined for parity, unused today.
-///      Four supporting PUREDINE tones were added — `dustyBlush`
-///      (`#F3D9DC`, icon backgrounds), `paleRose` (`#EFD7DA`, card
-///      borders), `softYellow` (`#FCE1AB`, gold highlight) and `paleMint`
-///      (`#EAF6EF`, success backgrounds). `headerGradient` now holds the
-///      supplied header gradient exactly (`#742A3C → #813244`), and a new
-///      `ctaGradient` field holds the supplied CTA gradient exactly
-///      (`#6E1832 → #9B3E4E → #F3C564`) — kept for palette-shape parity
-///      with the other admin screens, not referenced elsewhere today.
-///   3. TOP-TO-BOTTOM CONSISTENCY: every card on the screen (the hero
-///      restaurant card, the details grid, the contacts card, the admin
-///      account card, and both dialogs) now uses the PUREDINE card spec —
-///      a white → Soft Cream wash, a Pale Rose border, and Dusty Blush
-///      icon-tile backgrounds — plus the ambient background glows were
-///      re-tinted to the same palette, so the whole screen reads as one
-///      brand from the top bar all the way to the bottom of the scroll.
-///      Every data binding (`r?.name`, `r?.restaurantType`, `r?.isActive`,
-///      controller text, provider calls) is completely untouched.
+/// UI-ENHANCEMENT PASS 5: PUREDINE re-skin + StaffScreen-style top bar —
+/// zero changes to provider, form, save, contact-add/delete, or logout
+/// logic anywhere in this file — palette and presentation only.
+///
+/// UI-ENHANCEMENT PASS 6 (this pass — full three-tier responsive layout):
+/// zero changes to provider, form, save, contact-add/delete, or logout
+/// logic anywhere in this file — layout, spacing and presentation only.
+///   1. BREAKPOINTS: the old binary `isMobile` split (`< 800` / `>= 800`,
+///      which silently treated tablets and laptops as the exact same
+///      layout) is replaced by a proper three-tier `_ScreenSize` system —
+///      `mobile` (< 700), `tablet` (700–1099), `desktop` (>= 1100) — so
+///      phones, tablets and laptops/desktops each get spacing, type scale
+///      and grouping tuned to their own width instead of tablets being
+///      force-fit into either the phone or the laptop layout.
+///   2. CONTENT WIDTH: on tablet and desktop the scrollable form content
+///      (hero card, details grid, contacts, admin account) is now capped
+///      to a comfortable reading width (860px tablet / 1080px desktop)
+///      and centered, exactly like the rest of the admin app's dashboard
+///      screens, instead of stretching every field edge-to-edge across a
+///      wide tablet or laptop viewport. The header bar's inner content is
+///      centered to the same width so the title/subtitle line up with the
+///      form below it on larger screens. Mobile keeps the original
+///      full-width layout untouched.
+///   3. TYPE SCALE & SPACING: header title/subtitle sizes, header padding,
+///      hero-card avatar/name/type sizes, and section padding now each
+///      have a dedicated tablet value instead of jumping straight from the
+///      phone size to the laptop size, so tablet no longer looks either
+///      cramped (inheriting phone sizing) or oversized (inheriting laptop
+///      sizing).
+///   4. FIELD GROUPING: "Primary Phone" and "Primary Email" are now paired
+///      side-by-side on tablet and desktop (mirroring the existing
+///      State/Pincode pairing) instead of stacking as two full-width rows,
+///      giving the details card a denser, more professional two-column
+///      feel on larger screens while mobile keeps them stacked.
+///   Every data binding (`r?.name`, `r?.restaurantType`, `r?.isActive`,
+///   controller text, provider calls, dialog logic) and every
+///   onPressed/onTap handler is completely untouched — only how things are
+///   arranged and sized on screen changed.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   _Palette._();
@@ -177,6 +156,17 @@ class _Palette {
           offset: const Offset(0, 6),
         ),
       ];
+}
+
+/// UI-ENHANCEMENT PASS 6: three-tier responsive breakpoint used throughout
+/// this screen instead of a single binary `isMobile` flag. Presentation
+/// concern only — does not affect any provider/data logic.
+enum _ScreenSize { mobile, tablet, desktop }
+
+_ScreenSize _resolveScreenSize(double width) {
+  if (width < 700) return _ScreenSize.mobile;
+  if (width < 1100) return _ScreenSize.tablet;
+  return _ScreenSize.desktop;
 }
 
 class ProfileScreen extends StatefulWidget {
@@ -267,7 +257,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final restaurantProv = context.watch<RestaurantProvider>();
     final r = restaurantProv.restaurant;
     final size = MediaQuery.of(context).size;
-    final isMobile = size.width < 800;
+
+    // UI-ENHANCEMENT PASS 6: three-tier breakpoint (mobile / tablet /
+    // desktop) replaces the old binary `isMobile` check so tablets and
+    // laptops each get their own tuned layout instead of sharing one
+    // "not mobile" layout.
+    final _ScreenSize screenSize = _resolveScreenSize(size.width);
+    final bool isMobile = screenSize == _ScreenSize.mobile;
+    final bool isTablet = screenSize == _ScreenSize.tablet;
+    final bool isDesktop = screenSize == _ScreenSize.desktop;
+
+    // Desktop/tablet content is capped to a comfortable reading width and
+    // centered, like the rest of the admin app's dashboard screens, so it
+    // never stretches edge-to-edge on a wide tablet or laptop viewport.
+    // Mobile keeps the original full-width behavior.
+    final double maxContentWidth =
+        isDesktop ? 1080 : (isTablet ? 860 : double.infinity);
 
     return Scaffold(
       backgroundColor: _Palette.canvas,
@@ -276,7 +281,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // ── Header Section ───────────────────────────────────────────────
           // Fixed at the top, exactly like StaffScreen/MenuScreen — it no
           // longer scrolls away with the content beneath it.
-          _buildCustomHeader(isMobile),
+          _buildCustomHeader(screenSize),
 
           // ── Main Body Section ────────────────────────────────────────────
           Expanded(
@@ -443,42 +448,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         color: _Palette.milanoRed,
                         onRefresh: () => restaurantProv.fetchRestaurant(),
                         child: SingleChildScrollView(
-                          padding: EdgeInsets.all(isMobile ? 16 : 24),
-                          child: Form(
-                            key: _formKey,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildHeaderCard(r, isMobile),
-                                const SizedBox(height: 32),
-                                Row(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isMobile ? 16 : (isTablet ? 24 : 32),
+                            vertical: isMobile ? 16 : 24,
+                          ),
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: maxContentWidth,
+                              ),
+                              child: Form(
+                                key: _formKey,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Container(
-                                      width: 4,
-                                      height: 20,
-                                      decoration: BoxDecoration(
-                                        color: _Palette.milanoRed,
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Restaurant Details',
-                                      style: GoogleFonts.playfairDisplay(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                        color: _Palette.textDark,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                _buildDetailsGrid(r, isMobile),
-                                const SizedBox(height: 32),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
+                                    _buildHeaderCard(r, screenSize),
+                                    const SizedBox(height: 32),
                                     Row(
                                       children: [
                                         Container(
@@ -492,7 +477,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         ),
                                         const SizedBox(width: 8),
                                         Text(
-                                          'Additional Contacts',
+                                          'Restaurant Details',
                                           style: GoogleFonts.playfairDisplay(
                                             fontSize: 20,
                                             fontWeight: FontWeight.bold,
@@ -501,70 +486,107 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         ),
                                       ],
                                     ),
-                                    if (_isEditing)
-                                      TextButton.icon(
-                                        onPressed: () => setState(() {
-                                          _isEditing = false;
-                                          _populateFields();
-                                        }),
-                                        icon: const Icon(Icons.close, size: 18),
-                                        label: const Text('Done'),
-                                        style: TextButton.styleFrom(
-                                          foregroundColor: _Palette.milanoRed,
+                                    const SizedBox(height: 16),
+                                    _buildDetailsGrid(r, screenSize),
+                                    const SizedBox(height: 32),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Container(
+                                              width: 4,
+                                              height: 20,
+                                              decoration: BoxDecoration(
+                                                color: _Palette.milanoRed,
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              'Additional Contacts',
+                                              style:
+                                                  GoogleFonts.playfairDisplay(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold,
+                                                color: _Palette.textDark,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                      )
-                                    else
-                                      TextButton.icon(
-                                        onPressed: () =>
-                                            setState(() => _isEditing = true),
-                                        icon: const Icon(Icons.edit, size: 18),
-                                        label: const Text('Edit'),
-                                        style: TextButton.styleFrom(
-                                          foregroundColor: _Palette.milanoRed,
+                                        if (_isEditing)
+                                          TextButton.icon(
+                                            onPressed: () => setState(() {
+                                              _isEditing = false;
+                                              _populateFields();
+                                            }),
+                                            icon: const Icon(Icons.close,
+                                                size: 18),
+                                            label: const Text('Done'),
+                                            style: TextButton.styleFrom(
+                                              foregroundColor:
+                                                  _Palette.milanoRed,
+                                            ),
+                                          )
+                                        else
+                                          TextButton.icon(
+                                            onPressed: () => setState(
+                                                () => _isEditing = true),
+                                            icon: const Icon(Icons.edit,
+                                                size: 18),
+                                            label: const Text('Edit'),
+                                            style: TextButton.styleFrom(
+                                              foregroundColor:
+                                                  _Palette.milanoRed,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _buildContactsSection(restaurantProv),
+                                    const SizedBox(height: 32),
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 4,
+                                          height: 20,
+                                          decoration: BoxDecoration(
+                                            color: _Palette.milanoRed,
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                          ),
                                         ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Admin Account',
+                                          style: GoogleFonts.playfairDisplay(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: _Palette.textDark,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _infoCard([
+                                      _InfoRow(
+                                        icon: Icons.email_outlined,
+                                        label: 'Account Email',
+                                        value: auth.userEmail ??
+                                            'admin@restaurant.com',
                                       ),
+                                      const _InfoRow(
+                                        icon: Icons.badge_outlined,
+                                        label: 'Role',
+                                        value: 'Administrator',
+                                      ),
+                                    ]),
+                                    const SizedBox(height: 40),
                                   ],
                                 ),
-                                const SizedBox(height: 16),
-                                _buildContactsSection(restaurantProv),
-                                const SizedBox(height: 32),
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 4,
-                                      height: 20,
-                                      decoration: BoxDecoration(
-                                        color: _Palette.milanoRed,
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Admin Account',
-                                      style: GoogleFonts.playfairDisplay(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                        color: _Palette.textDark,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                _infoCard([
-                                  _InfoRow(
-                                    icon: Icons.email_outlined,
-                                    label: 'Account Email',
-                                    value: auth.userEmail ??
-                                        'admin@restaurant.com',
-                                  ),
-                                  const _InfoRow(
-                                    icon: Icons.badge_outlined,
-                                    label: 'Role',
-                                    value: 'Administrator',
-                                  ),
-                                ]),
-                                const SizedBox(height: 40),
-                              ],
+                              ),
                             ),
                           ),
                         ),
@@ -583,15 +605,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /// uses: a soft warm-gold corner glow, a large very faint watermark
   /// emblem, a subtle diagonal glass sheen, and a warm-gold hairline along
   /// the bottom edge. The title is a white → gold `ShaderMask`, the date
-  /// text (desktop only) sits in soft gold, the subtitle sits in reduced-
-  /// opacity white, and a thin gold underline accent sits beneath it — all
-  /// structurally identical to StaffScreen's `_buildHeader()`. In place of
-  /// StaffScreen's back-chevron / add-icon controls, this header keeps this
-  /// screen's own single action (Logout), restyled into the same circular
-  /// gold icon-button shape. The `onPressed` logic — logout then navigate
-  /// to `/admin/login` — is completely unchanged from Pass 3/4, only its
-  /// look and position changed.
-  Widget _buildCustomHeader(bool isMobile) {
+  /// text (tablet & desktop) sits in soft gold, the subtitle sits in
+  /// reduced-opacity white, and a thin gold underline accent sits beneath
+  /// it. In place of StaffScreen's back-chevron / add-icon controls, this
+  /// header keeps this screen's own single action (Logout), restyled into
+  /// the same circular gold icon-button shape. The `onPressed` logic —
+  /// logout then navigate to `/admin/login` — is completely unchanged from
+  /// Pass 3/4, only its look and position changed.
+  ///
+  /// UI-ENHANCEMENT PASS 6: the bar itself still spans the full device
+  /// width (matching the rest of the app's headers), but its inner
+  /// title/date/logout row and subtitle/divider are now centered inside
+  /// the same max-width column used by the form below, with a dedicated
+  /// tablet type scale, so the header lines up with the content beneath it
+  /// instead of always hugging the far edges on wide screens.
+  Widget _buildCustomHeader(_ScreenSize screenSize) {
+    final bool isMobile = screenSize == _ScreenSize.mobile;
+    final bool isTablet = screenSize == _ScreenSize.tablet;
+    final bool isDesktop = screenSize == _ScreenSize.desktop;
+    final double maxContentWidth =
+        isDesktop ? 1080 : (isTablet ? 860 : double.infinity);
+
+    final double horizontalPadding = isMobile ? 18 : (isTablet ? 26 : 32);
+    final double topPadding = isMobile ? 16 : (isTablet ? 20 : 22);
+    final double bottomPadding = isMobile ? 18 : (isTablet ? 22 : 24);
+    final double titleSize = isMobile ? 21 : (isTablet ? 24 : 28);
+    final double subtitleSize = isMobile ? 12.5 : (isTablet ? 13.5 : 14);
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -636,7 +676,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       bottom: isMobile ? -20 : -16,
                       child: Icon(
                         Icons.storefront_rounded,
-                        size: isMobile ? 120 : 160,
+                        size: isMobile ? 120 : (isTablet ? 140 : 160),
                         color: Colors.white.withValues(alpha: 0.05),
                       ),
                     ),
@@ -663,83 +703,88 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           SafeArea(
             bottom: false,
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                isMobile ? 18 : 32,
-                isMobile ? 16 : 22,
-                isMobile ? 18 : 32,
-                isMobile ? 18 : 24,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Top row — the two-tone title, the date (desktop only),
-                  // and the Logout icon button, all on one line. No search
-                  // bar or back control of any kind here — mirrors
-                  // StaffScreen's top row shape with this screen's own
-                  // single action swapped in.
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxContentWidth),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    topPadding,
+                    horizontalPadding,
+                    bottomPadding,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: ShaderMask(
-                          shaderCallback: (bounds) => const LinearGradient(
-                            colors: [
-                              Colors.white,
-                              _Palette.lemonChiffon,
-                            ],
-                          ).createShader(bounds),
-                          child: Text(
-                            'Restaurant Profile',
-                            style: GoogleFonts.playfairDisplay(
-                              color: Colors.white,
-                              fontSize: isMobile ? 21 : 28,
-                              fontWeight: FontWeight.bold,
+                      // Top row — the two-tone title, the date (tablet &
+                      // desktop), and the Logout icon button, all on one
+                      // line. No search bar or back control of any kind
+                      // here — mirrors StaffScreen's top row shape with
+                      // this screen's own single action swapped in.
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: ShaderMask(
+                              shaderCallback: (bounds) => const LinearGradient(
+                                colors: [
+                                  Colors.white,
+                                  _Palette.lemonChiffon,
+                                ],
+                              ).createShader(bounds),
+                              child: Text(
+                                'Restaurant Profile',
+                                style: GoogleFonts.playfairDisplay(
+                                  color: Colors.white,
+                                  fontSize: titleSize,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      if (!isMobile) ...[
-                        Text(
-                          _todayLabel(),
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.3,
-                            color: _Palette.softYellow,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                      ],
-                      _logoutIconButton(),
-                    ],
-                  ),
-                  SizedBox(height: isMobile ? 4 : 6),
-                  Text(
-                    'Manage your business identity',
-                    style: GoogleFonts.inter(
-                      color: Colors.white.withValues(alpha: 0.75),
-                      fontSize: isMobile ? 12.5 : 14,
-                    ),
-                  ),
-                  SizedBox(height: isMobile ? 12 : 14),
-                  // Thin gold gradient hairline — the same soft divider
-                  // language used across the rest of the app's headers.
-                  // Purely decorative.
-                  Container(
-                    width: 46,
-                    height: 3,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4),
-                      gradient: LinearGradient(
-                        colors: [
-                          _Palette.lemonChiffon.withValues(alpha: 0.95),
-                          _Palette.lemonChiffon.withValues(alpha: 0.15),
+                          if (!isMobile) ...[
+                            Text(
+                              _todayLabel(),
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.3,
+                                color: _Palette.softYellow,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                          ],
+                          _logoutIconButton(),
                         ],
                       ),
-                    ),
+                      SizedBox(height: isMobile ? 4 : 6),
+                      Text(
+                        'Manage your business identity',
+                        style: GoogleFonts.inter(
+                          color: Colors.white.withValues(alpha: 0.75),
+                          fontSize: subtitleSize,
+                        ),
+                      ),
+                      SizedBox(height: isMobile ? 12 : 14),
+                      // Thin gold gradient hairline — the same soft divider
+                      // language used across the rest of the app's
+                      // headers. Purely decorative.
+                      Container(
+                        width: 46,
+                        height: 3,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(4),
+                          gradient: LinearGradient(
+                            colors: [
+                              _Palette.lemonChiffon.withValues(alpha: 0.95),
+                              _Palette.lemonChiffon.withValues(alpha: 0.15),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -799,13 +844,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildHeaderCard(RestaurantProfile? r, bool isMobile) {
+  /// UI-ENHANCEMENT PASS 6: padding, avatar size and type scale now have a
+  /// dedicated tablet value (between the phone and desktop sizes) instead
+  /// of jumping straight from phone sizing to desktop sizing. Every data
+  /// binding (`r?.name`, `r?.restaurantType`, the status badge) is
+  /// completely unchanged.
+  Widget _buildHeaderCard(RestaurantProfile? r, _ScreenSize screenSize) {
+    final bool isMobile = screenSize == _ScreenSize.mobile;
+    final bool isTablet = screenSize == _ScreenSize.tablet;
+
+    final double cardPadding = isMobile ? 20 : (isTablet ? 24 : 28);
+    final double avatarSize = isMobile ? 56 : (isTablet ? 64 : 72);
+    final double avatarIconSize = isMobile ? 28 : (isTablet ? 32 : 36);
+    final double nameSize = isMobile ? 20 : (isTablet ? 23 : 26);
+    final double typeSize = isMobile ? 12 : (isTablet ? 13 : 14);
+
     // Wrapped in a clipped Column with a slim gold top cap, matching the
     // Orders/Staff screens' stat-card treatment. The card body sits on the
     // PUREDINE card spec — a white → Soft Cream wash with a Pale Rose
     // border — so it reads correctly against the (now light) page canvas.
-    // Every data binding (`r?.name`, `r?.restaurantType`, the status
-    // badge) is completely unchanged.
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
@@ -821,7 +878,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           Container(
             width: double.infinity,
-            padding: EdgeInsets.all(isMobile ? 20 : 28),
+            padding: EdgeInsets.all(cardPadding),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
@@ -836,8 +893,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Row(
                   children: [
                     Container(
-                      width: isMobile ? 56 : 72,
-                      height: isMobile ? 56 : 72,
+                      width: avatarSize,
+                      height: avatarSize,
                       decoration: BoxDecoration(
                         color: _Palette.dustyBlush,
                         borderRadius: BorderRadius.circular(20),
@@ -850,7 +907,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Icon(
                         Icons.restaurant_rounded,
                         color: _Palette.milanoRed,
-                        size: isMobile ? 28 : 36,
+                        size: avatarIconSize,
                       ),
                     ),
                     const SizedBox(width: 20),
@@ -861,7 +918,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Text(
                             r?.name ?? 'Restaurant Name',
                             style: GoogleFonts.playfairDisplay(
-                              fontSize: isMobile ? 20 : 26,
+                              fontSize: nameSize,
                               fontWeight: FontWeight.w900,
                               color: _Palette.milanoRed,
                             ),
@@ -870,7 +927,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Text(
                             r?.restaurantType ?? 'Restaurant Type',
                             style: GoogleFonts.inter(
-                              fontSize: isMobile ? 12 : 14,
+                              fontSize: typeSize,
                               color: _Palette.lemonChiffonDeep,
                               fontWeight: FontWeight.w600,
                             ),
@@ -934,9 +991,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildDetailsGrid(RestaurantProfile? r, bool isMobile) {
+  /// UI-ENHANCEMENT PASS 6: card padding now has a tablet value, and
+  /// "Primary Phone" / "Primary Email" are paired side-by-side on tablet
+  /// and desktop (mirroring the existing State/Pincode pairing) instead of
+  /// always stacking as two separate full-width rows — a denser, more
+  /// professional two-column feel on larger screens. Mobile is unchanged:
+  /// every field still stacks full-width. No controller, field, or binding
+  /// was touched — only grouping/spacing.
+  Widget _buildDetailsGrid(RestaurantProfile? r, _ScreenSize screenSize) {
+    final bool isMobile = screenSize == _ScreenSize.mobile;
+    final bool isTablet = screenSize == _ScreenSize.tablet;
+    final double gridPadding = isMobile ? 20 : (isTablet ? 24 : 28);
+
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(gridPadding),
       decoration: BoxDecoration(
         color: _Palette.cardWhite,
         borderRadius: BorderRadius.circular(24),
@@ -983,6 +1051,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ] else
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: _buildEditableRow(
@@ -1004,19 +1073,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           Divider(height: 32, color: _Palette.paleRose),
-          _buildEditableRow(
-            icon: Icons.phone_outlined,
-            label: 'Primary Phone',
-            controller: _phoneController,
-            hint: 'Main contact number',
-          ),
-          Divider(height: 32, color: _Palette.paleRose),
-          _buildEditableRow(
-            icon: Icons.email_outlined,
-            label: 'Primary Email',
-            controller: _emailController,
-            hint: 'Main contact email',
-          ),
+          if (isMobile) ...[
+            _buildEditableRow(
+              icon: Icons.phone_outlined,
+              label: 'Primary Phone',
+              controller: _phoneController,
+              hint: 'Main contact number',
+            ),
+            Divider(height: 32, color: _Palette.paleRose),
+            _buildEditableRow(
+              icon: Icons.email_outlined,
+              label: 'Primary Email',
+              controller: _emailController,
+              hint: 'Main contact email',
+            ),
+          ] else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _buildEditableRow(
+                    icon: Icons.phone_outlined,
+                    label: 'Primary Phone',
+                    controller: _phoneController,
+                    hint: 'Main contact number',
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildEditableRow(
+                    icon: Icons.email_outlined,
+                    label: 'Primary Email',
+                    controller: _emailController,
+                    hint: 'Main contact email',
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );

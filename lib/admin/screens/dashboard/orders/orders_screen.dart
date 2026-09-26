@@ -191,7 +191,7 @@ import 'package:restaurant_unified_app/admin/services/orders_service.dart';
 ///      Deep Brown; the update-status button uses wine shades instead of
 ///      blue/orange/purple/teal (status badges keep their semantic colours).
 ///
-/// FEATURE PASS 13 (this pass): the "Orders since ..." golden
+/// FEATURE PASS 13: the "Orders since ..." golden
 /// info pill inside the Time Range block (`_buildTimeRangeSection`) now
 /// only appears when at least one order actually falls inside the
 /// selected time range. Previously it showed as soon as any range other
@@ -203,6 +203,32 @@ import 'package:restaurant_unified_app/admin/services/orders_service.dart';
 /// filtering rule, provider call, sorting, status-update, dialog, or
 /// PDF/print logic anywhere in this file was touched, and no existing
 /// field, callback, route or keyword was renamed.
+///
+/// UI-ENHANCEMENT PASS 14 (this pass): responsive-layout-only, exactly
+/// like every pass above — no provider, data loading, filtering, sorting,
+/// status-update, dialog, or PDF/print logic anywhere in this file was
+/// touched, and no state field, callback, route, or keyword was renamed.
+///   1. RESPONSIVE BREAKPOINTS: the screen now measures the available
+///      width via a `_DeviceType` breakpoint (mobile < 700, tablet
+///      700–1100, desktop ≥ 1100), computed once in `build()` and
+///      threaded down to `_buildHeader`, `_buildStatsGrid`/`_statCard`,
+///      `_buildFilterSection`, `_buildOrdersList` and `_buildOrdersTable`
+///      instead of a single mobile/non-mobile boolean split at 900px, so
+///      the header's padding/type-scale, the stat-card grid, the filter
+///      dropdown layout, and the body's outer padding all now scale
+///      through three tiers instead of two.
+///   2. TABLET / DESKTOP POLISH: on tablet the four stat cards now lay
+///      out as a spacious 2×2 grid (desktop keeps its single row of 4;
+///      mobile keeps its original horizontal-scrolling row of cards) and
+///      the four filter dropdowns lay out as a 2×2 grid on tablet
+///      (desktop keeps its single row of 4; mobile keeps its original
+///      stacked column). The orders table's `horizontalMargin`/
+///      `columnSpacing` are slightly tighter on tablet so its columns sit
+///      comfortably rather than looking stretched. The searchable orders
+///      table (with its existing horizontal-scroll fallback) is now shown
+///      starting at the tablet breakpoint instead of only above 900px, so
+///      it reads as a proper data table on tablets instead of the stacked
+///      mobile card list; mobile keeps the original stacked card list.
 /// -----------------------------------------------------------------------
 class _OrdersTheme {
   // Primary brand — the "PUREDINE Maroon + Cream" palette (see the
@@ -272,6 +298,17 @@ class _OrdersTheme {
           offset: const Offset(0, 2),
         ),
       ];
+}
+
+/// PASS 14: simple responsive breakpoint helper — layout-only, does not
+/// touch any provider/filtering/sorting/status-update/PDF logic anywhere
+/// in this file.
+enum _DeviceType { mobile, tablet, desktop }
+
+_DeviceType _deviceTypeForWidth(double width) {
+  if (width < 700) return _DeviceType.mobile;
+  if (width < 1100) return _DeviceType.tablet;
+  return _DeviceType.desktop;
 }
 
 class OrdersScreen extends StatefulWidget {
@@ -501,7 +538,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
   Widget build(BuildContext context) {
     final filtered = _filtered;
     final size = MediaQuery.of(context).size;
-    final bool isMobile = size.width < 900;
+    // PASS 14: three-tier breakpoint replaces the old single mobile/
+    // non-mobile split at 900px. `isMobile` is kept as a convenience flag
+    // derived from it so existing mobile-only branches below read exactly
+    // as before.
+    final deviceType = _deviceTypeForWidth(size.width);
+    final bool isMobile = deviceType == _DeviceType.mobile;
 
     return Scaffold(
       backgroundColor: _OrdersTheme.canvas,
@@ -516,7 +558,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
           // Wine Maroon → Wine gradient. It stays fixed at the top,
           // exactly like MenuScreen's custom header — it does not scroll
           // away with the content beneath it.
-          _buildHeader(isMobile),
+          _buildHeader(deviceType),
 
           // ── Main Body Section ────────────────────────────────────────────
           Expanded(
@@ -665,16 +707,19 @@ class _OrdersScreenState extends State<OrdersScreen> {
                             controller: _scrollController,
                             physics: const AlwaysScrollableScrollPhysics(),
                             padding: EdgeInsets.symmetric(
-                              horizontal:
-                                  isMobile ? 16 : (size.width > 1400 ? 64 : 40),
+                              horizontal: isMobile
+                                  ? 16
+                                  : deviceType == _DeviceType.tablet
+                                      ? 28
+                                      : (size.width > 1400 ? 64 : 40),
                               vertical: 32,
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _buildStatsGrid(isMobile),
+                                _buildStatsGrid(deviceType),
                                 const SizedBox(height: 32),
-                                _buildFilterSection(isMobile),
+                                _buildFilterSection(deviceType),
                                 const SizedBox(height: 24),
                                 Text(
                                   'Showing ${filtered.length > 50 ? 50 : filtered.length} of ${filtered.length} orders',
@@ -686,7 +731,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                 ),
                                 const SizedBox(height: 12),
                                 _buildOrdersList(
-                                    filtered.take(50).toList(), isMobile),
+                                    filtered.take(50).toList(), deviceType),
                               ],
                             ),
                           ),
@@ -718,7 +763,28 @@ class _OrdersScreenState extends State<OrdersScreen> {
   /// same white pill search bar with the same state, handler and "N
   /// found" chip. Only the copy's colors changed so it reads clearly on
   /// the wine backdrop.
-  Widget _buildHeader(bool isMobile) {
+  ///
+  /// PASS 14: the two-tier `isMobile` padding/type-scale below was
+  /// stepped up into three tiers (mobile/tablet/desktop) so the header
+  /// reads with a bit more breathing room on tablets instead of jumping
+  /// straight from the compact phone sizing to the full desktop sizing.
+  /// Structure, text, state and handlers are unchanged.
+  Widget _buildHeader(_DeviceType deviceType) {
+    final bool isMobile = deviceType == _DeviceType.mobile;
+    final bool isTablet = deviceType == _DeviceType.tablet;
+
+    final double padLeftRight = isMobile ? 18 : (isTablet ? 26 : 32);
+    final double padTop = isMobile ? 16 : (isTablet ? 19 : 22);
+    final double padBottom = isMobile ? 18 : (isTablet ? 21 : 24);
+    final double titleSize = isMobile ? 21 : (isTablet ? 25 : 28);
+    final double subtitleSize = isMobile ? 12.5 : (isTablet ? 13.5 : 14);
+    final double watermarkSize = isMobile ? 130 : (isTablet ? 150 : 170);
+    final double watermarkRight = isMobile ? -22 : (isTablet ? -18 : -14);
+    final double watermarkBottom = isMobile ? -20 : (isTablet ? -16 : -14);
+    final double spaceAfterTitle = isMobile ? 4 : (isTablet ? 5 : 6);
+    final double spaceBeforeHairline = isMobile ? 12 : (isTablet ? 13 : 14);
+    final double spaceBeforeSearch = isMobile ? 14 : (isTablet ? 16 : 18);
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -759,11 +825,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       ),
                     ),
                     Positioned(
-                      right: isMobile ? -22 : -14,
-                      bottom: isMobile ? -20 : -14,
+                      right: watermarkRight,
+                      bottom: watermarkBottom,
                       child: Icon(
                         Icons.receipt_long_rounded,
-                        size: isMobile ? 130 : 170,
+                        size: watermarkSize,
                         color: Colors.white.withValues(alpha: 0.05),
                       ),
                     ),
@@ -792,10 +858,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
             bottom: false,
             child: Padding(
               padding: EdgeInsets.fromLTRB(
-                isMobile ? 18 : 32,
-                isMobile ? 16 : 22,
-                isMobile ? 18 : 32,
-                isMobile ? 18 : 24,
+                padLeftRight,
+                padTop,
+                padLeftRight,
+                padBottom,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -841,7 +907,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                             isMobile ? 'Orders' : 'Orders Management',
                             style: GoogleFonts.playfairDisplay(
                               color: Colors.white,
-                              fontSize: isMobile ? 21 : 28,
+                              fontSize: titleSize,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -849,17 +915,17 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       ),
                     ],
                   ),
-                  SizedBox(height: isMobile ? 4 : 6),
+                  SizedBox(height: spaceAfterTitle),
                   Text(
                     isMobile
                         ? 'Track customer orders'
                         : 'View and track customer orders',
                     style: GoogleFonts.inter(
                       color: Colors.white.withValues(alpha: 0.75),
-                      fontSize: isMobile ? 12.5 : 14,
+                      fontSize: subtitleSize,
                     ),
                   ),
-                  SizedBox(height: isMobile ? 12 : 14),
+                  SizedBox(height: spaceBeforeHairline),
                   // Thin gold gradient hairline — same soft divider
                   // language used on the Menu screen's header.
                   Container(
@@ -875,7 +941,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(height: isMobile ? 14 : 18),
+                  SizedBox(height: spaceBeforeSearch),
                   // Standard rounded pill search bar — same _searchQuery
                   // state and the exact same onChanged handler the old
                   // inline search field (previously inside
@@ -973,8 +1039,15 @@ class _OrdersScreenState extends State<OrdersScreen> {
   /// palette (Deep Wine Maroon, Wine, Fresh Green, Burgundy) instead of
   /// the old stray blue, so the row reads as one brand. The card widget,
   /// the values shown, and the filters they reflect are unchanged.
-  Widget _buildStatsGrid(bool isMobile) {
-    if (isMobile) {
+  ///
+  /// PASS 14: mobile keeps its original horizontally-scrolling row of
+  /// fixed-width cards; desktop keeps its original single row of four
+  /// `Expanded` cards. Tablet now lays the same four cards out as a
+  /// spacious 2×2 grid instead of squeezing a full row of four into a
+  /// mid-size width, so each figure gets more room on tablets. The card
+  /// values, colors and the filters they reflect are unchanged.
+  Widget _buildStatsGrid(_DeviceType deviceType) {
+    if (deviceType == _DeviceType.mobile) {
       return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
@@ -983,76 +1056,106 @@ class _OrdersScreenState extends State<OrdersScreen> {
               'Total Orders',
               _orders.length.toString(),
               _OrdersTheme.milanoRed,
-              isMobile,
+              deviceType,
             ),
             const SizedBox(width: 12),
             _statCard(
               'Placed',
               _orders.where((o) => o.status == 'PLACED').length.toString(),
               _OrdersTheme.milanoRedLight,
-              isMobile,
+              deviceType,
             ),
             const SizedBox(width: 12),
             _statCard(
               'Served',
               _orders.where((o) => o.status == 'SERVED').length.toString(),
               _OrdersTheme.successGreen,
-              isMobile,
+              deviceType,
             ),
             const SizedBox(width: 12),
             _statCard(
               'Revenue',
               '₹${_totalRevenue.toStringAsFixed(0)}',
               _OrdersTheme.milanoRedDark,
-              isMobile,
+              deviceType,
             ),
           ],
         ),
       );
     }
 
+    final totalCard = _statCard(
+      'Total Orders',
+      _orders.length.toString(),
+      _OrdersTheme.milanoRed,
+      deviceType,
+    );
+    final placedCard = _statCard(
+      'Placed',
+      _orders.where((o) => o.status == 'PLACED').length.toString(),
+      _OrdersTheme.milanoRedLight,
+      deviceType,
+    );
+    final servedCard = _statCard(
+      'Served',
+      _orders.where((o) => o.status == 'SERVED').length.toString(),
+      _OrdersTheme.successGreen,
+      deviceType,
+    );
+    final revenueCard = _statCard(
+      'Total Revenue',
+      '₹${_totalRevenue.toStringAsFixed(0)}',
+      _OrdersTheme.milanoRedDark,
+      deviceType,
+    );
+
+    if (deviceType == _DeviceType.tablet) {
+      return Column(
+        children: [
+          Row(
+            children: [
+              Expanded(child: totalCard),
+              const SizedBox(width: 20),
+              Expanded(child: placedCard),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(child: servedCard),
+              const SizedBox(width: 20),
+              Expanded(child: revenueCard),
+            ],
+          ),
+        ],
+      );
+    }
+
     return Row(
       children: [
-        Expanded(
-          child: _statCard(
-            'Total Orders',
-            _orders.length.toString(),
-            _OrdersTheme.milanoRed,
-            false,
-          ),
-        ),
+        Expanded(child: totalCard),
         const SizedBox(width: 24),
-        Expanded(
-          child: _statCard(
-            'Placed',
-            _orders.where((o) => o.status == 'PLACED').length.toString(),
-            _OrdersTheme.milanoRedLight,
-            false,
-          ),
-        ),
+        Expanded(child: placedCard),
         const SizedBox(width: 24),
-        Expanded(
-          child: _statCard(
-            'Served',
-            _orders.where((o) => o.status == 'SERVED').length.toString(),
-            _OrdersTheme.successGreen,
-            false,
-          ),
-        ),
+        Expanded(child: servedCard),
         const SizedBox(width: 24),
-        Expanded(
-          child: _statCard(
-            'Total Revenue',
-            '₹${_totalRevenue.toStringAsFixed(0)}',
-            _OrdersTheme.milanoRedDark,
-            false,
-          ),
-        ),
+        Expanded(child: revenueCard),
       ],
     );
   }
 
-  Widget _statCard(String title, String value, Color color, bool isMobile) {
+  Widget _statCard(
+    String title,
+    String value,
+    Color color,
+    _DeviceType deviceType,
+  ) {
+    final bool isMobile = deviceType == _DeviceType.mobile;
+    final bool isTablet = deviceType == _DeviceType.tablet;
+    final double cardPadding = isMobile ? 16 : (isTablet ? 20 : 24);
+    final double titleSize = isMobile ? 12 : (isTablet ? 13 : 14);
+    final double valueSize = isMobile ? 22 : (isTablet ? 25 : 28);
+
     // A slim color-coded top cap so each figure has its own subtle
     // identity at a glance. Same title/value/color inputs as before.
     //
@@ -1077,7 +1180,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
         children: [
           Container(height: 3, color: color.withValues(alpha: 0.65)),
           Container(
-            padding: EdgeInsets.all(isMobile ? 16 : 24),
+            padding: EdgeInsets.all(cardPadding),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
@@ -1100,7 +1203,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       title,
                       style: GoogleFonts.inter(
                         color: _OrdersTheme.mutedTaupe,
-                        fontSize: isMobile ? 12 : 14,
+                        fontSize: titleSize,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -1125,7 +1228,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   value,
                   style: GoogleFonts.inter(
                     color: color,
-                    fontSize: isMobile ? 22 : 28,
+                    fontSize: valueSize,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -1149,7 +1252,49 @@ class _OrdersScreenState extends State<OrdersScreen> {
   /// FEATURE PASS 9: a divider and the new "Time Range" block
   /// (`_buildTimeRangeSection`) were appended at the bottom of this panel.
   /// Everything above them is unchanged.
-  Widget _buildFilterSection(bool isMobile) {
+  ///
+  /// PASS 14: mobile keeps its original stacked column of four dropdowns;
+  /// desktop keeps its original single row of four. Tablet now lays the
+  /// same four dropdowns out as a 2×2 grid so each one has more breathing
+  /// room than a squeezed four-across row at mid-size widths. Every
+  /// dropdown's value/items/onChanged callback is unchanged.
+  Widget _buildFilterSection(_DeviceType deviceType) {
+    final statusDropdown = _buildDropdown(
+        _statusFilter,
+        [
+          'All Status',
+          'PLACED',
+          'CONFIRMED',
+          'PREPARING',
+          'READY',
+          'SERVED',
+          'CANCELLED',
+        ],
+        (v) => setState(() => _statusFilter = v!));
+    final paymentDropdown = _buildDropdown(
+        _paymentFilter,
+        [
+          'All Payments',
+          'PAID',
+          'PENDING',
+        ],
+        (v) => setState(() => _paymentFilter = v!));
+    final typeDropdown = _buildDropdown(
+        _typeFilter,
+        [
+          'All Types',
+          'DINE_IN',
+          'TAKEAWAY',
+        ],
+        (v) => setState(() => _typeFilter = v!));
+    final sortDropdown = _buildDropdown(
+        _sortOrder,
+        [
+          'Newest First',
+          'Oldest First',
+        ],
+        (v) => setState(() => _sortOrder = v!));
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -1190,98 +1335,48 @@ class _OrdersScreenState extends State<OrdersScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          if (isMobile)
+          if (deviceType == _DeviceType.mobile)
             Column(
               children: [
-                _buildDropdown(
-                    _statusFilter,
-                    [
-                      'All Status',
-                      'PLACED',
-                      'CONFIRMED',
-                      'PREPARING',
-                      'READY',
-                      'SERVED',
-                      'CANCELLED',
-                    ],
-                    (v) => setState(() => _statusFilter = v!)),
+                statusDropdown,
                 const SizedBox(height: 12),
-                _buildDropdown(
-                    _paymentFilter,
-                    [
-                      'All Payments',
-                      'PAID',
-                      'PENDING',
-                    ],
-                    (v) => setState(() => _paymentFilter = v!)),
+                paymentDropdown,
                 const SizedBox(height: 12),
-                _buildDropdown(
-                    _typeFilter,
-                    [
-                      'All Types',
-                      'DINE_IN',
-                      'TAKEAWAY',
-                    ],
-                    (v) => setState(() => _typeFilter = v!)),
+                typeDropdown,
                 const SizedBox(height: 12),
-                _buildDropdown(
-                    _sortOrder,
-                    [
-                      'Newest First',
-                      'Oldest First',
-                    ],
-                    (v) => setState(() => _sortOrder = v!)),
+                sortDropdown,
+              ],
+            )
+          else if (deviceType == _DeviceType.tablet)
+            Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: statusDropdown),
+                    const SizedBox(width: 16),
+                    Expanded(child: paymentDropdown),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(child: typeDropdown),
+                    const SizedBox(width: 16),
+                    Expanded(child: sortDropdown),
+                  ],
+                ),
               ],
             )
           else
             Row(
               children: [
-                Expanded(
-                  child: _buildDropdown(
-                      _statusFilter,
-                      [
-                        'All Status',
-                        'PLACED',
-                        'CONFIRMED',
-                        'PREPARING',
-                        'READY',
-                        'SERVED',
-                        'CANCELLED',
-                      ],
-                      (v) => setState(() => _statusFilter = v!)),
-                ),
+                Expanded(child: statusDropdown),
                 const SizedBox(width: 16),
-                Expanded(
-                  child: _buildDropdown(
-                      _paymentFilter,
-                      [
-                        'All Payments',
-                        'PAID',
-                        'PENDING',
-                      ],
-                      (v) => setState(() => _paymentFilter = v!)),
-                ),
+                Expanded(child: paymentDropdown),
                 const SizedBox(width: 16),
-                Expanded(
-                  child: _buildDropdown(
-                      _typeFilter,
-                      [
-                        'All Types',
-                        'DINE_IN',
-                        'TAKEAWAY',
-                      ],
-                      (v) => setState(() => _typeFilter = v!)),
-                ),
+                Expanded(child: typeDropdown),
                 const SizedBox(width: 16),
-                Expanded(
-                  child: _buildDropdown(
-                      _sortOrder,
-                      [
-                        'Newest First',
-                        'Oldest First',
-                      ],
-                      (v) => setState(() => _sortOrder = v!)),
-                ),
+                Expanded(child: sortDropdown),
               ],
             ),
 
@@ -1289,7 +1384,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
           const SizedBox(height: 22),
           const Divider(height: 1, thickness: 1, color: _OrdersTheme.paleRose),
           const SizedBox(height: 22),
-          _buildTimeRangeSection(isMobile),
+          _buildTimeRangeSection(deviceType == _DeviceType.mobile),
         ],
       ),
     );
@@ -1638,7 +1733,13 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
   }
 
-  Widget _buildOrdersList(List<OrderModel> orders, bool isMobile) {
+  /// PASS 14: the mobile stacked-card list is now shown only at the true
+  /// mobile breakpoint; tablet and desktop both use `_buildOrdersTable`
+  /// (which already scrolls horizontally on narrower widths), so tablets
+  /// get the fuller data-table presentation instead of the phone card
+  /// list. The empty state, the mobile card list itself, and everything
+  /// inside `_buildOrdersTable` are unchanged.
+  Widget _buildOrdersList(List<OrderModel> orders, _DeviceType deviceType) {
     if (orders.isEmpty) {
       return Container(
         width: double.infinity,
@@ -1672,7 +1773,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
       );
     }
 
-    if (isMobile) {
+    if (deviceType == _DeviceType.mobile) {
       return ListView.separated(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -1703,7 +1804,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
       );
     }
 
-    return _buildOrdersTable(orders);
+    return _buildOrdersTable(orders, deviceType);
   }
 
   Widget _buildOrderMobileCard(OrderModel o) {
@@ -1817,8 +1918,18 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
   }
 
-  Widget _buildOrdersTable(List<OrderModel> orders) {
+  /// PASS 14: added a `_DeviceType` parameter purely to fine-tune
+  /// `horizontalMargin`/`columnSpacing` on tablet (slightly tighter than
+  /// desktop) so the columns sit comfortably instead of looking stretched
+  /// at mid-size widths; the table already scrolled horizontally on
+  /// narrower widths before this pass. Every column, cell, badge and the
+  /// "View Details" action are unchanged.
+  Widget _buildOrdersTable(List<OrderModel> orders, _DeviceType deviceType) {
     final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
+    final bool isTablet = deviceType == _DeviceType.tablet;
+    final double horizontalMargin = isTablet ? 16 : 24;
+    final double columnSpacing = isTablet ? 16 : 24;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1842,8 +1953,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 _OrdersTheme.lemonChiffon.withValues(alpha: 0.35),
               ),
               dataRowMaxHeight: 80,
-              horizontalMargin: 24,
-              columnSpacing: 24,
+              horizontalMargin: horizontalMargin,
+              columnSpacing: columnSpacing,
               dividerThickness: 1,
               columns: [
                 DataColumn(

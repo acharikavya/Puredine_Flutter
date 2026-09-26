@@ -91,11 +91,10 @@ import 'package:restaurant_unified_app/admin/services/tables_service.dart';
 ///      flat fill — matching the "Login / CTA buttons" spec exactly. No
 ///      button's `onPressed` callback was touched.
 ///
-/// UI-ENHANCEMENT PASS 5 (this pass): presentation-only, exactly like
-/// every pass above — no provider/service call, table loading, order
-/// submission, validation, quantity, or category/item navigation logic
-/// was touched anywhere in this file, and no field, callback, or
-/// keyword was renamed.
+/// UI-ENHANCEMENT PASS 5: presentation-only, exactly like every pass
+/// above — no provider/service call, table loading, order submission,
+/// validation, quantity, or category/item navigation logic was touched
+/// anywhere in this file, and no field, callback, or keyword was renamed.
 ///   1. MOBILE CATEGORY GRID: on mobile widths the category cards
 ///      (`_CategoryCard`, inside `_buildCategoriesGrid`) were sized the
 ///      same as desktop, which made them feel cramped and let longer
@@ -116,6 +115,87 @@ import 'package:restaurant_unified_app/admin/services/tables_service.dart';
 ///      widths (their desktop radius is unchanged) so they read as
 ///      squared-off buttons on phone screens, matching the reference
 ///      screenshot.
+///
+/// UI-ENHANCEMENT PASS 6: presentation/layout-only, exactly like every
+/// pass above — no provider/service call, table loading, order
+/// submission, validation, quantity, or category/item navigation logic
+/// was touched anywhere in this file.
+///   1. RESPONSIVE BREAKPOINTS: the old binary `isDesktop` (width > 900)
+///      split has been replaced everywhere in this file with three
+///      explicit tiers so tablets get their own tuned layout instead of
+///      inheriting either the mobile stack or the full desktop spacing
+///      verbatim:
+///        • Mobile  — width <  600  → stacked single-column body
+///        • Tablet  — 600 <= width < 1024 → two-column body, tuned
+///          spacing/typography
+///        • Desktop — width >= 1024 → two-column body, full spacing
+///      The dialog's own width/height, the header's icon-chip/title
+///      sizing, the order-details-form heading size, the category
+///      grid's padding/spacing/aspect ratio, the `_CategoryCard` icon
+///      and label sizing, and the footer's paddings/font sizes were all
+///      given a tablet-tuned middle value between the existing mobile
+///      and desktop numbers, so every one of the three views now has a
+///      deliberate, proportioned layout instead of tablets simply
+///      reusing the desktop or mobile numbers unmodified. The header and
+///      footer were also pulled out into their own `_buildHeader()` /
+///      `_buildFooter()` methods purely to keep this breakpoint logic
+///      readable — their contents (copy, icons, callbacks) are unchanged.
+///   2. FOOTER BUTTONS — EQUAL, NARROWER WIDTH: previously "Cancel" was a
+///      content-sized `OutlinedButton` while the primary "Submit" button
+///      was wrapped in `Expanded`, so it stretched to fill all remaining
+///      footer width and ended up far wider than "Cancel". Both buttons
+///      are now wrapped in a fixed `SizedBox` of the same width (tuned
+///      per breakpoint: narrower on mobile, a little wider on tablet,
+///      widest — but still compact — on desktop), so "Cancel" and
+///      "Submit" always match each other and are both noticeably
+///      narrower than the old stretched Submit button, on mobile,
+///      tablet, and desktop alike. Their `onPressed` callbacks
+///      (`Navigator.pop(context)` / `_isSubmitting ? null : _submitOrder`)
+///      are completely unchanged.
+///
+/// TABLET-OVERFLOW FIX PASS 7: the "Order Mode" `SegmentedButton` (Dine-in
+/// / Takeaway / Delivery) was forced to `width: double.infinity` inside
+/// the left-hand details column. On tablet widths that left column is
+/// only ~40% of the dialog's own width (itself already narrower than
+/// desktop), so the three icon+label segments didn't have enough room and
+/// Flutter threw a `RenderFlex overflowed` layout error/yellow-black
+/// stripes specifically at tablet breakpoints. The fix wraps the
+/// `SegmentedButton` in a horizontally-scrollable
+/// `SingleChildScrollView(scrollDirection: Axis.horizontal)` instead of
+/// forcing it to fill the full column width, so it now sizes to its own
+/// natural (minimum) content width and — only if a viewport is ever too
+/// narrow to fit that — scrolls sideways instead of overflowing. This is
+/// a pure layout fix: the segmented control's `segments`, `selected`,
+/// and `onSelectionChanged: (v) => setState(() => _orderMode = v.first)`
+/// callback are completely untouched.
+///
+/// FOOTER BUTTONS PASS 8 (narrower, right-aligned, same line): "Cancel"
+/// and "Submit" already shared one fixed `buttonWidth` and already sat
+/// together on the same line at the right of the footer row (via the
+/// footer's `MainAxisAlignment.spaceBetween`, with the total-amount
+/// block taking the left side and this button `Row` taking the
+/// remaining/right side). This pass only narrows `buttonWidth` a little
+/// further at every breakpoint (mobile/tablet/desktop) so the pair reads
+/// as more compact; the equal sizing, same-line placement, and
+/// right-of-footer position are unchanged, and both `onPressed` callbacks
+/// (`Navigator.pop(context)` / `_isSubmitting ? null : _submitOrder`) are
+/// completely untouched.
+///
+/// TABLET-OVERFLOW FIX PASS 9 (Customer Details labels): the
+/// "Customer Name" / "Customer Phone" field labels inside the
+/// "Customer Details" card (built by `_fieldLabel(..., required: true)`)
+/// used a plain `Row` for their color bar + label text + "*" + "REQUIRED"
+/// pill. In the left-hand details column's narrower tablet width, that
+/// Row's combined content didn't fit and Flutter threw a `RenderFlex
+/// overflowed` layout error (the yellow/black stripe visible next to
+/// "REQUIRED" in the Customer Details card on tablet). The fix swaps
+/// that `Row` for a `Wrap` with the exact same children, in the exact
+/// same order, with the exact same styling/colors/spacing — so the
+/// "REQUIRED" pill now drops to its own line instead of overflowing
+/// whenever space is tight, on tablet and every other breakpoint alike.
+/// No label/badge text, color, or the `required`/`badge` logic was
+/// touched, and no other field label, form field, or validator anywhere
+/// in this file was changed.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   // PUREDINE Maroon + Cream — field names unchanged on purpose (see the
@@ -158,7 +238,7 @@ class _Palette {
   );
 
   /// The supplied CTA gradient, exactly: `#6E1832 → #9B3E4E → #F3C564`.
-  /// Used for the primary "Submit Order" action button below.
+  /// Used for the primary "Submit" action button below.
   static const LinearGradient ctaGradient = LinearGradient(
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
@@ -341,14 +421,42 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final isDesktop = size.width > 900;
+
+    // ── PASS 6: Responsive breakpoints ─────────────────────────────────
+    // Three explicit size tiers instead of the old two-tier
+    // (isDesktop / !isDesktop) split, so tablets get their own tuned
+    // layout instead of inheriting either the cramped mobile stack or the
+    // full desktop spacing verbatim.
+    //   • Mobile:  width <  600         → stacked single-column body
+    //   • Tablet:  600 <= width < 1024  → two-column body, tuned spacing
+    //   • Desktop: width >= 1024        → two-column body, full spacing
+    // No table loading, order submission, validation, quantity, or
+    // category/item navigation logic was touched — this pass only tunes
+    // sizes/paddings/widths per breakpoint plus the footer button sizing.
+    final double width = size.width;
+    final bool isMobile = width < 600;
+    final bool isTablet = width >= 600 && width < 1024;
+    final bool isDesktop = width >= 1024;
+
+    double dialogWidth;
+    double dialogHeight;
+    if (isDesktop) {
+      dialogWidth = width > 1100 ? 1000 : width * 0.92;
+      dialogHeight = size.height * 0.9;
+    } else if (isTablet) {
+      dialogWidth = width * 0.92;
+      dialogHeight = size.height * 0.88;
+    } else {
+      dialogWidth = width * 0.96;
+      dialogHeight = size.height * 0.94;
+    }
 
     return Dialog(
       backgroundColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
       child: Container(
-        width: isDesktop ? 1000 : size.width * 0.95,
-        height: size.height * 0.9,
+        width: dialogWidth,
+        height: dialogHeight,
         decoration: BoxDecoration(
           color: _Palette.cardWhite,
           borderRadius: BorderRadius.circular(26),
@@ -361,454 +469,18 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
         child: Column(
           children: [
             // ── Header (mini navbar) ─────────────────────────────────────
-            // UI-ENHANCEMENT PASS 4: rebuilt to match StaffScreen's header
-            // exactly — a medium-depth PUREDINE Deep Wine Maroon → Wine
-            // diagonal gradient (not the near-black four-stop of the old
-            // "command bar", and not the flat white of Pass 3), dressed
-            // with the same ambient touches used across the other admin
-            // headers: a soft warm-gold corner glow, a large very faint
-            // watermark emblem, a subtle diagonal glass sheen, and a
-            // warm-gold hairline along the bottom edge. Same icon chip,
-            // same title/subtitle copy, same gold underline accent, same
-            // `Navigator.pop(context)` close callback. Only the copy's
-            // colors changed (white / soft-gold instead of maroon /
-            // taupe) and the icon chip + close button were restyled from
-            // Pass-3's maroon-on-white / cream-on-white "glass" look to a
-            // light glass-on-wine treatment so both read clearly against
-            // the new dark backdrop — presentation only.
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                gradient: _Palette.headerGradient,
-                border: Border(
-                  bottom: BorderSide(
-                    color: _Palette.lemonChiffon.withValues(alpha: 0.30),
-                    width: 1,
-                  ),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: _Palette.milanoRedDarkest.withValues(alpha: 0.22),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: ClipRect(
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    // Soft warm-gold corner glow — purely decorative.
-                    Positioned(
-                      top: -60,
-                      right: -40,
-                      child: Container(
-                        width: 220,
-                        height: 220,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: RadialGradient(
-                            colors: [
-                              _Palette.lemonChiffon.withValues(alpha: 0.18),
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    // A subtle secondary highlight low-left, echoing the
-                    // second ambient ribbon used on the other admin
-                    // headers — now a soft warm-white tint so it still
-                    // reads on the dark wine backdrop.
-                    Positioned(
-                      bottom: -44,
-                      left: -44,
-                      child: Container(
-                        width: 170,
-                        height: 170,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: RadialGradient(
-                            colors: [
-                              Colors.white.withValues(alpha: 0.05),
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Large faint watermark emblem — sits low-opacity and
-                    // large behind the copy, matching the receipt icon
-                    // already used in the header's icon chip.
-                    Positioned(
-                      right: -14,
-                      bottom: -18,
-                      child: IgnorePointer(
-                        child: Opacity(
-                          opacity: 0.06,
-                          child: Icon(
-                            Icons.receipt_long_rounded,
-                            size: 128,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Fine dotted texture accent — matches the dashed dot
-                    // row used on the Menu/Dashboard/Staff headers.
-                    Positioned(
-                      top: 8,
-                      left: 0,
-                      right: 0,
-                      child: Center(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: List.generate(
-                            5,
-                            (i) => Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 3),
-                              width: 3.5,
-                              height: 3.5,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: i == 2
-                                    ? Colors.white.withValues(alpha: 0.85)
-                                    : _Palette.lemonChiffon
-                                        .withValues(alpha: 0.45),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Subtle diagonal glass sheen — a fine extra layer of
-                    // depth across the whole header, matching the glass
-                    // highlight language used on the other admin headers.
-                    Positioned.fill(
-                      child: IgnorePointer(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Colors.white.withValues(alpha: 0.07),
-                                Colors.transparent,
-                                Colors.transparent,
-                              ],
-                              stops: const [0.0, 0.4, 1.0],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Fine glass highlight line along the very top edge.
-                    Positioned(
-                      top: 0,
-                      left: 20,
-                      right: 20,
-                      child: Container(
-                        height: 1,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.transparent,
-                              _Palette.lemonChiffon.withValues(alpha: 0.6),
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 22,
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Icon chip — a light glass-on-wine treatment so
-                          // it reads clearly against the new dark
-                          // backdrop. Purely decorative, no callback.
-                          Container(
-                            width: isDesktop ? 48 : 42,
-                            height: isDesktop ? 48 : 42,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.14),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: _Palette.lemonChiffon
-                                    .withValues(alpha: 0.6),
-                                width: 1.2,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: _Palette.milanoRedDarkest
-                                      .withValues(alpha: 0.25),
-                                  blurRadius: 12,
-                                  spreadRadius: 1,
-                                ),
-                              ],
-                            ),
-                            child: Icon(
-                              Icons.receipt_long_rounded,
-                              color: Colors.white,
-                              size: isDesktop ? 24 : 20,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                ShaderMask(
-                                  shaderCallback: (bounds) =>
-                                      const LinearGradient(
-                                    colors: [
-                                      Colors.white,
-                                      _Palette.lemonChiffon,
-                                    ],
-                                  ).createShader(bounds),
-                                  child: Text(
-                                    'Create Manual Order',
-                                    style: GoogleFonts.playfairDisplay(
-                                      color: Colors.white,
-                                      fontSize: isDesktop ? 26 : 19,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.3,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const SizedBox(height: 9),
-                                Container(
-                                  width: 48,
-                                  height: 2.5,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(4),
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        _Palette.lemonChiffon
-                                            .withValues(alpha: 0.95),
-                                        _Palette.lemonChiffon
-                                            .withValues(alpha: 0.15),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Take an order on behalf of a customer',
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white.withValues(alpha: 0.75),
-                                    fontSize: 12,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          _HeaderCloseButton(
-                            onTap: () => Navigator.pop(context),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            _buildHeader(isDesktop: isDesktop, isTablet: isTablet),
 
             // Body
             Expanded(
-              child: isDesktop ? _buildDesktopBody() : _buildMobileBody(),
+              child: isMobile
+                  ? _buildMobileBody()
+                  : _buildTwoColumnBody(
+                      isDesktop: isDesktop, isTablet: isTablet),
             ),
 
             // ── Footer ────────────────────────────────────────────────────
-            Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: isDesktop ? 32 : 16,
-                vertical: isDesktop ? 20 : 16,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border(
-                  top: BorderSide(
-                    color: _Palette.paleRose,
-                  ),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: _Palette.milanoRedDeep.withValues(alpha: 0.05),
-                    blurRadius: 12,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 3,
-                            height: 12,
-                            decoration: BoxDecoration(
-                              color: _Palette.milanoRed,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'TOTAL AMOUNT',
-                            style: GoogleFonts.inter(
-                              color: _Palette.textMuted,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '₹${_totalAmount.toStringAsFixed(2)}',
-                        style: GoogleFonts.playfairDisplay(
-                          fontSize: isDesktop ? 27 : 20,
-                          fontWeight: FontWeight.bold,
-                          color: _Palette.milanoRed,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Expanded(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        // PASS 5: on mobile widths this button now uses a
-                        // smaller, more rectangular corner radius (6 vs
-                        // the desktop 12) so it reads as a squared-off
-                        // button on phone screens. `onPressed` and its
-                        // `Navigator.pop(context)` callback are unchanged.
-                        OutlinedButton(
-                          onPressed: _isSubmitting
-                              ? null
-                              : () => Navigator.pop(context),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: _Palette.textMuted,
-                            backgroundColor: _Palette.canvas,
-                            side: BorderSide(
-                              color: _Palette.paleRose,
-                            ),
-                            padding: EdgeInsets.symmetric(
-                              horizontal: isDesktop ? 24 : 12,
-                              vertical: isDesktop ? 18 : 14,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(isDesktop ? 12 : 6),
-                            ),
-                          ),
-                          child: Text(
-                            'Cancel',
-                            style:
-                                GoogleFonts.inter(fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                        SizedBox(width: isDesktop ? 16 : 8),
-                        Expanded(
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              borderRadius:
-                                  BorderRadius.circular(isDesktop ? 12 : 6),
-                              gradient:
-                                  _isSubmitting ? null : _Palette.ctaGradient,
-                              color: _isSubmitting
-                                  ? _Palette.milanoRedDeep
-                                      .withValues(alpha: 0.6)
-                                  : null,
-                              boxShadow: _isSubmitting
-                                  ? const []
-                                  : [
-                                      BoxShadow(
-                                        color: _Palette.milanoRed
-                                            .withValues(alpha: 0.32),
-                                        blurRadius: 20,
-                                        offset: const Offset(0, 10),
-                                      ),
-                                      BoxShadow(
-                                        color: _Palette.lemonChiffon
-                                            .withValues(alpha: 0.18),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                            ),
-                            child: ElevatedButton(
-                              onPressed: _isSubmitting ? null : _submitOrder,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                shadowColor: Colors.transparent,
-                                disabledBackgroundColor: Colors.transparent,
-                                elevation: 0,
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: isDesktop ? 40 : 8,
-                                  vertical: isDesktop ? 18 : 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(isDesktop ? 12 : 6),
-                                ),
-                              ),
-                              child: _isSubmitting
-                                  ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const Icon(
-                                            Icons.check_circle_rounded,
-                                            size: 16,
-                                            color: Colors.white,
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            // PASS 5: label shortened from
-                                            // "Submit Order" to "Submit" —
-                                            // the onPressed callback above
-                                            // (_submitOrder) is unchanged.
-                                            'Submit',
-                                            style: GoogleFonts.inter(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            _buildFooter(isDesktop: isDesktop, isTablet: isTablet),
           ],
         ),
       ).animate().fadeIn(duration: 220.ms, curve: Curves.easeOut).scale(
@@ -820,21 +492,474 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
     );
   }
 
+  // ── Header ───────────────────────────────────────────────────────────
+  // Pulled out of `build()` purely to keep the PASS 6 breakpoint logic
+  // readable. Same icon chip, same title copy ("Create Manual Order"),
+  // same subtitle copy ("Take an order on behalf of a customer"), same
+  // thin gold underline accent, and the exact same `Navigator.pop(context)`
+  // close callback as every earlier pass — only the chip/icon/title sizes
+  // and the header's own padding now scale across mobile / tablet /
+  // desktop instead of just mobile / desktop.
+  Widget _buildHeader({required bool isDesktop, required bool isTablet}) {
+    final double chipSize = isDesktop ? 48 : (isTablet ? 45 : 42);
+    final double chipIconSize = isDesktop ? 24 : (isTablet ? 22 : 20);
+    final double titleFontSize = isDesktop ? 26 : (isTablet ? 22 : 19);
+    final double horizontalPadding = isDesktop ? 24 : (isTablet ? 22 : 20);
+    final double verticalPadding = isDesktop ? 22 : (isTablet ? 20 : 18);
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: _Palette.headerGradient,
+        border: Border(
+          bottom: BorderSide(
+            color: _Palette.lemonChiffon.withValues(alpha: 0.30),
+            width: 1,
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _Palette.milanoRedDarkest.withValues(alpha: 0.22),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: ClipRect(
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // Soft warm-gold corner glow — purely decorative.
+            Positioned(
+              top: -60,
+              right: -40,
+              child: Container(
+                width: 220,
+                height: 220,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      _Palette.lemonChiffon.withValues(alpha: 0.18),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // A subtle secondary highlight low-left, echoing the second
+            // ambient ribbon used on the other admin headers — a soft
+            // warm-white tint so it still reads on the dark wine backdrop.
+            Positioned(
+              bottom: -44,
+              left: -44,
+              child: Container(
+                width: 170,
+                height: 170,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      Colors.white.withValues(alpha: 0.05),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // Large faint watermark emblem — sits low-opacity and large
+            // behind the copy, matching the receipt icon already used in
+            // the header's icon chip.
+            Positioned(
+              right: -14,
+              bottom: -18,
+              child: IgnorePointer(
+                child: Opacity(
+                  opacity: 0.06,
+                  child: Icon(
+                    Icons.receipt_long_rounded,
+                    size: 128,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+            // Fine dotted texture accent — matches the dashed dot row
+            // used on the Menu/Dashboard/Staff headers.
+            Positioned(
+              top: 8,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(
+                    5,
+                    (i) => Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      width: 3.5,
+                      height: 3.5,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: i == 2
+                            ? Colors.white.withValues(alpha: 0.85)
+                            : _Palette.lemonChiffon.withValues(alpha: 0.45),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Subtle diagonal glass sheen — a fine extra layer of depth
+            // across the whole header.
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.white.withValues(alpha: 0.07),
+                        Colors.transparent,
+                        Colors.transparent,
+                      ],
+                      stops: const [0.0, 0.4, 1.0],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Fine glass highlight line along the very top edge.
+            Positioned(
+              top: 0,
+              left: 20,
+              right: 20,
+              child: Container(
+                height: 1,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.transparent,
+                      _Palette.lemonChiffon.withValues(alpha: 0.6),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: verticalPadding,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Icon chip — a light glass-on-wine treatment so it
+                  // reads clearly against the dark backdrop. Purely
+                  // decorative, no callback.
+                  Container(
+                    width: chipSize,
+                    height: chipSize,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: _Palette.lemonChiffon.withValues(alpha: 0.6),
+                        width: 1.2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color:
+                              _Palette.milanoRedDarkest.withValues(alpha: 0.25),
+                          blurRadius: 12,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.receipt_long_rounded,
+                      color: Colors.white,
+                      size: chipIconSize,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ShaderMask(
+                          shaderCallback: (bounds) => const LinearGradient(
+                            colors: [
+                              Colors.white,
+                              _Palette.lemonChiffon,
+                            ],
+                          ).createShader(bounds),
+                          child: Text(
+                            'Create Manual Order',
+                            style: GoogleFonts.playfairDisplay(
+                              color: Colors.white,
+                              fontSize: titleFontSize,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.3,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(height: 9),
+                        Container(
+                          width: 48,
+                          height: 2.5,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(4),
+                            gradient: LinearGradient(
+                              colors: [
+                                _Palette.lemonChiffon.withValues(alpha: 0.95),
+                                _Palette.lemonChiffon.withValues(alpha: 0.15),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Take an order on behalf of a customer',
+                          style: GoogleFonts.inter(
+                            color: Colors.white.withValues(alpha: 0.75),
+                            fontSize: 12,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  _HeaderCloseButton(
+                    onTap: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Footer ───────────────────────────────────────────────────────────
+  // PASS 6/8: "Cancel" and "Submit" share one fixed width so they always
+  // match each other and stay noticeably narrower than the old layout
+  // (where "Submit" used to be wrapped in `Expanded` and stretch across
+  // all remaining footer width). Sizing is tuned per breakpoint, and PASS
+  // 8 narrows that shared width a little further while keeping both
+  // buttons on the same line at the right side of the footer row (the
+  // total-amount block sits on the left; `MainAxisAlignment.spaceBetween`
+  // pushes this button `Row` to the right). `onPressed` callbacks
+  // (`Navigator.pop(context)` / `_isSubmitting ? null : _submitOrder`) are
+  // completely unchanged.
+  Widget _buildFooter({required bool isDesktop, required bool isTablet}) {
+    final double horizontalPadding = isDesktop ? 32 : (isTablet ? 24 : 16);
+    final double verticalPadding = isDesktop ? 20 : (isTablet ? 18 : 16);
+    // PASS 8: narrowed further from Pass 6's 132/122/104.
+    final double buttonWidth = isDesktop ? 118 : (isTablet ? 108 : 92);
+    final double buttonHeight = isDesktop ? 50 : (isTablet ? 48 : 44);
+    final double buttonRadius = isDesktop ? 12 : (isTablet ? 11 : 9);
+    final double buttonSpacing = isDesktop ? 14 : (isTablet ? 12 : 10);
+    final double totalAmountFontSize = isDesktop ? 27 : (isTablet ? 24 : 20);
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: horizontalPadding,
+        vertical: verticalPadding,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(
+            color: _Palette.paleRose,
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _Palette.milanoRedDeep.withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 3,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: _Palette.milanoRed,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'TOTAL AMOUNT',
+                    style: GoogleFonts.inter(
+                      color: _Palette.textMuted,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '₹${_totalAmount.toStringAsFixed(2)}',
+                style: GoogleFonts.playfairDisplay(
+                  fontSize: totalAmountFontSize,
+                  fontWeight: FontWeight.bold,
+                  color: _Palette.milanoRed,
+                ),
+              ),
+            ],
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // "Cancel" — fixed-width `SizedBox` so it always matches
+              // the primary button's width below. `onPressed` is
+              // unchanged.
+              SizedBox(
+                width: buttonWidth,
+                height: buttonHeight,
+                child: OutlinedButton(
+                  onPressed:
+                      _isSubmitting ? null : () => Navigator.pop(context),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _Palette.textMuted,
+                    backgroundColor: _Palette.canvas,
+                    side: BorderSide(
+                      color: _Palette.paleRose,
+                    ),
+                    padding: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(buttonRadius),
+                    ),
+                  ),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      'Cancel',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: buttonSpacing),
+              // "Submit" — same fixed width/height as "Cancel" above
+              // (previously this button was `Expanded` and stretched to
+              // fill all remaining footer width). `onPressed` is
+              // unchanged.
+              SizedBox(
+                width: buttonWidth,
+                height: buttonHeight,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(buttonRadius),
+                    gradient: _isSubmitting ? null : _Palette.ctaGradient,
+                    color: _isSubmitting
+                        ? _Palette.milanoRedDeep.withValues(alpha: 0.6)
+                        : null,
+                    boxShadow: _isSubmitting
+                        ? const []
+                        : [
+                            BoxShadow(
+                              color: _Palette.milanoRed.withValues(alpha: 0.32),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                            BoxShadow(
+                              color:
+                                  _Palette.lemonChiffon.withValues(alpha: 0.18),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                  ),
+                  child: ElevatedButton(
+                    onPressed: _isSubmitting ? null : _submitOrder,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      disabledBackgroundColor: Colors.transparent,
+                      elevation: 0,
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(buttonRadius),
+                      ),
+                    ),
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.check_circle_rounded,
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Submit',
+                                  style: GoogleFonts.inter(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   // ── Body layouts ──────────────────────────────────────────────────────
-  // Desktop gets two independently-scrollable side-by-side panels (the
-  // parent `Expanded` above already gives this Row a fixed, bounded
-  // height to work within — `size.height * 0.9` minus header/footer — so
-  // no outer scroll wrapper or IntrinsicHeight is needed here). Each
-  // panel scrolls on its own via its own SingleChildScrollView, and the
-  // inner GridView/ListView stay `shrinkWrap: true` with
-  // `NeverScrollableScrollPhysics` so they size to their content inside
-  // that per-panel scroll view instead of fighting it for gesture/scroll
-  // ownership.
+  // Tablet and desktop both get two independently-scrollable side-by-side
+  // panels (the parent `Expanded` in `build()` already gives this `Row` a
+  // fixed, bounded height to work within, so no outer scroll wrapper or
+  // `IntrinsicHeight` is needed here). Each panel scrolls on its own via
+  // its own `SingleChildScrollView`, and the inner `GridView`/`ListView`
+  // stay `shrinkWrap: true` with `NeverScrollableScrollPhysics` so they
+  // size to their content inside that per-panel scroll view instead of
+  // fighting it for gesture/scroll ownership. Mobile keeps the original
+  // stacked single-column layout.
   //
   // IMPORTANT: this is a pure layout fix — no table loading, order
   // submission, validation, quantity, or category/item navigation logic
   // was changed.
-  Widget _buildDesktopBody() {
+  Widget _buildTwoColumnBody(
+      {required bool isDesktop, required bool isTablet}) {
+    final double detailsPadding = isDesktop ? 32 : (isTablet ? 24 : 20);
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -851,8 +976,8 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
               ),
             ),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(32),
-              child: _buildOrderDetailsForm(),
+              padding: EdgeInsets.all(detailsPadding),
+              child: _buildOrderDetailsForm(isTablet: isTablet),
             ),
           ),
         ),
@@ -862,7 +987,7 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
           child: Container(
             color: _Palette.canvas,
             child: SingleChildScrollView(
-              child: _buildMenuSelection(true),
+              child: _buildMenuSelection(isDesktop, isTablet),
             ),
           ),
         ),
@@ -876,7 +1001,7 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
         children: [
           Padding(
             padding: const EdgeInsets.all(24),
-            child: _buildOrderDetailsForm(),
+            child: _buildOrderDetailsForm(isTablet: false),
           ),
           Container(
             height: 1,
@@ -884,7 +1009,7 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
           ),
           Container(
             color: _Palette.canvas,
-            child: _buildMenuSelection(false),
+            child: _buildMenuSelection(false, false),
           ),
         ],
       ),
@@ -928,7 +1053,14 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
     );
   }
 
-  Widget _buildOrderDetailsForm() {
+  // PASS 6: now takes an optional `isTablet` flag purely to tune the
+  // section heading's font size / top spacing a touch for the tablet
+  // breakpoint. Every field, validator, and controller below is
+  // unchanged.
+  Widget _buildOrderDetailsForm({bool isTablet = false}) {
+    final double headingFontSize = isTablet ? 17 : 19;
+    final double sectionSpacing = isTablet ? 18 : 22;
+
     return Form(
       key: _formKey,
       child: Column(
@@ -948,7 +1080,7 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
               Text(
                 'Order Configuration',
                 style: GoogleFonts.playfairDisplay(
-                  fontSize: 19,
+                  fontSize: headingFontSize,
                   fontWeight: FontWeight.bold,
                   color: _Palette.milanoRedDeep,
                 ),
@@ -972,12 +1104,23 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
               ),
             ),
           ),
-          const SizedBox(height: 22),
+          SizedBox(height: sectionSpacing),
 
           // Order Mode
           _fieldLabel('Order Mode'),
-          SizedBox(
-            width: double.infinity,
+          // TABLET-OVERFLOW FIX PASS 7: this used to be forced to
+          // `width: double.infinity` via an outer `SizedBox`, which — in
+          // the narrower left-hand column tablet widths give this form —
+          // could ask the three icon+label segments for less width than
+          // they need and throw a `RenderFlex overflowed` layout error.
+          // Wrapping it in a horizontally-scrollable
+          // `SingleChildScrollView` instead lets the control size itself
+          // to its natural content width and only scrolls sideways if a
+          // viewport is ever too narrow, so it can never overflow. The
+          // `segments`, `selected`, and `onSelectionChanged` callback
+          // below are completely unchanged.
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
             child: SegmentedButton<String>(
               segments: const [
                 ButtonSegment(
@@ -1187,10 +1330,24 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
     );
   }
 
+  // TABLET-OVERFLOW FIX (Customer Details labels): this label row —
+  // color bar + label text + "*" + optional badge + optional "REQUIRED"
+  // pill — used to be a plain `Row`. On the "Customer Name" / "Customer
+  // Phone" labels (`required: true`), that Row's fixed-width bar, label
+  // text, asterisk, and "REQUIRED" pill together needed more horizontal
+  // space than the narrower left-hand details column has on tablet
+  // widths, so Flutter threw a `RenderFlex overflowed` layout error
+  // there (the yellow/black stripe). Swapping the `Row` for a `Wrap`
+  // (same children, same order, same styling/colors/text/spacing) lets
+  // the "REQUIRED" pill simply drop to its own line instead of
+  // overflowing whenever the available width is tight, so it can no
+  // longer overflow at any breakpoint. No label text, badge text, color,
+  // or the `required`/`badge` conditions were changed.
   Widget _fieldLabel(String label, {String? badge, bool required = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           Container(
             width: 3,
@@ -1267,25 +1424,30 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
     );
   }
 
-  // PASS 5: now takes `isDesktop` so `_buildCategoriesGrid` can size the
-  // category boxes differently on mobile vs desktop. `_buildItemsList`
-  // itself is unchanged — only how the categories grid lays out.
-  Widget _buildMenuSelection(bool isDesktop) {
+  // PASS 6: now takes both `isDesktop` and `isTablet` so
+  // `_buildCategoriesGrid` can size the category boxes for all three
+  // breakpoints. `_buildItemsList` itself is unchanged — only how the
+  // categories grid lays out.
+  Widget _buildMenuSelection(bool isDesktop, bool isTablet) {
     if (_viewMode == 'categories') {
-      return _buildCategoriesGrid(isDesktop);
+      return _buildCategoriesGrid(isDesktop, isTablet);
     } else {
       return _buildItemsList();
     }
   }
 
-  // PASS 5: takes `isDesktop` so the mobile grid can use a taller
-  // `childAspectRatio`, more spacing, and (via `_CategoryCard`'s new
-  // `isDesktop` flag) a larger icon/label — making each category box
-  // noticeably bigger and less cramped on phone screens. Desktop's
-  // numbers (padding 24, spacing 16, aspect ratio 1.4) are untouched.
-  // No navigation logic (`onTap` → `_viewMode`/`_activeCategory`) was
-  // changed.
-  Widget _buildCategoriesGrid(bool isDesktop) {
+  // PASS 6: takes both `isDesktop` and `isTablet` so the grid can use a
+  // tablet-tuned `childAspectRatio`/padding/spacing that sits between the
+  // existing mobile and desktop numbers (via `_CategoryCard`'s `isTablet`
+  // flag, a larger icon/label than desktop but a little tighter than
+  // mobile). Desktop's numbers (padding 24, spacing 16, aspect ratio 1.4)
+  // and mobile's numbers are both untouched. No navigation logic
+  // (`onTap` → `_viewMode`/`_activeCategory`) was changed.
+  Widget _buildCategoriesGrid(bool isDesktop, bool isTablet) {
+    final double gridPadding = isDesktop ? 24 : (isTablet ? 22 : 18);
+    final double gridSpacing = isDesktop ? 16 : (isTablet ? 15 : 14);
+    final double aspectRatio = isDesktop ? 1.4 : (isTablet ? 1.3 : 1.0);
+
     return Column(
       children: [
         Container(
@@ -1318,14 +1480,14 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
           ),
         ),
         GridView.builder(
-          padding: EdgeInsets.all(isDesktop ? 24 : 18),
+          padding: EdgeInsets.all(gridPadding),
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            crossAxisSpacing: isDesktop ? 16 : 14,
-            mainAxisSpacing: isDesktop ? 16 : 14,
-            childAspectRatio: isDesktop ? 1.4 : 1.0,
+            crossAxisSpacing: gridSpacing,
+            mainAxisSpacing: gridSpacing,
+            childAspectRatio: aspectRatio,
           ),
           itemCount: widget.categories.length,
           itemBuilder: (ctx, i) {
@@ -1333,6 +1495,7 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
             return _CategoryCard(
               category: cat,
               isDesktop: isDesktop,
+              isTablet: isTablet,
               onTap: () {
                 setState(() {
                   _activeCategory = cat;
@@ -1637,16 +1800,18 @@ class _HeaderCloseButtonState extends State<_HeaderCloseButton> {
 class _CategoryCard extends StatefulWidget {
   final MenuCategory category;
   final VoidCallback onTap;
-  // PASS 5: new flag only — lets the card size its icon/label a little
-  // larger on mobile so boxes feel bigger and names don't crowd the
-  // edges. Defaults to true (desktop) so any other caller that doesn't
-  // pass it keeps the exact same look as before.
+  // Lets the card size its icon/label a little larger on mobile so boxes
+  // feel bigger and names don't crowd the edges, and gives tablet its own
+  // in-between sizing. Defaults keep any other caller that doesn't pass
+  // these the exact same look as before (desktop-sized).
   final bool isDesktop;
+  final bool isTablet;
 
   const _CategoryCard({
     required this.category,
     required this.onTap,
     this.isDesktop = true,
+    this.isTablet = false,
   });
 
   @override
@@ -1659,6 +1824,14 @@ class _CategoryCardState extends State<_CategoryCard> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = widget.isDesktop;
+    final isTablet = widget.isTablet;
+
+    final double iconPadding = isDesktop ? 12 : (isTablet ? 13 : 16);
+    final double iconSize = isDesktop ? 28 : (isTablet ? 29 : 32);
+    final double labelFontSize = isDesktop ? 14 : (isTablet ? 14.5 : 15);
+    final double horizontalContentPadding = isDesktop ? 0 : (isTablet ? 6 : 10);
+    final double iconLabelSpacing = isDesktop ? 12 : (isTablet ? 13 : 14);
+
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
@@ -1670,7 +1843,7 @@ class _CategoryCardState extends State<_CategoryCard> {
           transform: _isHovered
               ? (Matrix4.identity()..scaleByDouble(1.02, 1.02, 1.0, 1.0))
               : Matrix4.identity(),
-          padding: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : 10),
+          padding: EdgeInsets.symmetric(horizontal: horizontalContentPadding),
           decoration: BoxDecoration(
             gradient: _isHovered
                 ? const LinearGradient(
@@ -1699,7 +1872,7 @@ class _CategoryCardState extends State<_CategoryCard> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: EdgeInsets.all(isDesktop ? 12 : 16),
+                padding: EdgeInsets.all(iconPadding),
                 decoration: BoxDecoration(
                   color: _isHovered
                       ? Colors.white.withValues(alpha: 0.18)
@@ -1710,10 +1883,10 @@ class _CategoryCardState extends State<_CategoryCard> {
                   Icons.restaurant_menu_rounded,
                   color:
                       _isHovered ? _Palette.lemonChiffon : _Palette.milanoRed,
-                  size: isDesktop ? 28 : 32,
+                  size: iconSize,
                 ),
               ),
-              SizedBox(height: isDesktop ? 12 : 14),
+              SizedBox(height: iconLabelSpacing),
               Padding(
                 padding: EdgeInsets.symmetric(
                   horizontal: isDesktop ? 0 : 6,
@@ -1726,7 +1899,7 @@ class _CategoryCardState extends State<_CategoryCard> {
                   softWrap: true,
                   style: GoogleFonts.inter(
                     fontWeight: _isHovered ? FontWeight.w800 : FontWeight.bold,
-                    fontSize: isDesktop ? 14 : 15,
+                    fontSize: labelFontSize,
                     color: _isHovered ? Colors.white : _Palette.textDark,
                   ),
                 ),

@@ -197,6 +197,39 @@ import '../core/theme.dart';
 /// removed, resized, or repositioned — only `Color` values (and the two
 /// small private/additive constants noted above, needed only to carry
 /// the extra requested gradient tones) changed.
+///
+/// RESPONSIVE + TABLET/LAPTOP POLISH PASS (this pass): no auth logic,
+/// controllers, focus handling, validation, navigation, or callback
+/// code was touched — layout/presentation only, exactly as requested.
+/// What changed:
+///   • Added proper `isTablet` (600–1023px) and `isDesktop` (≥1024px)
+///     breakpoints alongside the existing `isTinyScreen` / `isCompact` /
+///     `isMobile` ones, so every sizing value (paddings, badge, title,
+///     card width, button height, feature icons, etc.) now has a
+///     dedicated, larger step for tablets and laptops instead of simply
+///     reusing the largest phone value.
+///   • The whole header + card + footer column is now centered and
+///     capped with a `contentMaxWidth` on tablet/laptop screens (via
+///     `Align(topCenter)` + `ConstrainedBox`), so the screen reads as a
+///     deliberate, centered panel on wide viewports instead of stretching
+///     full-bleed edge-to-edge — this is what was actually breaking the
+///     layout on tablets/laptops before.
+///   • The feature-highlights row's width calculation now derives from
+///     the same capped content width (`effectiveContentWidth`) instead
+///     of the raw device `screenWidth`, which previously could make that
+///     row wider than its centered parent on large screens and misalign
+///     it.
+///   • Introduced a small `sp()` spacing helper (mobile spacing is
+///     completely untouched; tablet/laptop spacing is scaled up ~12–22%)
+///     applied only to a handful of internal vertical gaps inside the
+///     card, so larger screens get a little extra breathing room instead
+///     of a cramped phone layout stretched onto a bigger canvas.
+///   • The login card's corner radius now has a slightly larger, more
+///     premium step on tablet/laptop, and its max width is capped
+///     (460px tablet / 440px laptop+) so the form never becomes an
+///     awkward, overly wide input field on large screens.
+/// No colors, gradients, copy, icons, or structural widgets were added
+/// or removed — only sizing math and the new centering wrapper.
 /// -----------------------------------------------------------------------
 class _LoginPalette {
   // Core brand colors — "PUREDINE Maroon + Cream" reference palette.
@@ -461,31 +494,94 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
 
     // ── Responsive breakpoints ────────────────────────────────────────
     // Tuned for phones in portrait, small phones (e.g. iPhone SE / older
-    // Androids ~360px wide), and slightly larger phones/small tablets.
+    // Androids ~360px wide), regular phones, tablets (portrait/landscape,
+    // e.g. iPad ~768–1024px), and laptops/desktops (≥1024px). Adding the
+    // `isTablet` / `isDesktop` steps below is what actually fixes the
+    // layout on tablets and laptops — every size that used to jump
+    // straight from "phone" to "whatever's left" now has its own step.
     final bool isTinyScreen = screenWidth < 340;
     final bool isCompact = screenWidth < 380;
     final bool isMobile = screenWidth < 600;
+    final bool isTablet = screenWidth >= 600 && screenWidth < 1024;
+    final bool isDesktop = screenWidth >= 1024;
+    // `isDesktop` doubles as a readability flag for anyone scanning the
+    // sizing block below (every "isTablet ? tabletValue : desktopValue"
+    // ternary's else-branch is exactly the isDesktop case, since isMobile,
+    // isTablet and isDesktop are mutually exclusive and exhaustive).
+    assert(isMobile || isTablet || isDesktop);
+
+    // Overall header/card/footer column width. On phones this stays
+    // `double.infinity` (unchanged full-bleed behaviour). On tablets and
+    // laptops the whole column is capped and centered so the screen reads
+    // as a deliberate, centered panel instead of stretching edge-to-edge.
+    final double contentMaxWidth =
+        isMobile ? double.infinity : (isTablet ? 640 : 600);
+    // The actual width available to content inside that column — used
+    // instead of the raw `screenWidth` for any width math done further
+    // down (e.g. the feature-highlights row), so nothing overflows or
+    // misaligns once the column itself is capped on larger screens.
+    final double effectiveContentWidth =
+        isMobile ? screenWidth : contentMaxWidth;
+
+    // Small multiplier used only to open up a little extra breathing
+    // room between elements on tablets/laptops. Mobile spacing (where
+    // `spacingScale == 1.0`) is completely unchanged.
+    final double spacingScale = isMobile ? 1.0 : (isTablet ? 1.12 : 1.22);
+    double sp(double value) => value * spacingScale;
 
     // ── Header ("navbar") sizing ──────────────────────────────────────
-    final double horizontalPad = isTinyScreen ? 16 : (isCompact ? 18 : 24);
-    final double headerTopPad = isTinyScreen ? 30 : (isCompact ? 36 : 46);
-    final double headerBottomPad = isTinyScreen ? 46 : (isCompact ? 54 : 70);
-    final double badgeSize = isTinyScreen ? 52 : (isCompact ? 58 : 64);
-    final double badgeIconSize = isTinyScreen ? 24 : (isCompact ? 26 : 29);
-    final double titleSize = isTinyScreen ? 23 : (isCompact ? 26 : 31);
+    final double horizontalPad = isTinyScreen
+        ? 16
+        : (isCompact ? 18 : (isMobile ? 24 : (isTablet ? 32 : 40)));
+    final double headerTopPad = isTinyScreen
+        ? 30
+        : (isCompact ? 36 : (isMobile ? 46 : (isTablet ? 56 : 64)));
+    final double headerBottomPad = isTinyScreen
+        ? 46
+        : (isCompact ? 54 : (isMobile ? 70 : (isTablet ? 80 : 88)));
+    final double badgeSize = isTinyScreen
+        ? 52
+        : (isCompact ? 58 : (isMobile ? 64 : (isTablet ? 72 : 78)));
+    final double badgeIconSize = isTinyScreen
+        ? 24
+        : (isCompact ? 26 : (isMobile ? 29 : (isTablet ? 32 : 34)));
+    final double titleSize = isTinyScreen
+        ? 23
+        : (isCompact ? 26 : (isMobile ? 31 : (isTablet ? 34 : 37)));
     // Card now overlaps the header more aggressively, so it sits higher
     // up the screen and the whole layout feels tighter and more compact.
-    final double cardOverlap = isTinyScreen ? -34 : (isCompact ? -40 : -58);
-    final double cardHorizontalPad = isTinyScreen ? 20 : (isCompact ? 24 : 30);
-    final double cardTopPad = isTinyScreen ? 22 : (isCompact ? 26 : 30);
-    final double buttonHeight = isTinyScreen ? 48 : (isCompact ? 50 : 54);
-    final double cardMaxWidth = isMobile ? double.infinity : 420;
+    final double cardOverlap = isTinyScreen
+        ? -34
+        : (isCompact ? -40 : (isMobile ? -58 : (isTablet ? -66 : -74)));
+    final double cardHorizontalPad = isTinyScreen
+        ? 20
+        : (isCompact ? 24 : (isMobile ? 30 : (isTablet ? 38 : 44)));
+    final double cardTopPad = isTinyScreen
+        ? 22
+        : (isCompact ? 26 : (isMobile ? 30 : (isTablet ? 36 : 40)));
+    final double cardRadius = isTinyScreen
+        ? 22
+        : (isCompact ? 24 : (isMobile ? 28 : (isTablet ? 30 : 32)));
+    final double buttonHeight = isTinyScreen
+        ? 48
+        : (isCompact ? 50 : (isMobile ? 54 : (isTablet ? 56 : 58)));
+    // The card itself is capped well below the full column width on
+    // tablets/laptops so the form never turns into one long, awkward
+    // input field — it stays a natural, professional login-card width.
+    final double cardMaxWidth =
+        isMobile ? double.infinity : (isTablet ? 460 : 440);
 
     // Sizing for the feature-highlights row beneath the title, scaled
     // the same way the rest of the header already does.
-    final double featureLabelSize = isTinyScreen ? 10.5 : (isCompact ? 11 : 12);
-    final double featureIconSize = isTinyScreen ? 18 : (isCompact ? 19 : 21);
-    final double featureCircleSize = isTinyScreen ? 38 : (isCompact ? 42 : 46);
+    final double featureLabelSize = isTinyScreen
+        ? 10.5
+        : (isCompact ? 11 : (isMobile ? 12 : (isTablet ? 12.5 : 13)));
+    final double featureIconSize = isTinyScreen
+        ? 18
+        : (isCompact ? 19 : (isMobile ? 21 : (isTablet ? 22 : 23)));
+    final double featureCircleSize = isTinyScreen
+        ? 38
+        : (isCompact ? 42 : (isMobile ? 46 : (isTablet ? 50 : 54)));
 
     return Scaffold(
       backgroundColor: _LoginPalette.ivory,
@@ -517,564 +613,599 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
                       mediaQuery.padding.top -
                       mediaQuery.padding.bottom,
                 ),
-                child: Column(
-                  children: [
-                    // ---------------------------------------------------
-                    // Header banner — a flat, plain ivory surface (no
-                    // decorative leaf/glow backdrop) with a centered
-                    // two-tone ring logo badge, two-tone brand title, a
-                    // small-caps tagline, a script-style corner mark, and
-                    // a row of three evenly aligned feature highlights.
-                    // ---------------------------------------------------
-                    Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.fromLTRB(
-                        horizontalPad,
-                        headerTopPad,
-                        horizontalPad,
-                        headerBottomPad,
-                      ),
-                      decoration: const BoxDecoration(
-                        color: Colors.transparent,
-                      ),
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        alignment: const Alignment(0, -0.34),
-                        children: [
-                          // Small script-style corner mark — "Good Food,
-                          // Brighter Days" — sitting top-right of the
-                          // header, with no background glow/circle behind
-                          // it. Hidden on very narrow screens so it never
-                          // crowds the title.
-                          if (!isCompact)
-                            Positioned(
-                              top: 0,
-                              right: 2,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    'Good Food',
-                                    textAlign: TextAlign.right,
-                                    style: AppTheme.serif(
-                                      size: 12.5,
-                                      weight: FontWeight.w500,
-                                      color: _LoginPalette.textMuted,
-                                    ).copyWith(fontStyle: FontStyle.italic),
-                                  ),
-                                  Text(
-                                    'Brighter Days',
-                                    textAlign: TextAlign.right,
-                                    style: AppTheme.serif(
-                                      size: 12.5,
-                                      weight: FontWeight.w500,
-                                      color: _LoginPalette.textMuted,
-                                    ).copyWith(fontStyle: FontStyle.italic),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Container(
-                                    width: 28,
-                                    height: 2,
-                                    color: _LoginPalette.lemonChiffon,
-                                  ),
-                                ],
-                              ),
-                            ).animate().fadeIn(duration: 400.ms, delay: 60.ms),
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
+                // On tablets/laptops the whole header + card + footer
+                // column is centered and capped at `contentMaxWidth` so
+                // the screen reads as a deliberate, centered panel
+                // instead of stretching full-bleed edge-to-edge. On
+                // phones `contentMaxWidth` is `double.infinity`, so this
+                // wrapper is a no-op and behaviour is unchanged.
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: contentMaxWidth),
+                    child: Column(
+                      children: [
+                        // ---------------------------------------------------
+                        // Header banner — a flat, plain ivory surface (no
+                        // decorative leaf/glow backdrop) with a centered
+                        // two-tone ring logo badge, two-tone brand title, a
+                        // small-caps tagline, a script-style corner mark, and
+                        // a row of three evenly aligned feature highlights.
+                        // ---------------------------------------------------
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.fromLTRB(
+                            horizontalPad,
+                            headerTopPad,
+                            horizontalPad,
+                            headerBottomPad,
+                          ),
+                          decoration: const BoxDecoration(
+                            color: Colors.transparent,
+                          ),
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            alignment: const Alignment(0, -0.34),
                             children: [
-                              // ── Logo badge: two-tone ring (wine +
-                              // gold) with a fork/knife glyph in the
-                              // centre and a small leaf accent
-                              // overlapping the ring.
-                              _buildLogoBadge(badgeSize, badgeIconSize)
-                                  .animate()
-                                  .scale(
-                                    duration: 480.ms,
-                                    curve: Curves.easeOutBack,
-                                    begin: const Offset(0.7, 0.7),
-                                    end: const Offset(1, 1),
+                              // Small script-style corner mark — "Good Food,
+                              // Brighter Days" — sitting top-right of the
+                              // header, with no background glow/circle behind
+                              // it. Hidden on very narrow screens so it never
+                              // crowds the title.
+                              if (!isCompact)
+                                Positioned(
+                                  top: 0,
+                                  right: 2,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        'Good Food',
+                                        textAlign: TextAlign.right,
+                                        style: AppTheme.serif(
+                                          size: 12.5,
+                                          weight: FontWeight.w500,
+                                          color: _LoginPalette.textMuted,
+                                        ).copyWith(fontStyle: FontStyle.italic),
+                                      ),
+                                      Text(
+                                        'Brighter Days',
+                                        textAlign: TextAlign.right,
+                                        style: AppTheme.serif(
+                                          size: 12.5,
+                                          weight: FontWeight.w500,
+                                          color: _LoginPalette.textMuted,
+                                        ).copyWith(fontStyle: FontStyle.italic),
+                                      ),
+                                      const SizedBox(height: 5),
+                                      Container(
+                                        width: 28,
+                                        height: 2,
+                                        color: _LoginPalette.lemonChiffon,
+                                      ),
+                                    ],
                                   ),
-                              SizedBox(height: isTinyScreen ? 10 : 14),
-                              Padding(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: isTinyScreen ? 8 : 0,
-                                ),
-                                child: ShaderMask(
-                                  shaderCallback: (bounds) => _LoginPalette
-                                      .titleShaderGradient
-                                      .createShader(bounds),
-                                  child: Text(
-                                    _restaurantName,
-                                    textAlign: TextAlign.center,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: AppTheme.serif(
-                                      size: titleSize,
-                                      weight: FontWeight.bold,
-                                      color: _LoginPalette.white,
-                                    ),
-                                  ),
-                                ),
-                              ).animate().fadeIn(
-                                    duration: 400.ms,
-                                    delay: 100.ms,
-                                  ),
-                              const SizedBox(height: 6),
-                              // Small-caps tagline flanked by thin
-                              // dashes, matching the reference design's
-                              // subtitle treatment beneath the brand
-                              // name.
-                              Row(
+                                )
+                                    .animate()
+                                    .fadeIn(duration: 400.ms, delay: 60.ms),
+                              Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Container(
-                                    width: 14,
-                                    height: 1,
-                                    color: _LoginPalette.textMuted.withValues(
-                                      alpha: 0.4,
+                                  // ── Logo badge: two-tone ring (wine +
+                                  // gold) with a fork/knife glyph in the
+                                  // centre and a small leaf accent
+                                  // overlapping the ring.
+                                  _buildLogoBadge(badgeSize, badgeIconSize)
+                                      .animate()
+                                      .scale(
+                                        duration: 480.ms,
+                                        curve: Curves.easeOutBack,
+                                        begin: const Offset(0.7, 0.7),
+                                        end: const Offset(1, 1),
+                                      ),
+                                  SizedBox(height: sp(isTinyScreen ? 10 : 14)),
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: isTinyScreen ? 8 : 0,
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'GOOD FOOD. BETTER YOU.',
-                                    style: AppTheme.sans(
-                                      size: isTinyScreen ? 9.5 : 10.5,
-                                      weight: FontWeight.w600,
-                                      color: _LoginPalette.textMuted,
-                                    ).copyWith(letterSpacing: 1.4),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    width: 14,
-                                    height: 1,
-                                    color: _LoginPalette.textMuted.withValues(
-                                      alpha: 0.4,
-                                    ),
-                                  ),
-                                ],
-                              ).animate().fadeIn(
-                                    duration: 400.ms,
-                                    delay: 140.ms,
-                                  ),
-                              SizedBox(height: isTinyScreen ? 16 : 20),
-                              // ─────────────────────────────────────────
-                              // Feature highlights — three items laid out
-                              // in three EQUAL WIDTH columns (via
-                              // Expanded), each one centered within its
-                              // own column. This keeps the gap between
-                              // items — including the middle one — even
-                              // and properly aligned across every screen
-                              // width, instead of drifting together.
-                              // ─────────────────────────────────────────
-                              SizedBox(
-                                width: (screenWidth - (horizontalPad * 2))
-                                    .clamp(0.0, double.infinity),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(
-                                      child: _buildFeatureItem(
-                                        icon: Icons.eco_rounded,
-                                        label: 'Fresh Choices',
-                                        circleSize: featureCircleSize,
-                                        iconSize: featureIconSize,
-                                        labelSize: featureLabelSize,
+                                    child: ShaderMask(
+                                      shaderCallback: (bounds) => _LoginPalette
+                                          .titleShaderGradient
+                                          .createShader(bounds),
+                                      child: Text(
+                                        _restaurantName,
+                                        textAlign: TextAlign.center,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: AppTheme.serif(
+                                          size: titleSize,
+                                          weight: FontWeight.bold,
+                                          color: _LoginPalette.white,
+                                        ),
                                       ),
                                     ),
-                                    Expanded(
-                                      child: _buildFeatureItem(
-                                        icon: Icons.verified_user_rounded,
-                                        label: 'Safe & Secure',
-                                        circleSize: featureCircleSize,
-                                        iconSize: featureIconSize,
-                                        labelSize: featureLabelSize,
+                                  ).animate().fadeIn(
+                                        duration: 400.ms,
+                                        delay: 100.ms,
                                       ),
-                                    ),
-                                    Expanded(
-                                      child: _buildFeatureItem(
-                                        icon: Icons.bolt_rounded,
-                                        label: 'Fast & Easy',
-                                        circleSize: featureCircleSize,
-                                        iconSize: featureIconSize,
-                                        labelSize: featureLabelSize,
+                                  const SizedBox(height: 6),
+                                  // Small-caps tagline flanked by thin
+                                  // dashes, matching the reference design's
+                                  // subtitle treatment beneath the brand
+                                  // name.
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        width: 14,
+                                        height: 1,
+                                        color:
+                                            _LoginPalette.textMuted.withValues(
+                                          alpha: 0.4,
+                                        ),
                                       ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'GOOD FOOD. BETTER YOU.',
+                                        style: AppTheme.sans(
+                                          size: isTinyScreen ? 9.5 : 10.5,
+                                          weight: FontWeight.w600,
+                                          color: _LoginPalette.textMuted,
+                                        ).copyWith(letterSpacing: 1.4),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        width: 14,
+                                        height: 1,
+                                        color:
+                                            _LoginPalette.textMuted.withValues(
+                                          alpha: 0.4,
+                                        ),
+                                      ),
+                                    ],
+                                  ).animate().fadeIn(
+                                        duration: 400.ms,
+                                        delay: 140.ms,
+                                      ),
+                                  SizedBox(height: sp(isTinyScreen ? 16 : 20)),
+                                  // ─────────────────────────────────────────
+                                  // Feature highlights — three items laid out
+                                  // in three EQUAL WIDTH columns (via
+                                  // Expanded), each one centered within its
+                                  // own column. This keeps the gap between
+                                  // items — including the middle one — even
+                                  // and properly aligned across every screen
+                                  // width, instead of drifting together. The
+                                  // width now derives from the same capped
+                                  // `effectiveContentWidth` used for the rest
+                                  // of the column, so it can never overflow
+                                  // its centered parent on tablets/laptops.
+                                  // ─────────────────────────────────────────
+                                  SizedBox(
+                                    width: (effectiveContentWidth -
+                                            (horizontalPad * 2))
+                                        .clamp(0.0, double.infinity),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          child: _buildFeatureItem(
+                                            icon: Icons.eco_rounded,
+                                            label: 'Fresh Choices',
+                                            circleSize: featureCircleSize,
+                                            iconSize: featureIconSize,
+                                            labelSize: featureLabelSize,
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: _buildFeatureItem(
+                                            icon: Icons.verified_user_rounded,
+                                            label: 'Safe & Secure',
+                                            circleSize: featureCircleSize,
+                                            iconSize: featureIconSize,
+                                            labelSize: featureLabelSize,
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: _buildFeatureItem(
+                                            icon: Icons.bolt_rounded,
+                                            label: 'Fast & Easy',
+                                            circleSize: featureCircleSize,
+                                            iconSize: featureIconSize,
+                                            labelSize: featureLabelSize,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              )
-                                  .animate()
-                                  .fadeIn(
-                                    duration: 400.ms,
-                                    delay: 180.ms,
                                   )
-                                  .slideY(
-                                    begin: 0.2,
-                                    end: 0,
-                                    duration: 400.ms,
-                                    delay: 180.ms,
-                                    curve: Curves.easeOut,
-                                  ),
+                                      .animate()
+                                      .fadeIn(
+                                        duration: 400.ms,
+                                        delay: 180.ms,
+                                      )
+                                      .slideY(
+                                        begin: 0.2,
+                                        end: 0,
+                                        duration: 400.ms,
+                                        delay: 180.ms,
+                                        curve: Curves.easeOut,
+                                      ),
+                                ],
+                              ),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
-
-                    // ---------------------------------------------------
-                    // Card, overlapping the header (raised higher for a
-                    // tighter, more compact full-screen composition)
-                    // ---------------------------------------------------
-                    Transform.translate(
-                      offset: Offset(0, cardOverlap),
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(
-                          horizontalPad,
-                          0,
-                          horizontalPad,
-                          isTinyScreen ? 14 : 20,
                         ),
-                        child: Container(
-                          width: double.infinity,
-                          constraints: BoxConstraints(maxWidth: cardMaxWidth),
-                          padding: EdgeInsets.fromLTRB(
-                            cardHorizontalPad,
-                            cardTopPad,
-                            cardHorizontalPad,
-                            cardTopPad - 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _LoginPalette.white,
-                            borderRadius: BorderRadius.circular(
-                              isTinyScreen ? 22 : 28,
+
+                        // ---------------------------------------------------
+                        // Card, overlapping the header (raised higher for a
+                        // tighter, more compact full-screen composition)
+                        // ---------------------------------------------------
+                        Transform.translate(
+                          offset: Offset(0, cardOverlap),
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              horizontalPad,
+                              0,
+                              horizontalPad,
+                              isTinyScreen ? 14 : 20,
                             ),
-                            boxShadow: _LoginPalette.cardShadow,
-                            border: Border.all(
-                              color: _LoginPalette.lemonChiffon.withValues(
-                                alpha: 0.5,
+                            child: Container(
+                              width: double.infinity,
+                              constraints:
+                                  BoxConstraints(maxWidth: cardMaxWidth),
+                              padding: EdgeInsets.fromLTRB(
+                                cardHorizontalPad,
+                                cardTopPad,
+                                cardHorizontalPad,
+                                cardTopPad - 2,
                               ),
-                              width: 1.3,
-                            ),
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    width: 44,
-                                    height: 4,
-                                    decoration: BoxDecoration(
-                                      color: _LoginPalette.lemonChiffon,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
+                              decoration: BoxDecoration(
+                                color: _LoginPalette.white,
+                                borderRadius: BorderRadius.circular(cardRadius),
+                                boxShadow: _LoginPalette.cardShadow,
+                                border: Border.all(
+                                  color: _LoginPalette.lemonChiffon.withValues(
+                                    alpha: 0.5,
                                   ),
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    width: 10,
-                                    height: 4,
-                                    decoration: BoxDecoration(
-                                      color: _LoginPalette.lemonChiffon
-                                          .withValues(alpha: 0.4),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: isTinyScreen ? 12 : 16),
-                              // "Welcome back" + a small animated
-                              // waving-hand icon (replaces the plain
-                              // emoji character so it renders crisply
-                              // and consistently on every device/font).
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'Welcome back',
-                                    style: AppTheme.serif(
-                                      size: isTinyScreen ? 19 : 22,
-                                      weight: FontWeight.w700,
-                                      color: _LoginPalette.milanoRed,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Icon(
-                                    Icons.waving_hand_rounded,
-                                    size: isTinyScreen ? 20 : 24,
-                                    color: _LoginPalette.lemonChiffon,
-                                  )
-                                      .animate(
-                                        onPlay: (c) => c.repeat(reverse: true),
-                                      )
-                                      .rotate(
-                                        begin: -0.04,
-                                        end: 0.06,
-                                        duration: 480.ms,
-                                        curve: Curves.easeInOut,
-                                      ),
-                                ],
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                'Sign in to continue to your dashboard',
-                                style: AppTheme.sans(
-                                  size: isTinyScreen ? 12 : 13,
-                                  color: _LoginPalette.textMuted,
+                                  width: 1.3,
                                 ),
                               ),
-                              SizedBox(height: isTinyScreen ? 18 : 24),
-                              if (_error != null) ...[
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 12,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 44,
+                                        height: 4,
+                                        decoration: BoxDecoration(
+                                          color: _LoginPalette.lemonChiffon,
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        width: 10,
+                                        height: 4,
+                                        decoration: BoxDecoration(
+                                          color: _LoginPalette.lemonChiffon
+                                              .withValues(alpha: 0.4),
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  decoration: BoxDecoration(
-                                    color: _LoginPalette.dangerBg,
-                                    borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(
-                                      color: _LoginPalette.danger.withValues(
-                                        alpha: 0.25,
+                                  SizedBox(height: sp(isTinyScreen ? 12 : 16)),
+                                  // "Welcome back" + a small animated
+                                  // waving-hand icon (replaces the plain
+                                  // emoji character so it renders crisply
+                                  // and consistently on every device/font).
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        'Welcome back',
+                                        style: AppTheme.serif(
+                                          size: isTinyScreen ? 19 : 22,
+                                          weight: FontWeight.w700,
+                                          color: _LoginPalette.milanoRed,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Icon(
+                                        Icons.waving_hand_rounded,
+                                        size: isTinyScreen ? 20 : 24,
+                                        color: _LoginPalette.lemonChiffon,
+                                      )
+                                          .animate(
+                                            onPlay: (c) =>
+                                                c.repeat(reverse: true),
+                                          )
+                                          .rotate(
+                                            begin: -0.04,
+                                            end: 0.06,
+                                            duration: 480.ms,
+                                            curve: Curves.easeInOut,
+                                          ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    'Sign in to continue to your dashboard',
+                                    style: AppTheme.sans(
+                                      size: isTinyScreen ? 12 : 13,
+                                      color: _LoginPalette.textMuted,
+                                    ),
+                                  ),
+                                  SizedBox(height: sp(isTinyScreen ? 18 : 24)),
+                                  if (_error != null) ...[
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                        vertical: 12,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: _LoginPalette.dangerBg,
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(
+                                          color:
+                                              _LoginPalette.danger.withValues(
+                                            alpha: 0.25,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.error_outline_rounded,
+                                            size: 18,
+                                            color: _LoginPalette.danger,
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: Text(
+                                              _error!,
+                                              style: const TextStyle(
+                                                color: _LoginPalette.danger,
+                                                fontSize: 12.5,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ).animate().shake(duration: 400.ms, hz: 4),
+                                    SizedBox(
+                                        height: sp(isTinyScreen ? 12 : 16)),
+                                  ],
+                                  _buildFieldLabel('Email'),
+                                  const SizedBox(height: 8),
+                                  _buildTextField(
+                                    controller: _emailController,
+                                    focusNode: _emailFocus,
+                                    hasFocus: _emailHasFocus,
+                                    hint: 'Enter your email',
+                                    icon: Icons.mail_outline_rounded,
+                                    isCompact: isTinyScreen,
+                                  )
+                                      .animate()
+                                      .fadeIn(duration: 350.ms, delay: 80.ms)
+                                      .slideX(
+                                        begin: -0.03,
+                                        end: 0,
+                                        duration: 350.ms,
+                                      ),
+                                  SizedBox(height: sp(isTinyScreen ? 14 : 18)),
+                                  _buildFieldLabel('Password'),
+                                  const SizedBox(height: 8),
+                                  _buildTextField(
+                                    controller: _passwordController,
+                                    focusNode: _passwordFocus,
+                                    hasFocus: _passwordHasFocus,
+                                    hint: 'Enter your password',
+                                    icon: Icons.lock_outline_rounded,
+                                    obscureText: _obscurePassword,
+                                    isCompact: isTinyScreen,
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _obscurePassword
+                                            ? Icons.visibility_off_rounded
+                                            : Icons.visibility_rounded,
+                                        color: _LoginPalette.textMuted,
+                                        size: 20,
+                                      ),
+                                      onPressed: () => setState(
+                                        () => _obscurePassword =
+                                            !_obscurePassword,
+                                      ),
+                                    ),
+                                  )
+                                      .animate()
+                                      .fadeIn(duration: 350.ms, delay: 140.ms)
+                                      .slideX(
+                                        begin: -0.03,
+                                        end: 0,
+                                        duration: 350.ms,
+                                      ),
+                                  const SizedBox(height: 4),
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: TextButton(
+                                      style: TextButton.styleFrom(
+                                        foregroundColor:
+                                            _LoginPalette.milanoRed,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 4,
+                                          vertical: 4,
+                                        ),
+                                        minimumSize: Size.zero,
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                      onPressed: () =>
+                                          context.push('/forgot-password'),
+                                      child: Text(
+                                        'Forgot Password?',
+                                        style: AppTheme.sans(
+                                          color: _LoginPalette.milanoRed,
+                                          weight: FontWeight.bold,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                  child: Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.error_outline_rounded,
-                                        size: 18,
-                                        color: _LoginPalette.danger,
+                                  SizedBox(height: sp(isTinyScreen ? 14 : 18)),
+                                  // Login button — solid brand-gradient pill
+                                  // with only its label, no arrow icon
+                                  // (nothing was removed here since none was
+                                  // ever rendered).
+                                  Container(
+                                    height: buttonHeight,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(17),
+                                      gradient: auth.isLoading
+                                          ? null
+                                          : _LoginPalette.buttonGradient,
+                                      color: auth.isLoading
+                                          ? _LoginPalette.milanoRed.withValues(
+                                              alpha: 0.6,
+                                            )
+                                          : null,
+                                      boxShadow: auth.isLoading
+                                          ? []
+                                          : _LoginPalette.buttonShadow,
+                                    ),
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        borderRadius: BorderRadius.circular(17),
+                                        splashColor: _LoginPalette.lemonChiffon
+                                            .withValues(alpha: 0.25),
+                                        highlightColor: Colors.white.withValues(
+                                          alpha: 0.08,
+                                        ),
+                                        onTap: auth.isLoading
+                                            ? null
+                                            : _handleLogin,
+                                        child: Center(
+                                          child: AnimatedSwitcher(
+                                            duration: const Duration(
+                                                milliseconds: 250),
+                                            child: auth.isLoading
+                                                ? const SizedBox(
+                                                    key: ValueKey('loading'),
+                                                    width: 22,
+                                                    height: 22,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                      color: Colors.white,
+                                                      strokeWidth: 2.5,
+                                                    ),
+                                                  )
+                                                : Row(
+                                                    key:
+                                                        const ValueKey('label'),
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      Text(
+                                                        'Login',
+                                                        style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: isTinyScreen
+                                                              ? 15
+                                                              : 16,
+                                                          letterSpacing: 0.4,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                          ),
+                                        ),
                                       ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: Text(
-                                          _error!,
-                                          style: const TextStyle(
-                                            color: _LoginPalette.danger,
-                                            fontSize: 12.5,
-                                            fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  SizedBox(height: sp(isTinyScreen ? 16 : 20)),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.lock_rounded,
+                                        size: 13,
+                                        color:
+                                            _LoginPalette.textMuted.withValues(
+                                          alpha: 0.7,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Your data is encrypted and secure',
+                                        style: AppTheme.sans(
+                                          size: 11.5,
+                                          color: _LoginPalette.textMuted
+                                              .withValues(
+                                            alpha: 0.8,
                                           ),
                                         ),
                                       ),
                                     ],
                                   ),
-                                ).animate().shake(duration: 400.ms, hz: 4),
-                                SizedBox(height: isTinyScreen ? 12 : 16),
-                              ],
-                              _buildFieldLabel('Email'),
-                              const SizedBox(height: 8),
-                              _buildTextField(
-                                controller: _emailController,
-                                focusNode: _emailFocus,
-                                hasFocus: _emailHasFocus,
-                                hint: 'Enter your email',
-                                icon: Icons.mail_outline_rounded,
-                                isCompact: isTinyScreen,
-                              )
-                                  .animate()
-                                  .fadeIn(duration: 350.ms, delay: 80.ms)
-                                  .slideX(
-                                    begin: -0.03,
-                                    end: 0,
-                                    duration: 350.ms,
-                                  ),
-                              SizedBox(height: isTinyScreen ? 14 : 18),
-                              _buildFieldLabel('Password'),
-                              const SizedBox(height: 8),
-                              _buildTextField(
-                                controller: _passwordController,
-                                focusNode: _passwordFocus,
-                                hasFocus: _passwordHasFocus,
-                                hint: 'Enter your password',
-                                icon: Icons.lock_outline_rounded,
-                                obscureText: _obscurePassword,
-                                isCompact: isTinyScreen,
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscurePassword
-                                        ? Icons.visibility_off_rounded
-                                        : Icons.visibility_rounded,
-                                    color: _LoginPalette.textMuted,
-                                    size: 20,
-                                  ),
-                                  onPressed: () => setState(
-                                    () => _obscurePassword = !_obscurePassword,
-                                  ),
-                                ),
-                              )
-                                  .animate()
-                                  .fadeIn(duration: 350.ms, delay: 140.ms)
-                                  .slideX(
-                                    begin: -0.03,
-                                    end: 0,
-                                    duration: 350.ms,
-                                  ),
-                              const SizedBox(height: 4),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: TextButton(
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: _LoginPalette.milanoRed,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 4,
-                                      vertical: 4,
-                                    ),
-                                    minimumSize: Size.zero,
-                                    tapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                  ),
-                                  onPressed: () =>
-                                      context.push('/forgot-password'),
-                                  child: Text(
-                                    'Forgot Password?',
-                                    style: AppTheme.sans(
-                                      color: _LoginPalette.milanoRed,
-                                      weight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: isTinyScreen ? 14 : 18),
-                              // Login button — solid brand-gradient pill
-                              // with only its label, no arrow icon
-                              // (nothing was removed here since none was
-                              // ever rendered).
-                              Container(
-                                height: buttonHeight,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(17),
-                                  gradient: auth.isLoading
-                                      ? null
-                                      : _LoginPalette.buttonGradient,
-                                  color: auth.isLoading
-                                      ? _LoginPalette.milanoRed.withValues(
-                                          alpha: 0.6,
-                                        )
-                                      : null,
-                                  boxShadow: auth.isLoading
-                                      ? []
-                                      : _LoginPalette.buttonShadow,
-                                ),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(17),
-                                    splashColor: _LoginPalette.lemonChiffon
-                                        .withValues(alpha: 0.25),
-                                    highlightColor: Colors.white.withValues(
-                                      alpha: 0.08,
-                                    ),
-                                    onTap: auth.isLoading ? null : _handleLogin,
-                                    child: Center(
-                                      child: AnimatedSwitcher(
-                                        duration:
-                                            const Duration(milliseconds: 250),
-                                        child: auth.isLoading
-                                            ? const SizedBox(
-                                                key: ValueKey('loading'),
-                                                width: 22,
-                                                height: 22,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                  color: Colors.white,
-                                                  strokeWidth: 2.5,
-                                                ),
-                                              )
-                                            : Row(
-                                                key: const ValueKey('label'),
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  Text(
-                                                    'Login',
-                                                    style: TextStyle(
-                                                      color: Colors.white,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: isTinyScreen
-                                                          ? 15
-                                                          : 16,
-                                                      letterSpacing: 0.4,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: isTinyScreen ? 16 : 20),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.lock_rounded,
-                                    size: 13,
-                                    color: _LoginPalette.textMuted.withValues(
-                                      alpha: 0.7,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Your data is encrypted and secure',
-                                    style: AppTheme.sans(
-                                      size: 11.5,
-                                      color: _LoginPalette.textMuted.withValues(
-                                        alpha: 0.8,
-                                      ),
-                                    ),
-                                  ),
                                 ],
+                              ),
+                            ).animate().fade(duration: 500.ms).slideY(
+                                  begin: 0.08,
+                                  end: 0,
+                                  duration: 500.ms,
+                                  curve: Curves.easeOut,
+                                ),
+                          ),
+                        ),
+
+                        // ---------------------------------------------------
+                        // Footer mark — "EAT WELL • LIVE BETTER" with a
+                        // small gold underline beneath the card, sitting on
+                        // the plain ivory background (no wave/leaf backdrop).
+                        // ---------------------------------------------------
+                        Padding(
+                          padding: EdgeInsets.only(
+                            bottom: sp(isTinyScreen ? 18 : 26),
+                            top: 2,
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                'EAT WELL  •  LIVE BETTER',
+                                style: AppTheme.sans(
+                                  size: 10.5,
+                                  weight: FontWeight.w600,
+                                  color: _LoginPalette.textMuted.withValues(
+                                    alpha: 0.7,
+                                  ),
+                                ).copyWith(letterSpacing: 1.2),
+                              ),
+                              const SizedBox(height: 6),
+                              Container(
+                                width: 26,
+                                height: 2,
+                                decoration: BoxDecoration(
+                                  color: _LoginPalette.lemonChiffon,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
                               ),
                             ],
                           ),
-                        ).animate().fade(duration: 500.ms).slideY(
-                              begin: 0.08,
-                              end: 0,
-                              duration: 500.ms,
-                              curve: Curves.easeOut,
-                            ),
-                      ),
+                        ).animate().fadeIn(duration: 400.ms, delay: 320.ms),
+                      ],
                     ),
-
-                    // ---------------------------------------------------
-                    // Footer mark — "EAT WELL • LIVE BETTER" with a
-                    // small gold underline beneath the card, sitting on
-                    // the plain ivory background (no wave/leaf backdrop).
-                    // ---------------------------------------------------
-                    Padding(
-                      padding: EdgeInsets.only(
-                        bottom: isTinyScreen ? 18 : 26,
-                        top: 2,
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            'EAT WELL  •  LIVE BETTER',
-                            style: AppTheme.sans(
-                              size: 10.5,
-                              weight: FontWeight.w600,
-                              color: _LoginPalette.textMuted.withValues(
-                                alpha: 0.7,
-                              ),
-                            ).copyWith(letterSpacing: 1.2),
-                          ),
-                          const SizedBox(height: 6),
-                          Container(
-                            width: 26,
-                            height: 2,
-                            decoration: BoxDecoration(
-                              color: _LoginPalette.lemonChiffon,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ).animate().fadeIn(duration: 400.ms, delay: 320.ms),
-                  ],
+                  ),
                 ),
               ),
             ),

@@ -53,7 +53,7 @@ import '../widgets/common_widgets.dart';
 ///      provider, controller, route, or payment-processing logic was
 ///      touched anywhere in this pass — only presentation changed.
 ///
-/// UI-ENHANCEMENT PASS 4 (this pass): `_ScreenHeader`'s bottom edge is now
+/// UI-ENHANCEMENT PASS 4: `_ScreenHeader`'s bottom edge is now
 /// a straight, flat line instead of the previous rounded 32px bottom
 /// corners — matching the flat-bottom topbar treatment used on the
 /// Tables (Floor Plan) screen's header. The rounded `BorderRadius` on the
@@ -67,6 +67,55 @@ import '../widgets/common_widgets.dart';
 /// this file (`_StatsRow`, `_StatCard`, `_SectionCard`, payment method
 /// selection, and all provider/payment-processing logic in
 /// `_PaymentScreenState`). Presentation only.
+///
+/// UI-ENHANCEMENT PASS 5 (this pass): RESPONSIVE LAYOUT PASS
+/// (MOBILE / TABLET / LAPTOP) — no navigation, provider/payment-processing
+/// logic, callbacks, routes, copy, or any existing field/keyword anywhere
+/// in this file was renamed, removed, or otherwise touched. Previously
+/// `_ScreenHeader` used its own standalone `800` cutoff (inconsistent
+/// with the rest of the app's `600` mobile threshold), the body's content
+/// column was capped at a flat `1280px` regardless of device (far too
+/// wide for a single-column checkout form on a laptop monitor), and
+/// `_StatCard`/`_SectionCard` had no tablet/laptop tier at all. This pass
+/// fixes all three:
+///   1. SHARED BREAKPOINTS: two new top-level constants,
+///      `_kTabletBreakpointWidth` (`600`) and `_kLaptopBreakpointWidth`
+///      (`1024`), are now used consistently everywhere a device tier is
+///      needed. The screen's existing top-level `isMobile` (already
+///      `width < 600`) now reads from `_kTabletBreakpointWidth` instead
+///      of a bare `600` literal (identical value, just named), and new
+///      `isTablet`/`isDesktop` flags (`600–1023` / `1024+`) sit alongside
+///      it — all computed once in `build()` and threaded down to
+///      `_StatsRow`/`_StatCard` and both `_SectionCard`s. `_ScreenHeader`'s
+///      old standalone `800` cutoff is replaced with the same shared
+///      constants, so the header and the rest of the screen now agree on
+///      exactly where "tablet" starts and ends.
+///   2. A SENSIBLE, DEVICE-AWARE CONTENT WIDTH: the body's `ConstrainedBox`
+///      now caps the single-column payment form at a device-appropriate
+///      reading width — `double.infinity` on mobile (unchanged), `760`
+///      on tablet, and `860` on laptop — instead of one flat `1280`, so
+///      the order-details/items/total/payment-method cards read as a
+///      deliberate, comfortably-wide checkout column on a laptop monitor
+///      instead of stretching edge-to-edge across the whole screen. The
+///      body's outer padding is also now tiered (mobile/tablet/laptop)
+///      instead of a single fixed value.
+///   3. THREE-TIER SIZING: every metric in `_ScreenHeader` that used to
+///      be a two-way `isMobile ? a : b` ternary (padding, title font
+///      size, tagline font size, date/live font sizes, and row gaps) is
+///      now three-way (`isMobile ? a : (isTablet ? c : b)`), with the
+///      tablet number sitting sensibly between the existing mobile and
+///      desktop numbers. `_StatCard` and `_SectionCard` each gained new
+///      `isTablet`/`isDesktop` boolean inputs (added alongside their
+///      existing fields — nothing renamed) used only to scale their own
+///      icon sizes, padding, and font sizes up a notch on tablet and
+///      laptop. The "Total Amount" card and the payment-method list
+///      (built inline in `build()`, not their own widget classes) were
+///      similarly given their own tablet/laptop tier via three-tier local
+///      variables replacing what were previously fixed numbers. The exact
+///      original mobile numbers are fully preserved everywhere, and every
+///      card keeps the exact same content, arrangement, payment-method
+///      selection logic, and the Confirm Payment / Cancel Payment
+///      callbacks exactly as before — only sizing changed.
 ///
 /// NOTE: this is a private class redeclared identically to the ones in
 /// the other staff screens (private classes can't be shared across files
@@ -180,6 +229,14 @@ String _todayLabel() {
   return '${_kMonthNames[now.month - 1]} ${now.day}, ${now.year}';
 }
 
+// PASS 5: shared responsive breakpoints used across this screen's header,
+// stats row, section cards, the total card, and the payment-method list,
+// so mobile / tablet / laptop all get their own properly proportioned
+// layout instead of tablets being silently treated as either phones or
+// laptops.
+const double _kTabletBreakpointWidth = 600;
+const double _kLaptopBreakpointWidth = 1024;
+
 class PaymentScreen extends StatefulWidget {
   final String orderId;
 
@@ -238,7 +295,42 @@ class _PaymentScreenState extends State<PaymentScreen> {
         : _methods.firstWhere((m) => m['id'] == _selectedMethod)['label']
             as String;
 
-    final isMobile = MediaQuery.of(context).size.width < 600;
+    // PASS 5: `isMobile` keeps its exact original meaning and value
+    // (`width < 600`), just reading from the shared named constant
+    // instead of a bare literal. `isTablet`/`isDesktop` are new — so the
+    // stats row, section cards, total card, and payment-method list can
+    // each get their own properly proportioned tablet/laptop sizing
+    // instead of jumping straight from "mobile" numbers to one flat
+    // "everything else" treatment.
+    final isMobile =
+        MediaQuery.of(context).size.width < _kTabletBreakpointWidth;
+    final isTablet = !isMobile &&
+        MediaQuery.of(context).size.width < _kLaptopBreakpointWidth;
+    final isDesktop = !isMobile && !isTablet;
+
+    // PASS 5: tiered outer padding (mobile/tablet/laptop) instead of one
+    // fixed value, plus a device-appropriate content width cap — a
+    // single-column checkout form reads far better capped at a
+    // comfortable reading width than stretched to the old flat `1280px`
+    // on a laptop monitor. Mobile is unaffected (`double.infinity` is the
+    // exact original behaviour).
+    final double bodyHorizontalPadding = isMobile ? 16 : (isTablet ? 28 : 36);
+    final double bodyTopPadding = isMobile ? 16 : (isTablet ? 20 : 24);
+    final double bodyBottomPadding = isMobile ? 32 : (isTablet ? 36 : 40);
+    final double contentMaxWidth =
+        isMobile ? double.infinity : (isTablet ? 760 : 860);
+
+    // PASS 5: three-tier sizing for the "Total Amount" card and the
+    // payment-method list — mobile numbers are the exact originals,
+    // tablet sits between mobile and laptop, laptop is a modest step up
+    // for a fuller, more professional look on large screens.
+    final double totalHeaderVPad = isMobile ? 22 : (isTablet ? 24 : 26);
+    final double totalFigureFontSize = isMobile ? 38 : (isTablet ? 41 : 44);
+    final double totalContentPad = isMobile ? 22 : (isTablet ? 24 : 26);
+    final double methodListPad = isMobile ? 16 : (isTablet ? 18 : 20);
+    final double methodRowPad = isMobile ? 15 : (isTablet ? 16 : 17);
+    final double methodIconChipPad = isMobile ? 9 : (isTablet ? 10 : 11);
+    final double methodLabelFontSize = isMobile ? 16 : (isTablet ? 16.5 : 17);
 
     return Scaffold(
       backgroundColor: _Palette.canvas,
@@ -394,14 +486,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
               Expanded(
                 child: SingleChildScrollView(
                   padding: EdgeInsets.fromLTRB(
-                    isMobile ? 16 : 24,
-                    16,
-                    isMobile ? 16 : 24,
-                    32,
+                    bodyHorizontalPadding,
+                    bodyTopPadding,
+                    bodyHorizontalPadding,
+                    bodyBottomPadding,
                   ),
                   child: Center(
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1280),
+                      constraints: BoxConstraints(maxWidth: contentMaxWidth),
                       child: Column(
                         children: [
                           // ── Live Stats Row — mirrors the Billing
@@ -413,6 +505,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             amountDue: finalTotal,
                             methodLabel: selectedMethodLabel,
                             isMobile: isMobile,
+                            isTablet: isTablet,
                           ),
                           const SizedBox(height: 20),
 
@@ -421,6 +514,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             icon: Icons.receipt_long_rounded,
                             title: 'Order Details',
                             railColor: _Palette.milanoRed,
+                            isMobile: isMobile,
+                            isTablet: isTablet,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -463,6 +558,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             icon: Icons.restaurant_menu_rounded,
                             title: 'Items',
                             railColor: _Palette.gold,
+                            isMobile: isMobile,
+                            isTablet: isTablet,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -548,8 +645,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 // gold trim.
                                 Container(
                                   width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 22,
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: totalHeaderVPad,
                                   ),
                                   decoration: const BoxDecoration(
                                     gradient: LinearGradient(
@@ -642,7 +739,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                           Text(
                                             '₹$finalTotal',
                                             style: AppTheme.serif(
-                                              size: 38,
+                                              size: totalFigureFontSize,
                                               weight: FontWeight.w900,
                                               color: Colors.white,
                                             ),
@@ -653,7 +750,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                   ),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.all(22),
+                                  padding: EdgeInsets.all(totalContentPad),
                                   child: Column(
                                     children: [
                                       if (order.subtotal > 0)
@@ -724,7 +821,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           // 🔥 PAYMENT METHODS (GOOD UI PRESERVED, now themed)
                           Container(
                             width: double.infinity,
-                            padding: const EdgeInsets.all(16),
+                            padding: EdgeInsets.all(methodListPad),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(20),
@@ -750,7 +847,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                       milliseconds: 200,
                                     ),
                                     margin: const EdgeInsets.only(bottom: 10),
-                                    padding: const EdgeInsets.all(15),
+                                    padding: EdgeInsets.all(methodRowPad),
                                     decoration: BoxDecoration(
                                       gradient: isSelected
                                           ? LinearGradient(
@@ -788,7 +885,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                     child: Row(
                                       children: [
                                         Container(
-                                          padding: const EdgeInsets.all(9),
+                                          padding: EdgeInsets.all(
+                                            methodIconChipPad,
+                                          ),
                                           decoration: BoxDecoration(
                                             gradient: isSelected
                                                 ? const LinearGradient(
@@ -833,7 +932,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                           child: Text(
                                             m['label'] as String,
                                             style: AppTheme.sans(
-                                              size: 16,
+                                              size: methodLabelFontSize,
                                               weight: isSelected
                                                   ? FontWeight.bold
                                                   : FontWeight.w500,
@@ -982,21 +1081,36 @@ class _TitleDivider extends StatelessWidget {
 // rail down the left edge (matching the Create Order / Orders screens'
 // card treatment), and the icon chip picked up a soft colored glow.
 // Purely presentational — wraps the exact same child content as before.
+//
+// PASS 5: gained two new inputs, `isMobile` and `isTablet` (added
+// alongside the existing fields — nothing renamed), used only to scale
+// the card's own padding, icon chip size, and title font size up a notch
+// on tablet and laptop for a fuller, more professional feel on larger
+// screens. The original mobile numbers are fully preserved.
 class _SectionCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final Widget child;
   final Color railColor;
+  final bool isMobile;
+  final bool isTablet;
 
   const _SectionCard({
     required this.icon,
     required this.title,
     required this.child,
+    required this.isMobile,
+    required this.isTablet,
     this.railColor = _Palette.milanoRed,
   });
 
   @override
   Widget build(BuildContext context) {
+    final double cardPad = isMobile ? 20 : (isTablet ? 22 : 24);
+    final double iconChipSize = isMobile ? 34 : (isTablet ? 36 : 38);
+    final double iconSize = isMobile ? 17 : (isTablet ? 18 : 19);
+    final double titleFontSize = isMobile ? 18 : (isTablet ? 19 : 20);
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -1029,15 +1143,15 @@ class _SectionCard extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.all(cardPad),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
                     Container(
-                      width: 34,
-                      height: 34,
+                      width: iconChipSize,
+                      height: iconChipSize,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
@@ -1063,14 +1177,17 @@ class _SectionCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      child:
-                          Icon(icon, color: _Palette.milanoRedDeep, size: 17),
+                      child: Icon(
+                        icon,
+                        color: _Palette.milanoRedDeep,
+                        size: iconSize,
+                      ),
                     ),
                     const SizedBox(width: 11),
                     Text(
                       title,
                       style: AppTheme.serif(
-                        size: 18,
+                        size: titleFontSize,
                         weight: FontWeight.w800,
                         color: _Palette.textDark,
                       ),
@@ -1102,6 +1219,14 @@ class _SectionCard extends StatelessWidget {
 // flat bottom edge (no rounded corners) with a thin warm-gold hairline
 // border along that edge, using `ClipRect` in place of `ClipRRect`. No
 // photo, no watermark, no icon badge box of any kind.
+//
+// PASS 5: now classifies the screen into mobile / tablet / laptop using
+// the same shared `_kTabletBreakpointWidth` / `_kLaptopBreakpointWidth`
+// constants the rest of the screen uses (replacing the old standalone
+// `800` cutoff), and every previously two-way `isMobile ? a : b` size
+// below is now three-way `isMobile ? a : (isTablet ? c : b)` so tablets
+// get their own properly proportioned numbers instead of inheriting
+// either the phone or the laptop treatment.
 class _ScreenHeader extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -1117,7 +1242,9 @@ class _ScreenHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 800;
+    final width = MediaQuery.of(context).size.width;
+    final isMobile = width < _kTabletBreakpointWidth;
+    final isTablet = !isMobile && width < _kLaptopBreakpointWidth;
 
     return Container(
       width: double.infinity,
@@ -1210,10 +1337,10 @@ class _ScreenHeader extends StatelessWidget {
               bottom: false,
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
-                  isMobile ? 18 : 32,
-                  isMobile ? 14 : 20,
-                  isMobile ? 18 : 32,
-                  isMobile ? 24 : 30,
+                  isMobile ? 18 : (isTablet ? 26 : 32),
+                  isMobile ? 14 : (isTablet ? 17 : 20),
+                  isMobile ? 18 : (isTablet ? 26 : 32),
+                  isMobile ? 24 : (isTablet ? 27 : 30),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1228,7 +1355,7 @@ class _ScreenHeader extends StatelessWidget {
                       ],
                     ),
 
-                    SizedBox(height: isMobile ? 14 : 18),
+                    SizedBox(height: isMobile ? 14 : (isTablet ? 16 : 18)),
 
                     // ── Title block: small icon + label, then the big
                     // title — matches the Billing header's title block
@@ -1256,7 +1383,7 @@ class _ScreenHeader extends StatelessWidget {
                     Text(
                       title,
                       style: AppTheme.serif(
-                        size: isMobile ? 26 : 32,
+                        size: isMobile ? 26 : (isTablet ? 29 : 32),
                         weight: FontWeight.w900,
                         color: Colors.white,
                       ).copyWith(height: 1.1),
@@ -1264,7 +1391,7 @@ class _ScreenHeader extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
 
-                    SizedBox(height: isMobile ? 16 : 20),
+                    SizedBox(height: isMobile ? 16 : (isTablet ? 18 : 20)),
 
                     // ── Tagline ───────────────────────────────────────
                     // No card, no border/drop-shadow, no icon badge, no
@@ -1286,11 +1413,11 @@ class _ScreenHeader extends StatelessWidget {
                         ),
                       ),
                     ),
-                    SizedBox(height: isMobile ? 8 : 10),
+                    SizedBox(height: isMobile ? 8 : (isTablet ? 9 : 10)),
                     Text(
                       'Complete the payment, seamlessly.',
                       style: AppTheme.serif(
-                        size: isMobile ? 15.5 : 18,
+                        size: isMobile ? 15.5 : (isTablet ? 16.5 : 18),
                         weight: FontWeight.w800,
                         color: _Palette.canvasDeep,
                       ).copyWith(height: 1.3, letterSpacing: 0.2),
@@ -1298,7 +1425,7 @@ class _ScreenHeader extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
 
-                    SizedBox(height: isMobile ? 14 : 18),
+                    SizedBox(height: isMobile ? 14 : (isTablet ? 16 : 18)),
 
                     // ── Date + Live row ──────────────────────────────
                     Row(
@@ -1312,7 +1439,7 @@ class _ScreenHeader extends StatelessWidget {
                         Text(
                           dateLabel,
                           style: AppTheme.sans(
-                            size: isMobile ? 11.5 : 12.5,
+                            size: isMobile ? 11.5 : (isTablet ? 12 : 12.5),
                             weight: FontWeight.w600,
                             color: Colors.white.withValues(alpha: 0.85),
                           ),
@@ -1330,7 +1457,7 @@ class _ScreenHeader extends StatelessWidget {
                         Text(
                           'Live',
                           style: AppTheme.sans(
-                            size: isMobile ? 11 : 12,
+                            size: isMobile ? 11 : (isTablet ? 11.5 : 12),
                             weight: FontWeight.w700,
                             color: _Palette.success,
                             letterSpacing: 0.3,
@@ -1339,7 +1466,7 @@ class _ScreenHeader extends StatelessWidget {
                       ],
                     ),
 
-                    SizedBox(height: isMobile ? 10 : 12),
+                    SizedBox(height: isMobile ? 10 : (isTablet ? 11 : 12)),
 
                     // Thin gold gradient hairline underneath the date row.
                     Container(
@@ -1373,21 +1500,29 @@ class _ScreenHeader extends StatelessWidget {
 // `methodLabel` values already computed at the call site. No data,
 // provider, or navigation logic lives here — purely a display of values
 // already available at the call site.
+//
+// PASS 5: gained a new `isTablet` input (added alongside the existing
+// `isMobile` — nothing renamed), used only to widen the gap between the
+// three cards a touch on tablet and to scale `_StatCard`'s own sizing.
 class _StatsRow extends StatelessWidget {
   final int itemsCount;
   final int amountDue;
   final String methodLabel;
   final bool isMobile;
+  final bool isTablet;
 
   const _StatsRow({
     required this.itemsCount,
     required this.amountDue,
     required this.methodLabel,
     required this.isMobile,
+    required this.isTablet,
   });
 
   @override
   Widget build(BuildContext context) {
+    final double gap = isMobile ? 10 : (isTablet ? 12 : 14);
+
     return Row(
       children: [
         Expanded(
@@ -1397,9 +1532,10 @@ class _StatsRow extends StatelessWidget {
             label: 'Items',
             iconBg: _Palette.lemonChiffon.withValues(alpha: 0.55),
             iconColor: _Palette.goldDeep,
+            isTablet: isTablet,
           ),
         ),
-        SizedBox(width: isMobile ? 10 : 14),
+        SizedBox(width: gap),
         Expanded(
           child: _StatCard(
             icon: Icons.payments_rounded,
@@ -1407,9 +1543,10 @@ class _StatsRow extends StatelessWidget {
             label: 'Amount Due',
             iconBg: _Palette.dustyBlush,
             iconColor: _Palette.milanoRedDeep,
+            isTablet: isTablet,
           ),
         ),
-        SizedBox(width: isMobile ? 10 : 14),
+        SizedBox(width: gap),
         Expanded(
           child: _StatCard(
             icon: Icons.credit_card_rounded,
@@ -1417,6 +1554,7 @@ class _StatsRow extends StatelessWidget {
             label: 'Method',
             iconBg: _Palette.paleMint,
             iconColor: _Palette.successDeep,
+            isTablet: isTablet,
           ),
         ),
       ],
@@ -1429,12 +1567,20 @@ class _StatsRow extends StatelessWidget {
 // with a floating drop shadow — matches the Billing screen's `_StatCard`
 // exactly, designed to read clearly straddling the maroon header above it
 // and the white canvas beneath it.
+//
+// PASS 5: gained a new `isTablet` input (added alongside the existing
+// fields — nothing renamed), used only to scale the icon circle, value
+// font size, and padding up a notch on tablet/laptop (the "not tablet"
+// branch already covers laptop, matching how this card was originally
+// sized for anything wider than mobile). The original mobile numbers are
+// fully preserved.
 class _StatCard extends StatelessWidget {
   final IconData icon;
   final String value;
   final String label;
   final Color iconBg;
   final Color iconColor;
+  final bool isTablet;
 
   const _StatCard({
     required this.icon,
@@ -1442,12 +1588,22 @@ class _StatCard extends StatelessWidget {
     required this.label,
     required this.iconBg,
     required this.iconColor,
+    required this.isTablet,
   });
 
   @override
   Widget build(BuildContext context) {
+    final double iconContainerSize = isTablet ? 40 : 38;
+    final double iconSize = isTablet ? 18 : 17;
+    final double valueFontSize = isTablet ? 18 : 17;
+    final double horizontalPad = isTablet ? 13 : 12;
+    final double verticalPad = isTablet ? 15 : 14;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      padding: EdgeInsets.symmetric(
+        horizontal: horizontalPad,
+        vertical: verticalPad,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -1461,8 +1617,8 @@ class _StatCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 38,
-            height: 38,
+            width: iconContainerSize,
+            height: iconContainerSize,
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
@@ -1470,7 +1626,7 @@ class _StatCard extends StatelessWidget {
             ),
             child: Icon(
               icon,
-              size: 17,
+              size: iconSize,
               color: iconColor,
             ),
           ),
@@ -1483,7 +1639,7 @@ class _StatCard extends StatelessWidget {
                 Text(
                   value,
                   style: AppTheme.sans(
-                    size: 17,
+                    size: valueFontSize,
                     weight: FontWeight.w900,
                     color: _Palette.textDark,
                   ),

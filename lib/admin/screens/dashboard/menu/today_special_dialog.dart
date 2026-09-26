@@ -39,63 +39,40 @@ import 'package:restaurant_unified_app/admin/services/menu_service.dart';
 /// Chiffon identity so the dialog read as "majorly white" overall, with
 /// maroon and gold used only as accents rather than a solid header fill.
 ///
-/// UI-ENHANCEMENT PASS 4 (this pass): presentation-only, exactly like
-/// every pass above — no selection logic, save/API calls, search
-/// filtering, or item-payload logic was touched anywhere in this file,
-/// and no field, callback, or keyword was renamed.
-///   1. PALETTE — full PUREDINE mapping, mirroring the exact swap already
-///      done on StaffScreen/ManualOrderDialog. Every field name inside
-///      `_SpecialTheme` is unchanged on purpose (every widget in this
-///      file already reads from these exact names, so swapping only the
-///      underlying `Color` values re-skins the whole dialog with no
-///      other code touched):
-///        • `maroon`        → Deep Wine Maroon `#742A3C` (primary / topbar)
-///        • `maroonLight`   → Wine `#813244` (topbar lighter gradient)
-///        • `maroonDeep`    → Burgundy `#8A183F` (primary accent)
-///        • `maroonDarkest` → Deep Brown/Black `#2E0D16`
-///        • `cream`         → Warm Off-White `#FBF8F5` (main background)
-///        • `creamLighter`  → kept as pure white (card surface)
-///        • `gold`          → Warm Gold `#F3C564` (gold accent)
-///        • `goldDark`      → deeper gold `#D9A421` (derived companion)
-///        • `textDark`      → Deep Brown/Black `#2E0D16`
-///        • `textMuted`     → Muted Taupe `#9B707A`
-///        • `success`       → Fresh Green `#44AF70`
-///        • `danger` is kept as a clear alert red (not part of the
-///          supplied palette) so error states stay legible.
-///      Four supporting PUREDINE tones were ADDED as new fields — nothing
-///      existing was removed — `dustyBlush` (`#F3D9DC`, icon backgrounds),
-///      `paleRose` (`#EFD7DA`, card borders), `softYellow` (`#FCE1AB`,
-///      gold highlight) and `paleMint` (`#EAF6EF`, success backgrounds).
-///      `headerGradient` now holds the supplied header gradient exactly
-///      (`#742A3C → #813244`), and `ctaGradient` holds the supplied CTA
-///      gradient exactly (`#6E1832 → #9B3E4E → #F3C564`).
-///   2. HEADER: rebuilt to match StaffScreen's header treatment exactly —
-///      the flat white Pass-3 bar is replaced with the PUREDINE Deep Wine
-///      Maroon → Wine diagonal gradient (a medium-depth, not near-black,
-///      maroon band). It carries the same ambient dressing used on the
-///      other admin headers: a soft warm-gold corner glow, a large very
-///      faint watermark emblem (the same star glyph already used in this
-///      dialog's icon chip) sitting low-opacity behind the copy, a
-///      subtle diagonal glass sheen, and a warm-gold hairline along the
-///      bottom edge. Structurally nothing changed: the same star icon
-///      chip, the same title copy ("Today's Special"), the same subtitle
-///      copy ("Curate the featured menu highlights"), the same gold glow
-///      "navbar" rail underneath, the same dotted texture row, and the
-///      exact same `_isSubmitting ? null : () => Navigator.pop(context)`
-///      close callback (still correctly disabled while saving). Only the
-///      copy's colors changed (white / soft-gold instead of maroon /
-///      taupe) and the icon chip + close button were restyled from
-///      Pass-3's maroon-on-white / cream-on-white "glass" look to a light
-///      glass-on-wine treatment so both read clearly against the new
-///      dark backdrop — their callbacks/behavior are unchanged.
-///   3. TOP-TO-BOTTOM CONSISTENCY: so the whole dialog reads as one brand
-///      rather than just a re-colored header, the outer dialog frame,
-///      search bar, and item-card borders now use Pale Rose, the no-image
-///      / broken-image item placeholders use the Dusty Blush icon-BG, and
-///      the "Save Specials" CTA button now carries the supplied CTA
-///      gradient (`#6E1832 → #9B3E4E → #F3C564`) instead of a flat
-///      maroon fill — matching the "Login / CTA buttons" spec exactly.
-///      No button's `onPressed` callback was touched.
+/// UI-ENHANCEMENT PASS 4: presentation-only, exactly like every pass
+/// above — no selection logic, save/API calls, search filtering, or
+/// item-payload logic was touched anywhere in this file, and no field,
+/// callback, or keyword was renamed. Full PUREDINE palette mapping +
+/// header rebuild + top-to-bottom Pale Rose / Dusty Blush consistency
+/// pass (see previous revision history for the detailed breakdown).
+///
+/// UI-ENHANCEMENT PASS 5 (this pass): presentation/layout-only, exactly
+/// like every pass above — no selection logic, save/API calls, search
+/// filtering, category logic, or item-payload logic was touched anywhere
+/// in this file, and no field, callback, or keyword was renamed.
+///   1. RESPONSIVE LAYOUT: the dialog now measures the available width via
+///      a `_DeviceType` breakpoint (mobile < 600, tablet 600–1024,
+///      desktop ≥ 1024) computed once in `build()` and threaded down to
+///      every section builder. Dialog width/height/max-width, header
+///      padding & type scale, subtitle/search padding, item-list padding,
+///      and footer sizing all now scale per breakpoint instead of using a
+///      single fixed set of values, so the dialog reads correctly full
+///      screen-width on phones, mid-size on tablets, and as a comfortably
+///      centered panel on laptops/desktops.
+///   2. TABLET / DESKTOP POLISH: on tablet and desktop the item list now
+///      renders as a 2- or 3-column grid (same `CheckboxListTile`-based
+///      item tile, same `onChanged` selection callback, same item data)
+///      instead of a single-column list, and header/subtitle/search
+///      padding and type sizes are stepped up slightly for a more
+///      spacious, professional feel on larger screens. Mobile keeps the
+///      original single-column list exactly as before.
+///   3. FOOTER BUTTONS: "Cancel" and "Save Specials" are now wrapped in
+///      matching fixed-width `SizedBox`es (same width as each other at
+///      every breakpoint) and the CTA's internal padding was reduced so
+///      its overall footprint is visibly narrower than before, while
+///      still fitting its existing icon + label content. Neither button's
+///      `onPressed`/`onTap` callback or enabled/disabled condition was
+///      changed.
 /// ─────────────────────────────────────────────────────────────────────────
 class _SpecialTheme {
   // PUREDINE Maroon + Cream — field names unchanged on purpose (see the
@@ -139,6 +116,16 @@ class _SpecialTheme {
     end: Alignment.centerRight,
     colors: [Color(0xFF6E1832), Color(0xFF9B3E4E), gold],
   );
+}
+
+/// PASS 5: simple responsive breakpoint helper — layout-only, does not
+/// touch any selection/save/search/category logic anywhere in this file.
+enum _DeviceType { mobile, tablet, desktop }
+
+_DeviceType _deviceTypeForWidth(double width) {
+  if (width < 600) return _DeviceType.mobile;
+  if (width < 1024) return _DeviceType.tablet;
+  return _DeviceType.desktop;
 }
 
 /// Dialog that lets the admin pick any existing menu items and
@@ -297,21 +284,30 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
     }
   }
 
-  // ── UI: header — UI-ENHANCEMENT PASS 4 rebuilds this to match
-  // StaffScreen's header treatment: the PUREDINE Deep Wine Maroon → Wine
-  // diagonal gradient, dressed with the same ambient touches (corner
-  // glow, watermark emblem, glass sheen, gold hairline). The star icon
+  // ── UI: header — PASS 5 keeps the exact same structure, star icon
   // chip, gold glow rail, dotted texture row, title/subtitle copy, and
   // the close button's `_isSubmitting ? null : () => Navigator.pop(...)`
-  // behavior are all unchanged — presentation only. ─────────────────────
-  Widget _buildHeader() {
+  // behavior unchanged; only padding/type-scale now step up by
+  // `deviceType` for a more spacious tablet/desktop presentation. ───────
+  Widget _buildHeader(_DeviceType deviceType) {
+    final bool isMobile = deviceType == _DeviceType.mobile;
+    final bool isDesktop = deviceType == _DeviceType.desktop;
+
+    final double horizontalPad = isMobile ? 26 : (isDesktop ? 34 : 30);
+    final double verticalPad = isMobile ? 20 : (isDesktop ? 26 : 23);
+    final double titleSize = isMobile ? 24 : (isDesktop ? 28 : 26);
+    final double subtitleSize = isMobile ? 12.5 : (isDesktop ? 14 : 13.2);
+    final double chipPad = isMobile ? 10 : (isDesktop ? 13 : 11.5);
+    final double watermarkSize = isMobile ? 108 : (isDesktop ? 140 : 122);
+
     return ClipRRect(
       borderRadius: const BorderRadius.only(
         topLeft: Radius.circular(22),
         topRight: Radius.circular(22),
       ),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 20),
+        padding: EdgeInsets.symmetric(
+            horizontal: horizontalPad, vertical: verticalPad),
         decoration: BoxDecoration(
           // PUREDINE Deep Wine Maroon → Wine diagonal gradient — a
           // medium-depth maroon band, not near-black and not white.
@@ -345,7 +341,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                   opacity: 0.06,
                   child: Icon(
                     Icons.star_rounded,
-                    size: 108,
+                    size: watermarkSize,
                     color: Colors.white,
                   ),
                 ),
@@ -470,7 +466,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                     // Icon chip — a light glass-on-wine treatment so it
                     // reads clearly against the new dark backdrop.
                     Container(
-                      padding: const EdgeInsets.all(10),
+                      padding: EdgeInsets.all(chipPad),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: Colors.white.withValues(alpha: 0.14),
@@ -506,7 +502,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                               "Today's Special",
                               style: GoogleFonts.playfairDisplay(
                                 color: Colors.white,
-                                fontSize: 24,
+                                fontSize: titleSize,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 0.2,
                               ),
@@ -517,7 +513,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
                             'Curate the featured menu highlights',
                             style: GoogleFonts.inter(
                               color: Colors.white.withValues(alpha: 0.75),
-                              fontSize: 12.5,
+                              fontSize: subtitleSize,
                               fontWeight: FontWeight.w500,
                               letterSpacing: 0.15,
                             ),
@@ -562,10 +558,16 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
     );
   }
 
-  Widget _buildSubtitle() {
+  Widget _buildSubtitle(_DeviceType deviceType) {
+    final bool isMobile = deviceType == _DeviceType.mobile;
+    final bool isDesktop = deviceType == _DeviceType.desktop;
+    final double horizontalMargin = isMobile ? 16 : (isDesktop ? 28 : 22);
+    final double horizontalPad = isMobile ? 14 : (isDesktop ? 18 : 16);
+    final double fontSize = isMobile ? 12.5 : (isDesktop ? 13.5 : 13);
+
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      margin: EdgeInsets.fromLTRB(horizontalMargin, 14, horizontalMargin, 0),
+      padding: EdgeInsets.symmetric(horizontal: horizontalPad, vertical: 10),
       decoration: BoxDecoration(
         color: _SpecialTheme.softYellow.withValues(alpha: 0.45),
         borderRadius: BorderRadius.circular(12),
@@ -587,7 +589,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
             child: Text(
               "Select items to feature as Today's Special. Unselected items are removed.",
               style: GoogleFonts.inter(
-                fontSize: 12.5,
+                fontSize: fontSize,
                 color: _SpecialTheme.maroonDeep,
                 fontWeight: FontWeight.w500,
                 height: 1.3,
@@ -599,9 +601,13 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
     );
   }
 
-  Widget _buildSearch() {
+  Widget _buildSearch(_DeviceType deviceType) {
+    final bool isMobile = deviceType == _DeviceType.mobile;
+    final bool isDesktop = deviceType == _DeviceType.desktop;
+    final double horizontalMargin = isMobile ? 16 : (isDesktop ? 28 : 22);
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+      padding: EdgeInsets.fromLTRB(horizontalMargin, 14, horizontalMargin, 6),
       child: Container(
         decoration: BoxDecoration(
           color: _SpecialTheme.creamLighter,
@@ -648,7 +654,122 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
     );
   }
 
-  Widget _buildBody() {
+  /// PASS 5: extracted so the exact same tile (same checkbox, same
+  /// `onChanged` selection callback, same item fields) can be laid out
+  /// either in a single-column `ListView` (mobile) or a multi-column
+  /// `GridView` (tablet/desktop) with zero duplicated logic.
+  Widget _buildItemTile(MenuItem item) {
+    final isSelected = _specialItemIds.contains(item.id);
+    final displayName = item.name.trim().isEmpty ? 'Unnamed item' : item.name;
+    final price = item.price;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? _SpecialTheme.maroon.withValues(alpha: 0.06)
+            : _SpecialTheme.creamLighter,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isSelected ? _SpecialTheme.gold : _SpecialTheme.paleRose,
+          width: isSelected ? 1.5 : 1,
+        ),
+        boxShadow: isSelected
+            ? [
+                BoxShadow(
+                  color: _SpecialTheme.gold.withValues(alpha: 0.25),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+      ),
+      child: CheckboxListTile(
+        value: isSelected,
+        onChanged: (v) {
+          setState(() {
+            if (v == true) {
+              _specialItemIds.add(item.id);
+            } else {
+              _specialItemIds.remove(item.id);
+            }
+          });
+        },
+        activeColor: _SpecialTheme.maroon,
+        checkColor: _SpecialTheme.gold,
+        title: Text(
+          displayName,
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w600,
+            fontSize: 14.5,
+            color:
+                isSelected ? _SpecialTheme.maroonDeep : _SpecialTheme.textDark,
+          ),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: _SpecialTheme.gold.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              '₹${price.toStringAsFixed(2)}',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: _SpecialTheme.goldDark,
+              ),
+            ),
+          ),
+        ),
+        secondary: (item.imageUrl != null && item.imageUrl!.isNotEmpty)
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.network(
+                  item.imageUrl!,
+                  width: 48,
+                  height: 48,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: _SpecialTheme.dustyBlush,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(Icons.broken_image_rounded,
+                        size: 20,
+                        color: _SpecialTheme.maroon.withValues(alpha: 0.4)),
+                  ),
+                ),
+              )
+            : Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: _SpecialTheme.dustyBlush,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: _SpecialTheme.paleRose),
+                ),
+                child: Icon(Icons.fastfood_rounded,
+                    size: 20,
+                    color: _SpecialTheme.maroon.withValues(alpha: 0.55)),
+              ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        controlAffinity: ListTileControlAffinity.trailing,
+      ),
+    );
+  }
+
+  Widget _buildBody(_DeviceType deviceType) {
     if (widget.allItems.isEmpty) {
       return Center(
         child: Padding(
@@ -689,135 +810,54 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
       );
     }
 
+    // PASS 5: tablet/desktop render the same item tiles in a 2- or
+    // 3-column grid for a more spacious, professional layout; mobile
+    // keeps the original single-column list untouched.
+    final bool isMobile = deviceType == _DeviceType.mobile;
+    final int crossAxisCount = deviceType == _DeviceType.desktop
+        ? 3
+        : (deviceType == _DeviceType.tablet ? 2 : 1);
+    final double horizontalPad =
+        isMobile ? 14 : (crossAxisCount == 3 ? 26 : 20);
+
     return Container(
       color: _SpecialTheme.cream.withValues(alpha: 0.35),
-      child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
-        itemCount: filtered.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 8),
-        itemBuilder: (ctx, i) {
-          final item = filtered[i];
-          final isSelected = _specialItemIds.contains(item.id);
-          final displayName =
-              item.name.trim().isEmpty ? 'Unnamed item' : item.name;
-          final price = item.price;
-
-          return AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? _SpecialTheme.maroon.withValues(alpha: 0.06)
-                  : _SpecialTheme.creamLighter,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isSelected ? _SpecialTheme.gold : _SpecialTheme.paleRose,
-                width: isSelected ? 1.5 : 1,
+      child: isMobile
+          ? ListView.separated(
+              padding:
+                  EdgeInsets.fromLTRB(horizontalPad, 10, horizontalPad, 14),
+              itemCount: filtered.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (ctx, i) => _buildItemTile(filtered[i]),
+            )
+          : GridView.builder(
+              padding:
+                  EdgeInsets.fromLTRB(horizontalPad, 12, horizontalPad, 16),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 14,
+                childAspectRatio: crossAxisCount == 3 ? 3.4 : 3.9,
               ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: _SpecialTheme.gold.withValues(alpha: 0.25),
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
-                      ),
-                    ]
-                  : [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+              itemCount: filtered.length,
+              itemBuilder: (ctx, i) => _buildItemTile(filtered[i]),
             ),
-            child: CheckboxListTile(
-              value: isSelected,
-              onChanged: (v) {
-                setState(() {
-                  if (v == true) {
-                    _specialItemIds.add(item.id);
-                  } else {
-                    _specialItemIds.remove(item.id);
-                  }
-                });
-              },
-              activeColor: _SpecialTheme.maroon,
-              checkColor: _SpecialTheme.gold,
-              title: Text(
-                displayName,
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14.5,
-                  color: isSelected
-                      ? _SpecialTheme.maroonDeep
-                      : _SpecialTheme.textDark,
-                ),
-              ),
-              subtitle: Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: _SpecialTheme.gold.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    '₹${price.toStringAsFixed(2)}',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: _SpecialTheme.goldDark,
-                    ),
-                  ),
-                ),
-              ),
-              secondary: (item.imageUrl != null && item.imageUrl!.isNotEmpty)
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Image.network(
-                        item.imageUrl!,
-                        width: 48,
-                        height: 48,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: _SpecialTheme.dustyBlush,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(Icons.broken_image_rounded,
-                              size: 20,
-                              color:
-                                  _SpecialTheme.maroon.withValues(alpha: 0.4)),
-                        ),
-                      ),
-                    )
-                  : Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: _SpecialTheme.dustyBlush,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: _SpecialTheme.paleRose),
-                      ),
-                      child: Icon(Icons.fastfood_rounded,
-                          size: 20,
-                          color: _SpecialTheme.maroon.withValues(alpha: 0.55)),
-                    ),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
-              controlAffinity: ListTileControlAffinity.trailing,
-            ),
-          );
-        },
-      ),
     );
   }
 
-  Widget _buildFooter() {
+  Widget _buildFooter(_DeviceType deviceType) {
+    final bool isMobile = deviceType == _DeviceType.mobile;
+    final bool isDesktop = deviceType == _DeviceType.desktop;
+    final double horizontalPad = isMobile ? 22 : (isDesktop ? 30 : 26);
+
+    // PASS 5: Cancel and Save Specials now share one fixed width (and
+    // height) per breakpoint — narrower than the previous auto-sized CTA
+    // — with neither button's callback/enabled-condition touched.
+    final double buttonWidth = isMobile ? 128 : (isDesktop ? 158 : 144);
+    const double buttonHeight = 46;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+      padding: EdgeInsets.symmetric(horizontal: horizontalPad, vertical: 16),
       decoration: BoxDecoration(
         border: Border(top: BorderSide(color: _SpecialTheme.paleRose)),
         color: _SpecialTheme.creamLighter,
@@ -859,61 +899,70 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
             spacing: 12,
             alignment: MainAxisAlignment.end,
             children: [
-              TextButton(
-                onPressed: () {
-                  if (!_isSubmitting) Navigator.pop(context);
-                },
-                style: TextButton.styleFrom(
-                  foregroundColor: _SpecialTheme.maroonDeep,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                ),
-                child: Text('Cancel',
-                    style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
-              ),
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  gradient: _SpecialTheme.ctaGradient,
-                  boxShadow: [
-                    BoxShadow(
-                      color: _SpecialTheme.gold.withValues(alpha: 0.35),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: ElevatedButton.icon(
-                  onPressed:
-                      (_isSubmitting || widget.allItems.isEmpty) ? null : _save,
-                  icon: _isSubmitting
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Text('⭐', style: TextStyle(fontSize: 14)),
-                  label: Text(
-                    'Save Specials',
-                    style: GoogleFonts.inter(
-                      color: _SpecialTheme.textOnMaroon,
-                      fontWeight: FontWeight.bold,
-                    ),
+              SizedBox(
+                width: buttonWidth,
+                height: buttonHeight,
+                child: TextButton(
+                  onPressed: () {
+                    if (!_isSubmitting) Navigator.pop(context);
+                  },
+                  style: TextButton.styleFrom(
+                    foregroundColor: _SpecialTheme.maroonDeep,
+                    padding: EdgeInsets.zero,
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    disabledBackgroundColor: Colors.transparent,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 22, vertical: 13),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      side: BorderSide(
-                          color: _SpecialTheme.gold.withValues(alpha: 0.5),
-                          width: 1),
+                  child: Text('Cancel',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                ),
+              ),
+              SizedBox(
+                width: buttonWidth,
+                height: buttonHeight,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    gradient: _SpecialTheme.ctaGradient,
+                    boxShadow: [
+                      BoxShadow(
+                        color: _SpecialTheme.gold.withValues(alpha: 0.35),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton.icon(
+                    onPressed: (_isSubmitting || widget.allItems.isEmpty)
+                        ? null
+                        : _save,
+                    icon: _isSubmitting
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text('⭐', style: TextStyle(fontSize: 13)),
+                    label: Text(
+                      'Save Specials',
+                      style: GoogleFonts.inter(
+                        color: _SpecialTheme.textOnMaroon,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.5,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      disabledBackgroundColor: Colors.transparent,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        side: BorderSide(
+                            color: _SpecialTheme.gold.withValues(alpha: 0.5),
+                            width: 1),
+                      ),
                     ),
                   ),
                 ),
@@ -928,10 +977,32 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final deviceType = _deviceTypeForWidth(size.width);
 
-    // Near-fullscreen, more immersive dialog footprint.
-    final dialogWidth = size.width < 700 ? size.width * 0.96 : size.width * 0.6;
-    final dialogHeight = size.height * 0.9;
+    // PASS 5: dialog footprint now scales per breakpoint — near-fullscreen
+    // on mobile, a comfortably wide panel on tablet, and a centered panel
+    // with a generous max-width on desktop/laptop — instead of a single
+    // fixed width/height pair.
+    double dialogWidth;
+    double dialogHeight;
+    double maxDialogWidth;
+    switch (deviceType) {
+      case _DeviceType.mobile:
+        dialogWidth = size.width * 0.96;
+        dialogHeight = size.height * 0.92;
+        maxDialogWidth = 480;
+        break;
+      case _DeviceType.tablet:
+        dialogWidth = size.width * 0.85;
+        dialogHeight = size.height * 0.88;
+        maxDialogWidth = 760;
+        break;
+      case _DeviceType.desktop:
+        dialogWidth = size.width * 0.55;
+        dialogHeight = size.height * 0.85;
+        maxDialogWidth = 900;
+        break;
+    }
 
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
@@ -941,7 +1012,7 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
       child: Container(
         width: dialogWidth,
         height: dialogHeight,
-        constraints: const BoxConstraints(maxWidth: 640, minWidth: 320),
+        constraints: BoxConstraints(maxWidth: maxDialogWidth, minWidth: 320),
         decoration: BoxDecoration(
           color: _SpecialTheme.cream,
           borderRadius: BorderRadius.circular(22),
@@ -957,11 +1028,11 @@ class _TodaySpecialDialogState extends State<TodaySpecialDialog> {
         clipBehavior: Clip.antiAlias,
         child: Column(
           children: [
-            _buildHeader(),
-            _buildSubtitle(),
-            _buildSearch(),
-            Expanded(child: _buildBody()),
-            _buildFooter(),
+            _buildHeader(deviceType),
+            _buildSubtitle(deviceType),
+            _buildSearch(deviceType),
+            Expanded(child: _buildBody(deviceType)),
+            _buildFooter(deviceType),
           ],
         ),
       ),

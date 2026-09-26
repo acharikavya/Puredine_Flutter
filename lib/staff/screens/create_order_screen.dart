@@ -35,7 +35,7 @@ import '../widgets/common_widgets.dart';
 /// larger) for a more polished, "less boxed-in" look. No callback,
 /// navigation, or data logic lives in this widget — presentation only.
 ///
-/// UI-ENHANCEMENT PASS 7 (this pass): `_ScreenHeader`'s bottom edge is now
+/// UI-ENHANCEMENT PASS 7: `_ScreenHeader`'s bottom edge is now
 /// a straight, flat line instead of the previous rounded 32px corners —
 /// matching the flat-bottom topbar treatment used on StaffScreen. The
 /// rounded `BorderRadius` on the header `Container`/`ClipRRect` was
@@ -48,6 +48,30 @@ import '../widgets/common_widgets.dart';
 /// (`_StatsRow`, `_StatCard`, `_MenuItemRow`, `_SummaryRow`,
 /// `_SummaryDetailRow`, and all provider/submit/pricing logic in
 /// `_CreateOrderScreenState`). Presentation only.
+///
+/// UI-ENHANCEMENT PASS 8 (this pass — full three-tier responsive layout):
+/// responsive-layout-only — no provider, controller, route, submit, or
+/// pricing logic anywhere in this file was touched, and no state field or
+/// keyword was renamed.
+///   1. RESPONSIVE BREAKPOINTS: the body now measures the available width
+///      via a `_DeviceType` breakpoint (mobile < 700, tablet 700–1100,
+///      desktop ≥ 1100) — matching the same breakpoint already used on
+///      the Orders / Tables / Staff Profile screens — instead of the
+///      previous single `isWide` split at 768px. The two-column-vs-
+///      stacked switch still happens at the same tablet-and-up point
+///      (`isWide` is now simply "not mobile"), but the outer scroll
+///      padding, the spacing above the two-column area, and the summary
+///      panel's fixed width all now scale through three tiers instead of
+///      two.
+///   2. TABLET / DESKTOP POLISH: the summary panel is slightly narrower
+///      on tablet (280px) than on desktop (320px), so the left panel
+///      (table/customer fields + menu list) keeps more breathing room at
+///      mid-size widths instead of being squeezed by a desktop-width
+///      sidebar. `_ScreenHeader` gained its own tablet tier between the
+///      existing mobile and desktop sizing for its padding, title/
+///      tagline type scale, and internal spacing, matching the tuning
+///      already used on the Orders/Tables screens' headers. Every field,
+///      button, menu row, summary row, and callback is unchanged.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   // Primary / Topbar — Deep Wine Maroon
@@ -136,6 +160,19 @@ class _Palette {
           offset: const Offset(0, 2),
         ),
       ];
+}
+
+/// PASS 8: simple responsive breakpoint helper — layout-only, does not
+/// touch any provider/submit/pricing logic anywhere in this file. Matches
+/// the same breakpoint values already used on the Orders / Tables / Staff
+/// Profile screens so every staff screen switches layouts at exactly the
+/// same widths.
+enum _DeviceType { mobile, tablet, desktop }
+
+_DeviceType _deviceTypeForWidth(double width) {
+  if (width < 700) return _DeviceType.mobile;
+  if (width < 1100) return _DeviceType.tablet;
+  return _DeviceType.desktop;
 }
 
 const List<String> _kMonthNames = [
@@ -412,10 +449,28 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    final isWide = constraints.maxWidth >= 768;
+                    // PASS 8: three-tier breakpoint replaces the old
+                    // single `isWide` split at 768px. `isWide` is kept as
+                    // a convenience flag ("tablet or desktop") so the
+                    // two-column-vs-stacked switch below reads exactly as
+                    // before.
+                    final deviceType =
+                        _deviceTypeForWidth(constraints.maxWidth);
+                    final isWide = deviceType != _DeviceType.mobile;
+                    final isTablet = deviceType == _DeviceType.tablet;
+                    final isDesktop = deviceType == _DeviceType.desktop;
+
+                    // PASS 8: tier-specific outer padding and summary
+                    // panel width instead of a single fixed value for
+                    // every screen width.
+                    final double outerPadding =
+                        isDesktop ? 28 : (isTablet ? 22 : 16);
+                    final double panelGap = isDesktop ? 24 : 18;
+                    final double summaryPanelWidth = isDesktop ? 320 : 280;
+
                     return SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.all(24),
+                      padding: EdgeInsets.all(outerPadding),
                       child: Center(
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 1100),
@@ -435,7 +490,9 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                 availableTablesCount: availableTablesCount,
                                 isMobile: !isWide,
                               ),
-                              SizedBox(height: isWide ? 28 : 20),
+                              SizedBox(
+                                height: isDesktop ? 28 : (isTablet ? 24 : 20),
+                              ),
                               isWide
                                   ? Row(
                                       crossAxisAlignment:
@@ -449,9 +506,9 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                             menu,
                                           ),
                                         ),
-                                        const SizedBox(width: 24),
+                                        SizedBox(width: panelGap),
                                         SizedBox(
-                                          width: 320,
+                                          width: summaryPanelWidth,
                                           child: _buildSummaryPanel(
                                             menu.items,
                                             selectedCount,
@@ -1151,6 +1208,15 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
 // rounded 32px corners. A thin warm-gold hairline border was added along
 // that bottom edge (mirroring StaffScreen's own bottom-edge accent). No
 // submit/navigation/pricing logic lives here.
+//
+// UI-ENHANCEMENT PASS 8: the single `isMobile` split at 800px was stepped
+// up into three tiers (mobile/tablet/desktop) using the same
+// `_deviceTypeForWidth` breakpoint the rest of the screen now uses, so
+// the header's padding, title/tagline type scale, and internal spacing
+// read with a bit more breathing room on tablets instead of jumping
+// straight from the compact phone sizing to the full desktop sizing —
+// matching the tuning already used on the Orders/Tables screens' headers.
+// Structure, text, callbacks and data are unchanged.
 class _ScreenHeader extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -1166,7 +1232,22 @@ class _ScreenHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 800;
+    final deviceType = _deviceTypeForWidth(MediaQuery.of(context).size.width);
+    final isMobile = deviceType == _DeviceType.mobile;
+    final isTablet = deviceType == _DeviceType.tablet;
+
+    final double padLeftRight = isMobile ? 18 : (isTablet ? 26 : 32);
+    final double padTop = isMobile ? 14 : (isTablet ? 17 : 20);
+    final double padBottom = isMobile ? 24 : (isTablet ? 27 : 30);
+    final double titleSize = isMobile ? 26 : (isTablet ? 29 : 32);
+    final double taglineSize = isMobile ? 15.5 : (isTablet ? 16.5 : 18);
+    final double spaceAfterBackRow = isMobile ? 16 : (isTablet ? 18 : 20);
+    final double spaceAfterTitleBlock = isMobile ? 16 : (isTablet ? 18 : 20);
+    final double spaceAfterRule = isMobile ? 8 : (isTablet ? 9 : 10);
+    final double spaceAfterTagline = isMobile ? 14 : (isTablet ? 16 : 18);
+    final double dateTextSize = isMobile ? 11.5 : (isTablet ? 12 : 12.5);
+    final double liveTextSize = isMobile ? 11 : (isTablet ? 11.5 : 12);
+    final double spaceAfterDateRow = isMobile ? 10 : (isTablet ? 11 : 12);
 
     return Container(
       width: double.infinity,
@@ -1258,10 +1339,10 @@ class _ScreenHeader extends StatelessWidget {
               bottom: false,
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
-                  isMobile ? 18 : 32,
-                  isMobile ? 14 : 20,
-                  isMobile ? 18 : 32,
-                  isMobile ? 24 : 30,
+                  padLeftRight,
+                  padTop,
+                  padLeftRight,
+                  padBottom,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1273,7 +1354,7 @@ class _ScreenHeader extends StatelessWidget {
                       ],
                     ),
 
-                    SizedBox(height: isMobile ? 16 : 20),
+                    SizedBox(height: spaceAfterBackRow),
 
                     // ── Title block: label + big title, now full width
                     // since the top-right icon badge has been removed.
@@ -1304,7 +1385,7 @@ class _ScreenHeader extends StatelessWidget {
                         Text(
                           title,
                           style: AppTheme.serif(
-                            size: isMobile ? 26 : 32,
+                            size: titleSize,
                             weight: FontWeight.w900,
                             color: Colors.white,
                           ).copyWith(height: 1.1),
@@ -1314,7 +1395,7 @@ class _ScreenHeader extends StatelessWidget {
                       ],
                     ).animate().fade(duration: 500.ms).slideY(begin: -0.15),
 
-                    SizedBox(height: isMobile ? 16 : 20),
+                    SizedBox(height: spaceAfterTitleBlock),
 
                     // ── Tagline ───────────────────────────────────────
                     // No card, no border/drop-shadow, no icon badge — just
@@ -1340,11 +1421,11 @@ class _ScreenHeader extends StatelessWidget {
                             ),
                           ),
                         ),
-                        SizedBox(height: isMobile ? 8 : 10),
+                        SizedBox(height: spaceAfterRule),
                         Text(
                           'Add items and finalize the order.',
                           style: AppTheme.serif(
-                            size: isMobile ? 15.5 : 18,
+                            size: taglineSize,
                             weight: FontWeight.w800,
                             color: _Palette.canvasDeep,
                           ).copyWith(height: 1.3, letterSpacing: 0.2),
@@ -1356,7 +1437,7 @@ class _ScreenHeader extends StatelessWidget {
                           begin: 0.1,
                         ),
 
-                    SizedBox(height: isMobile ? 14 : 18),
+                    SizedBox(height: spaceAfterTagline),
 
                     // ── Date + Live row ──────────────────────────────────
                     Row(
@@ -1370,7 +1451,7 @@ class _ScreenHeader extends StatelessWidget {
                         Text(
                           dateLabel,
                           style: AppTheme.sans(
-                            size: isMobile ? 11.5 : 12.5,
+                            size: dateTextSize,
                             weight: FontWeight.w600,
                             color: Colors.white.withValues(alpha: 0.85),
                           ),
@@ -1388,7 +1469,7 @@ class _ScreenHeader extends StatelessWidget {
                         Text(
                           'Live',
                           style: AppTheme.sans(
-                            size: isMobile ? 11 : 12,
+                            size: liveTextSize,
                             weight: FontWeight.w700,
                             color: _Palette.freshGreen,
                             letterSpacing: 0.3,
@@ -1397,7 +1478,7 @@ class _ScreenHeader extends StatelessWidget {
                       ],
                     ),
 
-                    SizedBox(height: isMobile ? 10 : 12),
+                    SizedBox(height: spaceAfterDateRow),
 
                     // Thin gold gradient hairline underneath the date row.
                     Container(

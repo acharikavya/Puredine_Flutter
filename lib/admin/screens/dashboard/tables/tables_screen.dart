@@ -88,11 +88,11 @@ import 'package:restaurant_unified_app/utils/file_download_helper.dart';
 /// circular "Add Table" icon button (`_addIconButton()`, same
 /// `_showAddDialog` callback).
 ///
-/// UI-ENHANCEMENT PASS 10 (this pass): presentation-only, exactly like
-/// every pass above — no provider, service, data loading, filtering,
-/// dialog, QR-generation, download, or copy-link logic anywhere in this
-/// file was touched, and no state field, controller, callback, or
-/// keyword was renamed.
+/// UI-ENHANCEMENT PASS 10: presentation-only, exactly like every pass
+/// above — no provider, service, data loading, filtering, dialog,
+/// QR-generation, download, or copy-link logic anywhere in this file was
+/// touched, and no state field, controller, callback, or keyword was
+/// renamed.
 ///   1. PALETTE — full PUREDINE mapping: every field name inside
 ///      `_Palette` is unchanged on purpose (every widget in this file
 ///      already reads from these exact names, so swapping only the
@@ -143,6 +143,15 @@ import 'package:restaurant_unified_app/utils/file_download_helper.dart';
 ///      the same rounded, softly shadowed treatment, and the backdrop
 ///      gained an extra low blush glow so the bottom of a long scroll
 ///      keeps the same warm tint as the top.
+///
+/// UI-ENHANCEMENT PASS 11 (this pass): responsive/tablet-laptop polish —
+/// no provider, service, data loading, filtering, dialog, QR-generation,
+/// download, or copy-link logic anywhere in this file was touched, and
+/// no state field, controller, callback, or keyword was renamed. See the
+/// per-method doc comments below for exactly what changed (an extra
+/// `isDesktopWide` (≥1024px) breakpoint tier layered on top of the
+/// existing `isMobile` (<800px) split, plus a small step-up in the body's
+/// horizontal padding for the 1024–1399px laptop range — sizing only).
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   _Palette._();
@@ -1093,6 +1102,13 @@ class _TablesScreenState extends State<TablesScreen> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isMobile = size.width < 800;
+    // PASS 11: extra sizing-only tier for laptop/large-monitor widths —
+    // does not change the `isMobile` (<800) structural switch used
+    // throughout this file (stat row layout, filters bar layout, table
+    // list layout are all untouched), only how much horizontal breathing
+    // room the scrollable body and a few internal paddings get on
+    // genuinely large screens.
+    final bool isDesktopWide = size.width >= 1024;
 
     return Scaffold(
       backgroundColor: _Palette.canvas,
@@ -1228,8 +1244,11 @@ class _TablesScreenState extends State<TablesScreen> {
                     Expanded(
                       child: SingleChildScrollView(
                         padding: EdgeInsets.symmetric(
-                          horizontal:
-                              isMobile ? 16 : (size.width > 1400 ? 64 : 40),
+                          horizontal: isMobile
+                              ? 16
+                              : (size.width > 1400
+                                  ? 64
+                                  : (isDesktopWide ? 48 : 40)),
                           vertical: 24,
                         ),
                         child: Column(
@@ -1290,7 +1309,17 @@ class _TablesScreenState extends State<TablesScreen> {
   /// colors changed so it reads clearly on the wine backdrop. No
   /// navigation, dialog, or any other logic was touched — presentation
   /// only.
+  ///
+  /// PASS 11: added an `isDesktopWide` (≥1024px) tier on top of the
+  /// existing `isMobile` split, so the header's padding and title/
+  /// subtitle font sizes step up a little further on laptop-sized
+  /// screens instead of reusing the same values a mid-size tablet gets.
+  /// The title, the desktop-only inline date, the subtitle copy, the
+  /// gold underline accent, and `_addIconButton()`/`_showAddDialog` are
+  /// completely unchanged in structure and behaviour.
   Widget _buildHeader(bool isMobile) {
+    final double _headerWidth = MediaQuery.of(context).size.width;
+    final bool isDesktopWide = _headerWidth >= 1024;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -1364,10 +1393,10 @@ class _TablesScreenState extends State<TablesScreen> {
             bottom: false,
             child: Padding(
               padding: EdgeInsets.fromLTRB(
-                isMobile ? 18 : 32,
-                isMobile ? 16 : 22,
-                isMobile ? 18 : 32,
-                isMobile ? 18 : 24,
+                isMobile ? 18 : (isDesktopWide ? 40 : 32),
+                isMobile ? 16 : (isDesktopWide ? 26 : 22),
+                isMobile ? 18 : (isDesktopWide ? 40 : 32),
+                isMobile ? 18 : (isDesktopWide ? 28 : 24),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1392,7 +1421,8 @@ class _TablesScreenState extends State<TablesScreen> {
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.playfairDisplay(
                               color: Colors.white,
-                              fontSize: isMobile ? 21 : 28,
+                              fontSize:
+                                  isMobile ? 21 : (isDesktopWide ? 32 : 28),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -1402,7 +1432,7 @@ class _TablesScreenState extends State<TablesScreen> {
                         Text(
                           _todayLabel(),
                           style: GoogleFonts.inter(
-                            fontSize: 12,
+                            fontSize: isDesktopWide ? 13 : 12,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.3,
                             color: _Palette.softYellow,
@@ -1418,7 +1448,7 @@ class _TablesScreenState extends State<TablesScreen> {
                     'Manage restaurant tables and QR codes',
                     style: GoogleFonts.inter(
                       color: Colors.white.withValues(alpha: 0.75),
-                      fontSize: isMobile ? 12.5 : 14,
+                      fontSize: isMobile ? 12.5 : (isDesktopWide ? 15 : 14),
                     ),
                   ),
                   SizedBox(height: isMobile ? 12 : 14),
@@ -1610,6 +1640,12 @@ class _TablesScreenState extends State<TablesScreen> {
   /// PASS 10: the card body sits on a white → Soft Cream wash with a Pale
   /// Rose border, matching the PUREDINE card spec — decoration only, no
   /// data changed.
+  ///
+  /// PASS 11: added the same `isDesktopWide` (≥1024px) tier used
+  /// elsewhere, so the card's inner padding, value font size, and icon
+  /// chip size step up a little further on laptop-sized screens (desktop/
+  /// non-mobile branch only — the mobile horizontal-scroll card sizing is
+  /// untouched). Same label/value/color/icon inputs as before.
   Widget _buildStatCard(
     String label,
     String value,
@@ -1617,6 +1653,9 @@ class _TablesScreenState extends State<TablesScreen> {
     bool isMobile,
     IconData icon,
   ) {
+    final double _cardWidth = MediaQuery.of(context).size.width;
+    final bool isDesktopWide = !isMobile && _cardWidth >= 1024;
+
     Widget cardContent = Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
@@ -1637,7 +1676,9 @@ class _TablesScreenState extends State<TablesScreen> {
           // cards exactly.
           Container(height: 3, color: color.withValues(alpha: 0.65)),
           Container(
-            padding: EdgeInsets.all(isMobile ? 16 : 20),
+            padding: EdgeInsets.all(
+              isMobile ? 16 : (isDesktopWide ? 24 : 20),
+            ),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
@@ -1690,7 +1731,7 @@ class _TablesScreenState extends State<TablesScreen> {
                         value,
                         style: GoogleFonts.inter(
                           color: color,
-                          fontSize: isMobile ? 20 : 24,
+                          fontSize: isMobile ? 20 : (isDesktopWide ? 27 : 24),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -1704,7 +1745,11 @@ class _TablesScreenState extends State<TablesScreen> {
                     color: color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(icon, color: color, size: isMobile ? 16 : 20),
+                  child: Icon(
+                    icon,
+                    color: color,
+                    size: isMobile ? 16 : (isDesktopWide ? 22 : 20),
+                  ),
                 ),
               ],
             ),
@@ -1721,8 +1766,10 @@ class _TablesScreenState extends State<TablesScreen> {
   }
 
   Widget _buildFiltersBar(bool isMobile) {
+    final double _filtersWidth = MediaQuery.of(context).size.width;
+    final bool isDesktopWide = _filtersWidth >= 1024;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isDesktopWide ? 20 : 16),
       decoration: BoxDecoration(
         color: _Palette.cardWhite,
         borderRadius: BorderRadius.circular(18),

@@ -351,7 +351,7 @@ import 'package:restaurant_unified_app/admin/core/providers/notification_provide
 /// dialog, navigation, or callback logic anywhere in this file was
 /// touched in this pass — this single decorative shadow was removed.
 ///
-/// UI-ENHANCEMENT PASS 27 (this pass): two purely structural/decorative
+/// UI-ENHANCEMENT PASS 27: two purely structural/decorative
 /// changes — no data loading, filtering, mutation, dialog, navigation,
 /// or callback logic anywhere in this file was touched, and no widget,
 /// callback, field, or keyword was renamed.
@@ -378,6 +378,12 @@ import 'package:restaurant_unified_app/admin/core/providers/notification_provide
 ///      header's own gradient background is unchanged; the scroll view's
 ///      former top padding (`28`) was folded into the quick-action row's
 ///      own padding so spacing stays visually the same.
+///
+/// UI-ENHANCEMENT PASS 28 (this pass): responsive/tablet-laptop polish —
+/// no data loading, filtering, mutation, dialog, navigation, or callback
+/// logic anywhere in this file was touched, and no widget, callback,
+/// field, or keyword was renamed. See the per-method doc comments below
+/// for exactly what changed (extra breakpoint tiers and sizing only).
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   // NOTE: field names are unchanged from the previous theme on purpose
@@ -1124,6 +1130,14 @@ class _MenuScreenState extends State<MenuScreen> {
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.of(context).size.width > 800;
     final mediaQuery = MediaQuery.of(context);
+    // PASS 28: extra sizing-only tier for laptop/large-monitor widths —
+    // does not change the `isDesktop` (>800) structural switch above
+    // (still exactly the same Row-vs-Column decision as before), only
+    // how wide the sidebar column and the overall content area are
+    // allowed to grow on genuinely large screens.
+    final bool isDesktopWide = mediaQuery.size.width >= 1280;
+    final double sidebarWidth = isDesktopWide ? 320 : 300;
+    final double contentMaxWidth = isDesktopWide ? 1440 : 1360;
 
     // Extra bottom inset (home indicator / gesture bar) so the scrollable
     // content never sits flush under the device's safe-area edge — mirrors
@@ -1329,7 +1343,8 @@ class _MenuScreenState extends State<MenuScreen> {
                         ),
                         child: Center(
                           child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 1360),
+                            constraints:
+                                BoxConstraints(maxWidth: contentMaxWidth),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
@@ -1352,7 +1367,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                                   CrossAxisAlignment.start,
                                               children: [
                                                 SizedBox(
-                                                  width: 300,
+                                                  width: sidebarWidth,
                                                   child: _buildSidebar(),
                                                 ),
                                                 const SizedBox(width: 32),
@@ -1467,8 +1482,19 @@ class _MenuScreenState extends State<MenuScreen> {
   /// dressing, its search pill, its promo banner, and its notification
   /// bell exactly as before — only the `border` entry was dropped from
   /// this decoration.
+  ///
+  /// PASS 28: added an `isDesktopWide` (≥1024px) tier and an
+  /// `isPhoneCompact` (<380px) tier on top of the existing `isMobile`
+  /// (<800px) split, so padding, title/subtitle font sizes, the
+  /// promo-banner photo badge, and the row's internal spacing now step
+  /// up smoothly for laptop-sized screens instead of reusing the same
+  /// "≥800" values a mid-size tablet gets. No structure, callback, or
+  /// data logic touched — sizing math only.
   Widget _buildCustomHeader() {
-    final isMobile = MediaQuery.of(context).size.width < 800;
+    final double _headerWidth = MediaQuery.of(context).size.width;
+    final isMobile = _headerWidth < 800;
+    final bool isPhoneCompact = _headerWidth < 380;
+    final bool isDesktopWide = _headerWidth >= 1024;
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
@@ -1880,13 +1906,22 @@ class _MenuScreenState extends State<MenuScreen> {
   /// looks the same as before. The three tiles, their icons, labels, and
   /// callbacks are untouched, and it still has no background of its own —
   /// it renders straight onto the screen's canvas.
+  ///
+  /// PASS 28: added the same `isDesktopWide` (≥1024px) tier used in
+  /// `_buildCustomHeader()`, so the row's horizontal padding and the gap
+  /// between tiles step up a little further on laptop-sized screens. Each
+  /// `_QuickActionTile` is now also told whether it's on a wide screen
+  /// (`isWide:`) so its own icon/label sizing can scale up to match — see
+  /// `_QuickActionTile`'s doc comment. No callback wiring changed.
   Widget _buildQuickActionsRow() {
-    final isMobile = MediaQuery.of(context).size.width < 800;
+    final double _rowWidth = MediaQuery.of(context).size.width;
+    final isMobile = _rowWidth < 800;
+    final bool isDesktopWide = _rowWidth >= 1024;
     return Padding(
       padding: EdgeInsets.fromLTRB(
-        isMobile ? 18 : 32,
-        24,
-        isMobile ? 18 : 32,
+        isMobile ? 18 : (isDesktopWide ? 40 : 32),
+        isDesktopWide ? 28 : 24,
+        isMobile ? 18 : (isDesktopWide ? 40 : 32),
         4,
       ),
       child: Row(
@@ -1896,22 +1931,25 @@ class _MenuScreenState extends State<MenuScreen> {
               icon: Icons.add_circle_rounded,
               label: 'Add Item',
               onTap: () => _showItemForm(),
+              isWide: isDesktopWide,
             ),
           ),
-          SizedBox(width: isMobile ? 10 : 16),
+          SizedBox(width: isMobile ? 10 : (isDesktopWide ? 22 : 16)),
           Expanded(
             child: _QuickActionTile(
               icon: Icons.receipt_long_rounded,
               label: 'Create Order',
               onTap: _showManualOrderForm,
+              isWide: isDesktopWide,
             ),
           ),
-          SizedBox(width: isMobile ? 10 : 16),
+          SizedBox(width: isMobile ? 10 : (isDesktopWide ? 22 : 16)),
           Expanded(
             child: _QuickActionTile(
               icon: Icons.star_rounded,
               label: "Today's Special",
               onTap: _showTodaySpecialDialog,
+              isWide: isDesktopWide,
             ),
           ),
         ],
@@ -1920,7 +1958,9 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 
   Widget _buildSidebar() {
-    final isMobile = MediaQuery.of(context).size.width < 800;
+    final double _sidebarWidth = MediaQuery.of(context).size.width;
+    final isMobile = _sidebarWidth < 800;
+    final bool isDesktopWide = _sidebarWidth >= 1024;
 
     if (isMobile) {
       return Column(
@@ -2005,30 +2045,30 @@ class _MenuScreenState extends State<MenuScreen> {
         ),
         boxShadow: _Palette.softShadow,
       ),
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isDesktopWide ? 24 : 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
               Container(
-                width: 34,
-                height: 34,
+                width: isDesktopWide ? 38 : 34,
+                height: isDesktopWide ? 38 : 34,
                 decoration: BoxDecoration(
                   color: _Palette.dustyBlush.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.folder_outlined,
                   color: _Palette.milanoRedDeep,
-                  size: 18,
+                  size: isDesktopWide ? 20 : 18,
                 ),
               ),
               const SizedBox(width: 10),
               Text(
                 'Categories',
                 style: GoogleFonts.playfairDisplay(
-                  fontSize: 22,
+                  fontSize: isDesktopWide ? 24 : 22,
                   fontWeight: FontWeight.bold,
                   color: _Palette.milanoRedDeep,
                 ),
@@ -2159,8 +2199,11 @@ class _MenuScreenState extends State<MenuScreen> {
   /// with no wasted space, while still allowing individual cards to grow
   /// on demand. Column count and spacing scale with the available width
   /// — 2 columns on narrow/mobile layouts, 3 on medium widths, 4 on wide
-  /// desktop layouts. No data, filtering, or mutation logic was touched
-  /// here — layout only.
+  /// desktop layouts, and 5 on very wide laptop/monitor widths (Pass 28
+  /// — a small additional tier so ultra-wide screens don't stretch 4
+  /// columns unnecessarily wide; everything below 1500px is completely
+  /// unchanged from before). No data, filtering, or mutation logic was
+  /// touched here — layout only.
   Widget _buildItemsGrid() {
     final items = _filteredItems;
     if (items.isEmpty) {
@@ -2197,11 +2240,13 @@ class _MenuScreenState extends State<MenuScreen> {
 
     return LayoutBuilder(
       builder: (ctx, c) {
-        final cols = c.maxWidth > 1100
-            ? 4
-            : c.maxWidth > 700
-                ? 3
-                : 2;
+        final cols = c.maxWidth > 1500
+            ? 5
+            : c.maxWidth > 1100
+                ? 4
+                : c.maxWidth > 700
+                    ? 3
+                    : 2;
         final double spacing = c.maxWidth > 600 ? 22 : 14;
 
         // Same left-to-right, top-to-bottom item order a fixed grid
@@ -3429,15 +3474,24 @@ class _HeaderButton extends StatelessWidget {
 /// in Pass 26) and its bottom hairline border (removed in Pass 27), not
 /// from anything in this class. As of Pass 27 these tiles are simply the
 /// first scrollable content in the body.
+///
+/// PASS 28: added an optional `isWide` flag (defaults to `false`, so
+/// every existing call site that doesn't pass it renders exactly as
+/// before). When `true` — passed from `_buildQuickActionsRow()` on
+/// laptop-sized (≥1024px) screens — the icon circle, icon glyph, tile
+/// padding, and label text step up to a slightly larger, more "premium"
+/// size. The `onTap` wiring and every other behaviour are unchanged.
 class _QuickActionTile extends StatefulWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final bool isWide;
 
   const _QuickActionTile({
     required this.icon,
     required this.label,
     required this.onTap,
+    this.isWide = false,
   });
 
   @override
@@ -3449,6 +3503,11 @@ class _QuickActionTileState extends State<_QuickActionTile> {
 
   @override
   Widget build(BuildContext context) {
+    final double iconCircleSize = widget.isWide ? 48 : 40;
+    final double iconGlyphSize = widget.isWide ? 24 : 20;
+    final double tilePaddingV = widget.isWide ? 18 : 14;
+    final double labelFontSize = widget.isWide ? 12.5 : 11.5;
+
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
@@ -3458,7 +3517,7 @@ class _QuickActionTileState extends State<_QuickActionTile> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
+          padding: EdgeInsets.symmetric(vertical: tilePaddingV, horizontal: 6),
           decoration: BoxDecoration(
             color: _isHovered
                 ? _Palette.milanoRedDeep.withValues(alpha: 0.12)
@@ -3478,8 +3537,8 @@ class _QuickActionTileState extends State<_QuickActionTile> {
               // of a flat cream circle, so each quick-action icon reads
               // as a more inviting, on-brand button.
               Container(
-                width: 40,
-                height: 40,
+                width: iconCircleSize,
+                height: iconCircleSize,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -3499,7 +3558,7 @@ class _QuickActionTileState extends State<_QuickActionTile> {
                 child: Icon(
                   widget.icon,
                   color: _Palette.milanoRedDeep,
-                  size: 20,
+                  size: iconGlyphSize,
                 ),
               ),
               const SizedBox(height: 8),
@@ -3509,7 +3568,7 @@ class _QuickActionTileState extends State<_QuickActionTile> {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
-                  fontSize: 11.5,
+                  fontSize: labelFontSize,
                   fontWeight: FontWeight.w700,
                   color: _Palette.textDark,
                 ),

@@ -28,7 +28,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 /// provider, controller, route, status-transition, or data value was
 /// touched — only presentation changed.
 ///
-/// UI-ENHANCEMENT PASS 4 (this pass): `_ScreenHeader`'s bottom edge is now
+/// UI-ENHANCEMENT PASS 4: `_ScreenHeader`'s bottom edge is now
 /// a straight, flat line instead of the previous rounded 32px corners —
 /// matching the flat-bottom topbar treatment used on the Tables screen's
 /// header. The rounded `BorderRadius` on the header `Container`/`ClipRRect`
@@ -41,6 +41,58 @@ import 'package:flutter_animate/flutter_animate.dart';
 /// every other part of this file (order summary, items, totals, action
 /// buttons, and all provider/status logic in `_OrderDetailsScreenState`).
 /// Presentation only.
+///
+/// UI-ENHANCEMENT PASS 5 (this pass): RESPONSIVE LAYOUT PASS
+/// (MOBILE / TABLET / LAPTOP) — no navigation, provider/status logic,
+/// callbacks, routes, copy, or any existing field/keyword anywhere in
+/// this file was renamed, removed, or otherwise touched. Previously
+/// `_ScreenHeader` only ever branched on a single `isMobile` check
+/// (`width < 800`), so every tablet was silently forced into either the
+/// cramped "mobile" numbers or the full "desktop" numbers depending only
+/// on which side of 800px it happened to fall on, and the scrollable body
+/// below the header had no tablet/laptop tier at all — its padding was a
+/// single fixed value and its content had no max-width cap, so the
+/// summary/items cards could stretch unnaturally wide on a laptop/desktop
+/// screen. This pass fixes both:
+///   1. SHARED BREAKPOINTS: two new top-level constants,
+///      `_kTabletBreakpointWidth` (`600`) and `_kLaptopBreakpointWidth`
+///      (`1024`), are now used consistently by both `_ScreenHeader` and
+///      the scrollable body, replacing the header's old standalone `800`
+///      threshold. `isMobile` now means `width < 600` and a new `isTablet`
+///      flag covers `600–1023`; `1024` and above is laptop/desktop — the
+///      same three-tier split used elsewhere in the app.
+///   2. THREE-TIER SIZING: every metric that used to be a two-way
+///      `isMobile ? mobileValue : desktopValue` ternary in `_ScreenHeader`
+///      (padding, title font size, tagline font size, date/live font
+///      sizes, and the vertical gaps between the header's rows) is now a
+///      three-way `isMobile ? mobileValue : (isTablet ? tabletValue :
+///      desktopValue)` ternary, with the tablet number always sitting
+///      sensibly between the existing mobile and desktop numbers.
+///   3. BODY CONTENT — WIDTH CAP + TIERED PADDING: the body's
+///      `SingleChildScrollView` padding is now three-tier
+///      (mobile/tablet/laptop) instead of one fixed value, and its
+///      content `Column` is wrapped in a `Center` + `ConstrainedBox`
+///      capping the content at a sensible max width on tablet (`820`)
+///      and laptop (`960`) — so on a wide laptop monitor the order
+///      summary, items, and action buttons read as a deliberate,
+///      centered, professional column instead of stretching edge-to-edge
+///      across the whole screen. Mobile is unaffected (`double.infinity`,
+///      i.e. the exact original behaviour) since phone screens are
+///      always narrower than either cap anyway.
+///   4. CARD POLISH ON TABLET & LAPTOP: `_SectionCard` gained two new
+///      boolean inputs, `isMobile` and `isTablet` (new parameters added
+///      alongside the existing ones — nothing existing was renamed), used
+///      only to scale its own padding, corner radius, and title font size
+///      up a notch on tablet and laptop for a fuller, more professional
+///      feel on larger screens. The order-items row's quantity badge and
+///      the Subtotal/Tax/Total figures were similarly given their own
+///      tablet/laptop tier, computed inline in
+///      `_OrderDetailsScreenState.build()` (no new widget/field, just
+///      three-tier local variables replacing the previous fixed numbers).
+///      The exact original mobile numbers are fully preserved everywhere,
+///      and every card keeps the exact same content, arrangement, status
+///      logic, and action-button callbacks as before — only sizing
+///      changed.
 ///
 /// NOTE: this is a private class redeclared identically to the ones in
 /// the other staff screens (private classes can't be shared across files
@@ -132,6 +184,14 @@ String _todayLabel() {
   final now = DateTime.now();
   return '${_kMonthNames[now.month - 1]} ${now.day}, ${now.year}';
 }
+
+// PASS 5: shared responsive breakpoints used by both `_ScreenHeader` and
+// the scrollable body content below it, so mobile / tablet / laptop all
+// get their own properly proportioned layout instead of tablets being
+// silently treated as either phones or laptops depending only on which
+// side of a single cutoff they happened to fall on.
+const double _kTabletBreakpointWidth = 600;
+const double _kLaptopBreakpointWidth = 1024;
 
 class OrderDetailsScreen extends StatefulWidget {
   final String orderId;
@@ -231,6 +291,46 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
 
     final config = _getConfig(order.status);
     final statusColor = config['color'] as Color;
+
+    // PASS 5: shared mobile/tablet/laptop classification for the
+    // scrollable body below the header (the header computes its own copy
+    // internally using the same shared breakpoint constants).
+    final bodyWidth = MediaQuery.of(context).size.width;
+    final isMobileBody = bodyWidth < _kTabletBreakpointWidth;
+    final isTabletBody = !isMobileBody && bodyWidth < _kLaptopBreakpointWidth;
+
+    // PASS 5: tiered padding (mobile/tablet/laptop) instead of one fixed
+    // value, plus a content max-width cap on tablet/laptop so the order
+    // summary, items, and action buttons read as a deliberate, centered
+    // column instead of stretching edge-to-edge on a wide laptop monitor.
+    // Mobile is unaffected — `double.infinity` is the exact original
+    // behaviour.
+    final double bodyHorizontalPadding =
+        isMobileBody ? 20 : (isTabletBody ? 32 : 40);
+    final double bodyTopPadding = isMobileBody ? 24 : (isTabletBody ? 28 : 32);
+    final double bodyBottomPadding =
+        isMobileBody ? 32 : (isTabletBody ? 36 : 40);
+    final double bodyContentMaxWidth =
+        isMobileBody ? double.infinity : (isTabletBody ? 820 : 960);
+    final double sectionGapSmall = isMobileBody ? 18 : (isTabletBody ? 20 : 22);
+    final double sectionGapLarge = isMobileBody ? 22 : (isTabletBody ? 24 : 26);
+
+    // PASS 5: three-tier sizing for the order-items row's quantity badge
+    // and the Subtotal/Tax/Total figures — mobile numbers are the exact
+    // originals, tablet sits between mobile and laptop, laptop is a
+    // modest step up for a fuller, more professional look on large
+    // screens.
+    final double itemBadgeSize = isMobileBody ? 38 : (isTabletBody ? 41 : 44);
+    final double itemBadgeFontSize =
+        isMobileBody ? 12 : (isTabletBody ? 12.5 : 13);
+    final double itemNameFontSize =
+        isMobileBody ? 14 : (isTabletBody ? 14.5 : 15);
+    final double itemPriceFontSize =
+        isMobileBody ? 14 : (isTabletBody ? 14.5 : 15);
+    final double totalLabelFontSize =
+        isMobileBody ? 16 : (isTabletBody ? 17 : 18);
+    final double totalValueFontSize =
+        isMobileBody ? 24 : (isTabletBody ? 26 : 28);
 
     return Scaffold(
       backgroundColor: _Palette.canvas,
@@ -393,187 +493,209 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
 
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
-                  child: Column(
-                    children: [
-                      // Order summary card
-                      _SectionCard(
-                        title: 'Order Summary',
-                        accentColor: statusColor,
-                        trailing: Text(
-                          order.time,
-                          style: AppTheme.sans(
-                            size: 13,
-                            color: _Palette.textMuted,
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (order.customerName != null) ...[
-                              _InfoRow(
-                                icon: Icons.person_outline,
-                                label: 'Customer',
-                                value: order.customerName!,
-                              ),
-                              Divider(
-                                height: 24,
-                                color: _Palette.milanoRedDeep.withValues(
-                                  alpha: 0.08,
-                                ),
-                              ),
-                            ],
-                            _InfoRow(
-                              icon: Icons.table_restaurant_outlined,
-                              label: 'Table',
-                              value: order.table,
-                            ),
-                            Divider(
-                              height: 24,
-                              color: _Palette.milanoRedDeep.withValues(
-                                alpha: 0.08,
+                  padding: EdgeInsets.fromLTRB(
+                    bodyHorizontalPadding,
+                    bodyTopPadding,
+                    bodyHorizontalPadding,
+                    bodyBottomPadding,
+                  ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints:
+                          BoxConstraints(maxWidth: bodyContentMaxWidth),
+                      child: Column(
+                        children: [
+                          // Order summary card
+                          _SectionCard(
+                            title: 'Order Summary',
+                            accentColor: statusColor,
+                            isMobile: isMobileBody,
+                            isTablet: isTabletBody,
+                            trailing: Text(
+                              order.time,
+                              style: AppTheme.sans(
+                                size: 13,
+                                color: _Palette.textMuted,
                               ),
                             ),
-                            _InfoRow(
-                              icon: Icons.access_time,
-                              label: 'Time',
-                              value: order.time,
-                            ),
-                          ],
-                        ),
-                      ).animate().fade(duration: 400.ms).slideY(
-                            begin: 0.06,
-                            duration: 400.ms,
-                            curve: Curves.easeOutQuad,
-                          ),
-                      const SizedBox(height: 18),
-
-                      // Items
-                      _SectionCard(
-                        title: 'Order Items',
-                        accentColor: _Palette.gold,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            ...order.itemsDetails.map(
-                              (item) => Padding(
-                                padding: const EdgeInsets.only(bottom: 14),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 38,
-                                      height: 38,
-                                      decoration: BoxDecoration(
-                                        color: _Palette.milanoRed.withValues(
-                                          alpha: 0.08,
-                                        ),
-                                        borderRadius: BorderRadius.circular(11),
-                                        border: Border.all(
-                                          color: _Palette.gold.withValues(
-                                            alpha: 0.3,
-                                          ),
-                                        ),
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          '${item.quantity}x',
-                                          style: AppTheme.sans(
-                                            size: 12,
-                                            weight: FontWeight.w800,
-                                            color: _Palette.milanoRedDeep,
-                                          ),
-                                        ),
-                                      ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (order.customerName != null) ...[
+                                  _InfoRow(
+                                    icon: Icons.person_outline,
+                                    label: 'Customer',
+                                    value: order.customerName!,
+                                  ),
+                                  Divider(
+                                    height: 24,
+                                    color: _Palette.milanoRedDeep.withValues(
+                                      alpha: 0.08,
                                     ),
-                                    const SizedBox(width: 14),
-                                    Expanded(
-                                      child: Text(
-                                        item.name,
-                                        style: AppTheme.sans(
-                                          size: 14,
-                                          weight: FontWeight.w500,
-                                          color: _Palette.textDark.withValues(
-                                            alpha: 0.85,
+                                  ),
+                                ],
+                                _InfoRow(
+                                  icon: Icons.table_restaurant_outlined,
+                                  label: 'Table',
+                                  value: order.table,
+                                ),
+                                Divider(
+                                  height: 24,
+                                  color: _Palette.milanoRedDeep.withValues(
+                                    alpha: 0.08,
+                                  ),
+                                ),
+                                _InfoRow(
+                                  icon: Icons.access_time,
+                                  label: 'Time',
+                                  value: order.time,
+                                ),
+                              ],
+                            ),
+                          ).animate().fade(duration: 400.ms).slideY(
+                                begin: 0.06,
+                                duration: 400.ms,
+                                curve: Curves.easeOutQuad,
+                              ),
+                          SizedBox(height: sectionGapSmall),
+
+                          // Items
+                          _SectionCard(
+                            title: 'Order Items',
+                            accentColor: _Palette.gold,
+                            isMobile: isMobileBody,
+                            isTablet: isTabletBody,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ...order.itemsDetails.map(
+                                  (item) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 14),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: itemBadgeSize,
+                                          height: itemBadgeSize,
+                                          decoration: BoxDecoration(
+                                            color:
+                                                _Palette.milanoRed.withValues(
+                                              alpha: 0.08,
+                                            ),
+                                            borderRadius:
+                                                BorderRadius.circular(11),
+                                            border: Border.all(
+                                              color: _Palette.gold.withValues(
+                                                alpha: 0.3,
+                                              ),
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              '${item.quantity}x',
+                                              style: AppTheme.sans(
+                                                size: itemBadgeFontSize,
+                                                weight: FontWeight.w800,
+                                                color: _Palette.milanoRedDeep,
+                                              ),
+                                            ),
                                           ),
                                         ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                        const SizedBox(width: 14),
+                                        Expanded(
+                                          child: Text(
+                                            item.name,
+                                            style: AppTheme.sans(
+                                              size: itemNameFontSize,
+                                              weight: FontWeight.w500,
+                                              color:
+                                                  _Palette.textDark.withValues(
+                                                alpha: 0.85,
+                                              ),
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        Text(
+                                          '₹${(item.quantity * (double.tryParse(item.price) ?? 0)).round()}',
+                                          style: AppTheme.sans(
+                                            size: itemPriceFontSize,
+                                            weight: FontWeight.w700,
+                                            color: _Palette.textDark,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                Divider(
+                                  color: _Palette.milanoRedDeep.withValues(
+                                    alpha: 0.08,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                _TotalRow(
+                                  'Subtotal',
+                                  '₹${order.subtotal.round()}',
+                                ),
+                                if (order.tax > 0) ...[
+                                  const SizedBox(height: 8),
+                                  _TotalRow('Tax', '₹${order.tax.round()}'),
+                                ],
+                                const SizedBox(height: 14),
+                                Container(
+                                  height: 1,
+                                  color: _Palette.milanoRedDeep.withValues(
+                                    alpha: 0.10,
+                                  ),
+                                ),
+                                const SizedBox(height: 14),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Total',
+                                      style: AppTheme.sans(
+                                        size: totalLabelFontSize,
+                                        weight: FontWeight.w800,
+                                        color: _Palette.textDark,
                                       ),
                                     ),
                                     Text(
-                                      '₹${(item.quantity * (double.tryParse(item.price) ?? 0)).round()}',
-                                      style: AppTheme.sans(
-                                        size: 14,
-                                        weight: FontWeight.w700,
-                                        color: _Palette.textDark,
+                                      '₹${order.total.round()}',
+                                      style: AppTheme.serif(
+                                        size: totalValueFontSize,
+                                        weight: FontWeight.w900,
+                                        color: _Palette.milanoRedDeep,
                                       ),
                                     ),
                                   ],
                                 ),
-                              ),
-                            ),
-                            Divider(
-                              color: _Palette.milanoRedDeep.withValues(
-                                alpha: 0.08,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            _TotalRow(
-                              'Subtotal',
-                              '₹${order.subtotal.round()}',
-                            ),
-                            if (order.tax > 0) ...[
-                              const SizedBox(height: 8),
-                              _TotalRow('Tax', '₹${order.tax.round()}'),
-                            ],
-                            const SizedBox(height: 14),
-                            Container(
-                              height: 1,
-                              color: _Palette.milanoRedDeep.withValues(
-                                alpha: 0.10,
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Total',
-                                  style: AppTheme.sans(
-                                    size: 16,
-                                    weight: FontWeight.w800,
-                                    color: _Palette.textDark,
-                                  ),
-                                ),
-                                Text(
-                                  '₹${order.total.round()}',
-                                  style: AppTheme.serif(
-                                    size: 24,
-                                    weight: FontWeight.w900,
-                                    color: _Palette.milanoRedDeep,
-                                  ),
-                                ),
                               ],
                             ),
-                          ],
-                        ),
-                      ).animate().fade(duration: 400.ms, delay: 80.ms).slideY(
-                            begin: 0.06,
-                            duration: 400.ms,
-                            curve: Curves.easeOutQuad,
-                          ),
-                      const SizedBox(height: 22),
+                          )
+                              .animate()
+                              .fade(duration: 400.ms, delay: 80.ms)
+                              .slideY(
+                                begin: 0.06,
+                                duration: 400.ms,
+                                curve: Curves.easeOutQuad,
+                              ),
+                          SizedBox(height: sectionGapLarge),
 
-                      // Action buttons based on status
-                      _ActionButtons(order: order, provider: provider)
-                          .animate()
-                          .fade(duration: 400.ms, delay: 160.ms)
-                          .slideY(
-                            begin: 0.06,
-                            duration: 400.ms,
-                            curve: Curves.easeOutQuad,
-                          ),
-                    ],
+                          // Action buttons based on status
+                          _ActionButtons(order: order, provider: provider)
+                              .animate()
+                              .fade(duration: 400.ms, delay: 160.ms)
+                              .slideY(
+                                begin: 0.06,
+                                duration: 400.ms,
+                                curve: Curves.easeOutQuad,
+                              ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -603,6 +725,14 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
 // (already computed by the caller) purely as a text format — no new
 // logic. Same onBack callback as before — this is a purely
 // presentational change.
+//
+// PASS 5: now classifies the screen into mobile / tablet / laptop using
+// the same shared `_kTabletBreakpointWidth` / `_kLaptopBreakpointWidth`
+// constants the body content uses (replacing the old standalone `800`
+// cutoff), and every previously two-way `isMobile ? a : b` size below is
+// now three-way `isMobile ? a : (isTablet ? c : b)` so tablets get their
+// own properly proportioned numbers instead of inheriting either the
+// phone or the laptop treatment.
 class _ScreenHeader extends StatelessWidget {
   final String tableName;
   final String orderNumber;
@@ -630,7 +760,9 @@ class _ScreenHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 800;
+    final width = MediaQuery.of(context).size.width;
+    final isMobile = width < _kTabletBreakpointWidth;
+    final isTablet = !isMobile && width < _kLaptopBreakpointWidth;
 
     return Container(
       width: double.infinity,
@@ -723,10 +855,10 @@ class _ScreenHeader extends StatelessWidget {
               bottom: false,
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
-                  isMobile ? 18 : 32,
-                  isMobile ? 14 : 20,
-                  isMobile ? 18 : 32,
-                  isMobile ? 24 : 30,
+                  isMobile ? 18 : (isTablet ? 26 : 32),
+                  isMobile ? 14 : (isTablet ? 17 : 20),
+                  isMobile ? 18 : (isTablet ? 26 : 32),
+                  isMobile ? 24 : (isTablet ? 27 : 30),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -748,7 +880,7 @@ class _ScreenHeader extends StatelessWidget {
                       ],
                     ),
 
-                    SizedBox(height: isMobile ? 16 : 20),
+                    SizedBox(height: isMobile ? 16 : (isTablet ? 18 : 20)),
 
                     // ── Title block: small icon + subtitle label, then
                     // the big title — matches the Profile/Tables/New
@@ -780,7 +912,7 @@ class _ScreenHeader extends StatelessWidget {
                         Text(
                           tableName,
                           style: AppTheme.serif(
-                            size: isMobile ? 26 : 32,
+                            size: isMobile ? 26 : (isTablet ? 29 : 32),
                             weight: FontWeight.w900,
                             color: Colors.white,
                           ).copyWith(height: 1.1),
@@ -790,7 +922,7 @@ class _ScreenHeader extends StatelessWidget {
                       ],
                     ).animate().fade(duration: 500.ms).slideY(begin: -0.15),
 
-                    SizedBox(height: isMobile ? 16 : 20),
+                    SizedBox(height: isMobile ? 16 : (isTablet ? 18 : 20)),
 
                     // ── Tagline ───────────────────────────────────────
                     // No card, no border/drop-shadow, no icon badge — just
@@ -818,11 +950,11 @@ class _ScreenHeader extends StatelessWidget {
                             ),
                           ),
                         ),
-                        SizedBox(height: isMobile ? 8 : 10),
+                        SizedBox(height: isMobile ? 8 : (isTablet ? 9 : 10)),
                         Text(
                           '$itemsCount item${itemsCount == 1 ? '' : 's'} • $totalLabel • placed at $timeLabel.',
                           style: AppTheme.serif(
-                            size: isMobile ? 15.5 : 18,
+                            size: isMobile ? 15.5 : (isTablet ? 16.5 : 18),
                             weight: FontWeight.w800,
                             color: _Palette.canvasDeep,
                           ).copyWith(height: 1.3, letterSpacing: 0.2),
@@ -834,7 +966,7 @@ class _ScreenHeader extends StatelessWidget {
                           begin: 0.1,
                         ),
 
-                    SizedBox(height: isMobile ? 14 : 18),
+                    SizedBox(height: isMobile ? 14 : (isTablet ? 16 : 18)),
 
                     // ── Date + Live row ──────────────────────────────────
                     Row(
@@ -848,7 +980,7 @@ class _ScreenHeader extends StatelessWidget {
                         Text(
                           dateLabel,
                           style: AppTheme.sans(
-                            size: isMobile ? 11.5 : 12.5,
+                            size: isMobile ? 11.5 : (isTablet ? 12 : 12.5),
                             weight: FontWeight.w600,
                             color: Colors.white.withValues(alpha: 0.85),
                           ),
@@ -866,7 +998,7 @@ class _ScreenHeader extends StatelessWidget {
                         Text(
                           'Live',
                           style: AppTheme.sans(
-                            size: isMobile ? 11 : 12,
+                            size: isMobile ? 11 : (isTablet ? 11.5 : 12),
                             weight: FontWeight.w700,
                             color: _Palette.success,
                             letterSpacing: 0.3,
@@ -875,7 +1007,7 @@ class _ScreenHeader extends StatelessWidget {
                       ],
                     ),
 
-                    SizedBox(height: isMobile ? 10 : 12),
+                    SizedBox(height: isMobile ? 10 : (isTablet ? 11 : 12)),
 
                     // Thin gold gradient hairline underneath the date row.
                     Container(
@@ -1017,21 +1149,37 @@ class _StatusChip extends StatelessWidget {
 // picks up the current order-status color, Order Items keeps the brand
 // gold) matching the Orders screen's order-card treatment. Purely
 // presentational — wraps the exact same child content as before.
+//
+// PASS 5: gained two new inputs, `isMobile` and `isTablet` (added
+// alongside the existing fields — nothing renamed), used only to scale
+// the card's own padding, corner radius, and title font size up a notch
+// on tablet and laptop for a fuller, more professional feel on larger
+// screens. The original mobile numbers are fully preserved.
 class _SectionCard extends StatelessWidget {
   final String title;
   final Widget? trailing;
   final Widget child;
   final Color accentColor;
+  final bool isMobile;
+  final bool isTablet;
 
   const _SectionCard({
     required this.title,
     required this.child,
+    required this.isMobile,
+    required this.isTablet,
     this.trailing,
     this.accentColor = _Palette.gold,
   });
 
   @override
   Widget build(BuildContext context) {
+    final double cardPadding = isMobile ? 22 : (isTablet ? 24 : 26);
+    final double cardRadius = isMobile ? 22 : (isTablet ? 24 : 26);
+    final double titleFontSize = isMobile ? 18 : (isTablet ? 19 : 20);
+    final double accentBarHeight = isMobile ? 20 : (isTablet ? 21 : 22);
+    final double headerGap = isMobile ? 18 : (isTablet ? 19 : 20);
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -1043,7 +1191,7 @@ class _SectionCard extends StatelessWidget {
             _Palette.canvasDeep.withValues(alpha: 0.35),
           ],
         ),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(cardRadius),
         border: Border.all(
           color: _Palette.paleRose.withValues(alpha: 0.7),
         ),
@@ -1075,7 +1223,12 @@ class _SectionCard extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(22, 22, 22, 22),
+            padding: EdgeInsets.fromLTRB(
+              cardPadding,
+              cardPadding,
+              cardPadding,
+              cardPadding,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1086,7 +1239,7 @@ class _SectionCard extends StatelessWidget {
                       children: [
                         Container(
                           width: 4,
-                          height: 20,
+                          height: accentBarHeight,
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
                               colors: [_Palette.gold, _Palette.goldLight],
@@ -1100,7 +1253,7 @@ class _SectionCard extends StatelessWidget {
                         Text(
                           title,
                           style: AppTheme.serif(
-                            size: 18,
+                            size: titleFontSize,
                             weight: FontWeight.w800,
                             color: _Palette.textDark,
                           ),
@@ -1110,7 +1263,7 @@ class _SectionCard extends StatelessWidget {
                     if (trailing != null) trailing!,
                   ],
                 ),
-                const SizedBox(height: 18),
+                SizedBox(height: headerGap),
                 child,
               ],
             ),

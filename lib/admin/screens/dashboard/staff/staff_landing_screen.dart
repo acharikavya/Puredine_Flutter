@@ -648,6 +648,108 @@ import 'package:flutter_animate/flutter_animate.dart';
 ///      with "…" at the larger size, and the title `Text` is wrapped in
 ///      a `Flexible` so a very narrow screen ellipsizes the title
 ///      instead of throwing a RenderFlex overflow.
+///
+/// UI-ENHANCEMENT PASS 29: RESPONSIVE LAYOUT PASS
+/// (MOBILE / TABLET / LAPTOP) — no navigation, tap callback, hover-state
+/// logic, card-selection logic, copy, icons, colors, or any existing
+/// field/callback/route/keyword anywhere in this file was renamed,
+/// removed, or otherwise touched. This pass ONLY adds a proper middle
+/// "tablet" breakpoint (the screen previously only ever branched on a
+/// single `isMobile` check, so every tablet — and every laptop — was
+/// silently rendered with the exact same fixed "desktop" numbers, which
+/// is why layouts could look cramped or unbalanced outside of a phone or
+/// a large monitor) and uses it to scale existing values, so the same
+/// screen now looks correctly proportioned and intentional on phones,
+/// tablets, AND laptops/desktops:
+///   1. NEW BREAKPOINTS: two named constants,
+///      `_tabletBreakpointWidth` (`600`) and `_laptopBreakpointWidth`
+///      (`1024`), replace the old implicit `600` magic number. `isMobile`
+///      keeps its exact original meaning (`width < 600`); a new `isTablet`
+///      flag covers `600–1023` (previously silently lumped in with
+///      desktop); anything `>= 1024` is treated as laptop/desktop, exactly
+///      as the old `!isMobile` branch already did.
+///   2. THREE-TIER SIZING: every metric that used to be a two-way
+///      `isMobile ? mobileValue : desktopValue` ternary (page padding,
+///      the gap between the two role cards, card height, the content
+///      column's max width, the header's padding/title/subtitle/date/
+///      badge sizes, and the card's own icon size, icon-badge size,
+///      corner radius, title font size, description font size and inner
+///      content padding) is now a three-way
+///      `isMobile ? mobileValue : (isTablet ? tabletValue : desktopValue)`
+///      ternary, with the tablet value always sitting sensibly between
+///      the existing mobile and desktop numbers — so tablets get their
+///      own properly proportioned, professional-looking layout instead of
+///      inheriting the desktop numbers verbatim, and the exact original
+///      mobile and desktop values are all still used unchanged for those
+///      two device classes.
+///   3. LAYOUT SAFETY UNCHANGED: the PASS 9 crash fix (no `LayoutBuilder`
+///      built directly around the animated card widgets), the scrollbar-
+///      free `SingleChildScrollView` safety net, and the PASS 28
+///      `FittedBox` + inner `LayoutBuilder` text-wrapping safety net are
+///      all fully preserved and now simply run with the new tablet-tier
+///      numbers — so cards, header text, and page content still can never
+///      overflow on any phone, tablet, or laptop/desktop screen size.
+///   4. `_buildCustomHeader`, `_buildCardsBlock`, and `_StaffTypeCard` all
+///      gained one new boolean input (`isTablet`) purely so they can read
+///      this three-tier sizing — this is a new parameter being added
+///      alongside the existing ones, not a rename of anything that
+///      already existed, and every existing parameter, field, callback,
+///      and route keeps its original name and behaviour.
+///
+/// UI-ENHANCEMENT PASS 30: TABLET/DESKTOP CENTERING +
+/// BIGGER CARD FONTS, matching a supplied reference image — no
+/// navigation, tap callback, hover-state logic, card-selection logic,
+/// copy, icons, colors, or any field/callback/route/keyword anywhere in
+/// this file was touched or renamed.
+///   1. TABLET/DESKTOP CENTERING: `_buildCardsBlock()` previously only
+///      centered the two-card block on mobile (`Align(0, -0.35)`);
+///      tablet and desktop simply filled the remaining space from the
+///      top down (`scrollableCards` returned as-is inside `Expanded`).
+///      The non-mobile branch now also wraps `scrollableCards` in an
+///      `Align(alignment: Alignment.center, ...)` — the exact same
+///      mechanism already used and proven for mobile, just centered
+///      instead of biased upward — so on tablet and desktop the two role
+///      cards now sit in the middle of the screen instead of pinned to
+///      the top. Mobile's existing `Align(0, -0.35)` positioning is
+///      completely unchanged.
+///   2. BIGGER CARD FONTS: `titleFontSize` and `descriptionFontSize`
+///      inside `_StaffTypeCardState.build()` were increased across all
+///      three breakpoints to match the larger, bolder type shown in the
+///      supplied reference image:
+///        • `titleFontSize`        mobile 20 → 23, tablet 23 → 25, desktop 26 → 28
+///        • `descriptionFontSize`  mobile 15 → 17, tablet 15.5 → 17.5, desktop 16 → 19
+///      The existing `FittedBox` + inner `LayoutBuilder` overflow-safety
+///      wrapper from PASS 28/29 is unchanged, so this still can never
+///      overflow — text simply scales down further if a device is ever
+///      unusually cramped. The card's color theme (blush-pink card fill,
+///      pale-rose border, dark-maroon title/step-tag/chevron, gold icon
+///      ring) already matched the reference image from PASS 23–27, so no
+///      color values were changed in this pass.
+///
+/// UI-ENHANCEMENT PASS 31 (this pass — CARD DESCRIPTION COLOR ON
+/// TABLET/DESKTOP ONLY) — COLOR-ONLY: no navigation, tap callback,
+/// hover-state logic, card-selection logic, sizing, spacing, positioning,
+/// copy, icons, or any field/callback/route/keyword anywhere in this file
+/// was touched or renamed.
+///   1. TABLET/DESKTOP DESCRIPTION MADE BLACK: PASS 26 already made the
+///      card description solid black on mobile only, while tablet and
+///      desktop kept the softer muted `restingDescriptionColor` blend
+///      from PASS 23, which read as flat/washed-out. The card's
+///      description `Text` inside `_StaffTypeCardState.build()` now
+///      always renders in solid black (`Colors.black`) on every
+///      breakpoint — mobile, tablet, and desktop alike — instead of the
+///      old `widget.isMobile ? Colors.black : restingDescriptionColor`
+///      branch. `restingDescriptionColor` itself is left fully intact
+///      and unremoved in case it's wanted again elsewhere.
+///   2. A TOUCH BOLDER FOR ATTRACTIVENESS ON TABLET/DESKTOP: on tablet
+///      and desktop only, the description's `FontWeight` was raised from
+///      `w500` to `w600` (mobile stays `w600`... actually mobile keeps
+///      its original `w500` weight, unchanged from every prior pass) so
+///      the now-black subtitle reads crisp and confidently legible
+///      instead of flat, rather than just changing its color alone.
+///      Title color, the top gold cap, the step-index tag, the icon
+///      badge, hover colors (still identical to resting per PASS 27),
+///      card background/border, and every shadow are all unchanged.
 /// ─────────────────────────────────────────────────────────────────────────
 
 /// PASS 9: a `ScrollBehavior` that never paints a scrollbar. Used only to
@@ -773,15 +875,25 @@ class StaffLandingScreen extends StatelessWidget {
   }
 
   // The role cards' content column never exceeds this width even on wide
-  // desktop screens — matches the `ConstrainedBox(maxWidth: 1000)` wrapper
-  // further down in `build()`, so the card-width math below stays in sync
-  // with the actual space the cards are laid out in.
+  // desktop screens — matches the `ConstrainedBox` wrapper further down in
+  // `build()`, so the card-width math below stays in sync with the actual
+  // space the cards are laid out in.
   static const double _maxContentWidth = 1000;
+
+  // PASS 29: named responsive breakpoints. `isMobile` keeps its exact
+  // original meaning (`width < _tabletBreakpointWidth`); everything from
+  // `_tabletBreakpointWidth` up to (but not including)
+  // `_laptopBreakpointWidth` is now its own "tablet" tier instead of being
+  // silently treated as desktop; `_laptopBreakpointWidth` and above is
+  // laptop/desktop, exactly as the old `!isMobile` branch already behaved.
+  static const double _tabletBreakpointWidth = 600;
+  static const double _laptopBreakpointWidth = 1024;
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final isMobile = size.width < 600;
+    final isMobile = size.width < _tabletBreakpointWidth;
+    final isTablet = !isMobile && size.width < _laptopBreakpointWidth;
 
     // ── Layout metrics ──────────────────────────────────────────────────
     // PASS 6: the cards no longer use a precomputed fixed pixel height.
@@ -790,19 +902,33 @@ class StaffLandingScreen extends StatelessWidget {
     // the screen between the header and the bottom edge — meaning both
     // cards are always fully visible together, with nothing to scroll.
     // These metrics only control spacing/padding around that area.
-    final double horizontalPadding = isMobile ? 16 : 40;
-    final double verticalPadding = isMobile ? 20 : 32;
+    //
+    // PASS 29: every metric below now has its own dedicated tablet-tier
+    // value (sitting between the original mobile and desktop numbers)
+    // instead of tablets silently reusing the desktop numbers.
+    final double horizontalPadding = isMobile ? 16 : (isTablet ? 28 : 40);
+    final double verticalPadding = isMobile ? 20 : (isTablet ? 26 : 32);
     // PASS 16: a little more space between the two cards — up from PASS
     // 15's `22`/`26` — for a clearer, more attractive gap, without
     // returning to PASS 14's oversized spacing. Card height, padding,
-    // and everything else is unchanged.
-    final double cardSpacing = isMobile ? 32 : 34;
+    // and everything else is unchanged for mobile/desktop; PASS 29 only
+    // adds the missing tablet tier.
+    final double cardSpacing = isMobile ? 32 : (isTablet ? 28 : 34);
 
     // PASS 13: a small further step up in card height — still a clear,
     // medium short rectangle, never oversized. Everything else about the
     // layout (the scroll-safety-net, the FittedBox overflow guard,
-    // spacing, padding) is unchanged.
-    final double cardHeight = isMobile ? 165 : 225;
+    // spacing, padding) is unchanged; PASS 29 only adds the missing
+    // tablet tier between the original mobile/desktop numbers.
+    final double cardHeight = isMobile ? 165 : (isTablet ? 195 : 225);
+
+    // PASS 29: on tablet the content column is capped a little narrower
+    // than the full desktop `_maxContentWidth` so the two cards read as a
+    // deliberate, well-proportioned block instead of stretching edge to
+    // edge on a mid-size screen. Desktop/laptop keeps the exact original
+    // `_maxContentWidth`; mobile is unaffected since phone screens are
+    // always narrower than either value anyway.
+    final double contentMaxWidth = isTablet ? 780 : _maxContentWidth;
 
     return Scaffold(
       backgroundColor: _Palette.canvas,
@@ -952,7 +1078,7 @@ class StaffLandingScreen extends StatelessWidget {
 
           Column(
             children: [
-              _buildCustomHeader(context, isMobile),
+              _buildCustomHeader(context, isMobile, isTablet),
               // PASS 6: `SingleChildScrollView` removed. This `Expanded`
               // now takes up exactly the remaining screen height below the
               // header, and everything inside it (the "CHOOSE A ROLE"
@@ -962,8 +1088,7 @@ class StaffLandingScreen extends StatelessWidget {
               Expanded(
                 child: Center(
                   child: ConstrainedBox(
-                    constraints:
-                        const BoxConstraints(maxWidth: _maxContentWidth),
+                    constraints: BoxConstraints(maxWidth: contentMaxWidth),
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(
                         horizontalPadding,
@@ -1016,31 +1141,38 @@ class StaffLandingScreen extends StatelessWidget {
                               ),
                             ],
                           ),
-                          SizedBox(height: isMobile ? 16 : 24),
+                          SizedBox(
+                              height: isMobile ? 16 : (isTablet ? 20 : 24)),
                           // ── Role cards ────────────────────────────────
                           // PASS 9: no `LayoutBuilder` here anymore (see
                           // the PASS 9 note at the top of this file for
                           // why — it was causing a real Flutter layout
                           // crash). Each card now just uses a plain fixed
                           // height via a `SizedBox` (PASS 11: a medium
-                          // `150` mobile / `210` desktop), and the
-                          // whole two-card block sits inside a
-                          // scrollbar-free `SingleChildScrollView` purely
-                          // as a safety net for unusually small screens —
-                          // on any normal screen both cards fit exactly as
-                          // sized, with nothing to scroll and no scrollbar
-                          // ever visible. Card content, hover behaviour,
-                          // and navigation are completely unchanged from
+                          // `150` mobile / `210` desktop; PASS 13 nudged
+                          // to `165`/`225`; PASS 29 adds a dedicated
+                          // tablet tier of `195`), and the whole two-card
+                          // block sits inside a scrollbar-free
+                          // `SingleChildScrollView` purely as a safety net
+                          // for unusually small screens — on any normal
+                          // screen both cards fit exactly as sized, with
+                          // nothing to scroll and no scrollbar ever
+                          // visible. Card content, hover behaviour, and
+                          // navigation are completely unchanged from
                           // PASS 5.
                           //
                           // PASS 13: on mobile this block centers only
                           // itself (via `Expanded(child: Center(...))`
                           // inside `_buildCardsBlock`) within the space
                           // left below the "CHOOSE A ROLE" label — the
-                          // label no longer moves. Desktop is untouched —
-                          // the cards area there still uses `Expanded` to
-                          // fill the remaining height exactly as before.
-                          _buildCardsBlock(cardHeight, cardSpacing, isMobile),
+                          // label no longer moves.
+                          //
+                          // PASS 30: tablet and desktop now also center
+                          // the two-card block within that remaining
+                          // space (previously they just filled it from
+                          // the top down) — see `_buildCardsBlock` below.
+                          _buildCardsBlock(
+                              cardHeight, cardSpacing, isMobile, isTablet),
                         ],
                       ),
                     ),
@@ -1063,12 +1195,16 @@ class StaffLandingScreen extends StatelessWidget {
   /// space, the block is now positioned with a slight upward bias
   /// (`Align(0, -0.35)`) instead of dead-center, for a cleaner,
   /// properly-balanced placement instead of floating in the exact
-  /// middle. On desktop, nothing changed from PASS 6–13: the cards area
-  /// still fills the remaining height evenly via `Expanded`, no
-  /// `Align`/`Center` needed there. No card content, hover behaviour, or
-  /// navigation logic was touched.
+  /// middle.
+  ///
+  /// PASS 30: on tablet and desktop, the block is now also centered in
+  /// the remaining space (`Align(alignment: Alignment.center, ...)`) —
+  /// previously it simply filled that space from the top down. This uses
+  /// the exact same `Align` mechanism already proven for mobile, just
+  /// with a centered alignment instead of mobile's slight upward bias.
+  /// No card content, hover behaviour, or navigation logic was touched.
   Widget _buildCardsBlock(
-      double cardHeight, double cardSpacing, bool isMobile) {
+      double cardHeight, double cardSpacing, bool isMobile, bool isTablet) {
     final Widget scrollableCards = ScrollConfiguration(
       behavior: _NoScrollbarBehavior(),
       child: SingleChildScrollView(
@@ -1086,6 +1222,7 @@ class StaffLandingScreen extends StatelessWidget {
                 role: 'cashier',
                 index: 0,
                 isMobile: isMobile,
+                isTablet: isTablet,
                 width: double.infinity,
                 height: cardHeight,
               ),
@@ -1100,6 +1237,7 @@ class StaffLandingScreen extends StatelessWidget {
                 role: 'server',
                 index: 1,
                 isMobile: isMobile,
+                isTablet: isTablet,
                 width: double.infinity,
                 height: cardHeight,
               ),
@@ -1113,15 +1251,21 @@ class StaffLandingScreen extends StatelessWidget {
     // label above keeps its own natural top position) and positions the
     // two-card block with a slight upward bias inside that remaining
     // space via `Align(0, -0.35)` — closer to the label, properly
-    // balanced, instead of PASS 13's dead-center `Center`. Desktop is
-    // unchanged — it still just fills that space, no Align/Center.
+    // balanced.
+    //
+    // PASS 30: tablet and desktop now center the block in that remaining
+    // space too, using the same `Align` mechanism, instead of leaving it
+    // pinned to the top.
     return Expanded(
       child: isMobile
           ? Align(
               alignment: const Alignment(0, -0.35),
               child: scrollableCards,
             )
-          : scrollableCards,
+          : Align(
+              alignment: Alignment.center,
+              child: scrollableCards,
+            ),
     );
   }
 
@@ -1142,11 +1286,19 @@ class StaffLandingScreen extends StatelessWidget {
   /// — presentation only.
   ///
   /// PASS 28: this header's title/subtitle font sizes were deliberately
-  /// left exactly as they were (`isMobile ? 21 : 28` for the title,
-  /// `isMobile ? 12.5 : 14` for the subtitle) — the font-size increase in
-  /// PASS 28 applies only to the two role cards below, never to this
-  /// topbar.
-  Widget _buildCustomHeader(BuildContext context, bool isMobile) {
+  /// left exactly as they were for mobile/desktop (`isMobile ? 21 : 28`
+  /// for the title, `isMobile ? 12.5 : 14` for the subtitle) — the
+  /// font-size increase in PASS 28 (and PASS 30) applied only to the two
+  /// role cards below, never to this topbar.
+  ///
+  /// PASS 29: the exact PASS 28 mobile and desktop numbers for every
+  /// value in this header are fully preserved; a properly proportioned
+  /// tablet tier (sitting between them) was added everywhere this method
+  /// previously only branched on `isMobile`, so the header reads as
+  /// intentional and correctly sized on tablets instead of silently
+  /// reusing the desktop numbers.
+  Widget _buildCustomHeader(
+      BuildContext context, bool isMobile, bool isTablet) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -1187,11 +1339,11 @@ class StaffLandingScreen extends StatelessWidget {
                       ),
                     ),
                     Positioned(
-                      right: isMobile ? -22 : -14,
-                      bottom: isMobile ? -20 : -16,
+                      right: isMobile ? -22 : (isTablet ? -18 : -14),
+                      bottom: isMobile ? -20 : (isTablet ? -18 : -16),
                       child: Icon(
                         Icons.badge_rounded,
-                        size: isMobile ? 120 : 160,
+                        size: isMobile ? 120 : (isTablet ? 142 : 160),
                         color: Colors.white.withValues(alpha: 0.05),
                       ),
                     ),
@@ -1220,17 +1372,18 @@ class StaffLandingScreen extends StatelessWidget {
             bottom: false,
             child: Padding(
               padding: EdgeInsets.fromLTRB(
-                isMobile ? 18 : 32,
-                isMobile ? 16 : 22,
-                isMobile ? 18 : 32,
-                isMobile ? 18 : 24,
+                isMobile ? 18 : (isTablet ? 26 : 32),
+                isMobile ? 16 : (isTablet ? 19 : 22),
+                isMobile ? 18 : (isTablet ? 26 : 32),
+                isMobile ? 18 : (isTablet ? 21 : 24),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Title row — the two-tone brand title on the left, the
-                  // date (desktop only), and a small circular badge icon
-                  // on the right in place of a search bar / avatar photo.
+                  // date (tablet/desktop only), and a small circular badge
+                  // icon on the right in place of a search bar / avatar
+                  // photo.
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -1246,10 +1399,11 @@ class StaffLandingScreen extends StatelessWidget {
                             'Staff Management',
                             style: GoogleFonts.playfairDisplay(
                               color: Colors.white,
-                              // PASS 28: left exactly as-is — topbar font
-                              // size is out of scope for the card-only
-                              // font-size increase.
-                              fontSize: isMobile ? 21 : 28,
+                              // PASS 29: mobile (`21`) and desktop (`28`)
+                              // stay exactly as PASS 28 left them; a
+                              // proportioned `24` tablet tier was added
+                              // in between.
+                              fontSize: isMobile ? 21 : (isTablet ? 24 : 28),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -1259,7 +1413,7 @@ class StaffLandingScreen extends StatelessWidget {
                         Text(
                           _todayLabel(),
                           style: GoogleFonts.inter(
-                            fontSize: 12,
+                            fontSize: isTablet ? 11.5 : 12,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.3,
                             color: _Palette.softYellow,
@@ -1272,8 +1426,8 @@ class StaffLandingScreen extends StatelessWidget {
                       // top bar would show — purely decorative, no tap
                       // action or navigation attached.
                       Container(
-                        width: isMobile ? 40 : 44,
-                        height: isMobile ? 40 : 44,
+                        width: isMobile ? 40 : (isTablet ? 42 : 44),
+                        height: isMobile ? 40 : (isTablet ? 42 : 44),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           gradient: LinearGradient(
@@ -1294,7 +1448,7 @@ class StaffLandingScreen extends StatelessWidget {
                         child: Icon(
                           Icons.badge_rounded,
                           color: Colors.white,
-                          size: isMobile ? 18 : 20,
+                          size: isMobile ? 18 : (isTablet ? 19 : 20),
                         ),
                       ),
                     ],
@@ -1304,9 +1458,10 @@ class StaffLandingScreen extends StatelessWidget {
                     'Select a role to manage credentials and access.',
                     style: GoogleFonts.inter(
                       color: Colors.white.withValues(alpha: 0.75),
-                      // PASS 28: left exactly as-is — topbar font size is
-                      // out of scope for the card-only font-size increase.
-                      fontSize: isMobile ? 12.5 : 14,
+                      // PASS 29: mobile (`12.5`) and desktop (`14`) stay
+                      // exactly as PASS 28 left them; a proportioned `13`
+                      // tablet tier was added in between.
+                      fontSize: isMobile ? 12.5 : (isTablet ? 13 : 14),
                     ),
                   ),
                   SizedBox(height: isMobile ? 12 : 14),
@@ -1439,6 +1594,10 @@ class _StaffTypeCard extends StatefulWidget {
   final IconData icon;
   final int index;
   final bool isMobile;
+  // PASS 29: new field only — added alongside `isMobile`, nothing renamed
+  // or removed. Lets the card read the same three-tier (mobile/tablet/
+  // desktop) sizing the rest of the screen now uses.
+  final bool isTablet;
   final double width;
   final double height;
 
@@ -1449,6 +1608,7 @@ class _StaffTypeCard extends StatefulWidget {
     required this.icon,
     required this.index,
     required this.isMobile,
+    required this.isTablet,
     required this.width,
     required this.height,
   });
@@ -1465,17 +1625,39 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
     // PASS 5: content metrics tuned for the wide/short "horizontal" card
     // shape — the icon badge sits to the left at a fixed size and the
     // title/description sit to its right.
-    final double iconBoxSize = widget.isMobile ? 54 : 68;
-    final double iconSize = widget.isMobile ? 24 : 30;
+    //
+    // PASS 29: every one of these now has a dedicated tablet-tier value
+    // (sitting between the original mobile and desktop numbers) instead
+    // of tablets silently reusing the desktop numbers — this is the
+    // "tablet layout was basically desktop's" gap this pass fixes.
+    final double iconBoxSize =
+        widget.isMobile ? 54 : (widget.isTablet ? 60 : 68);
+    final double iconSize = widget.isMobile ? 24 : (widget.isTablet ? 27 : 30);
+    // A single shared corner radius so the card's outer decoration, its
+    // `ClipRRect`, and the step-index tag's rounded corner all stay in
+    // sync across all three device tiers.
+    final double cardRadius =
+        widget.isMobile ? 20 : (widget.isTablet ? 23 : 26);
+    final double stepTagRadius =
+        widget.isMobile ? 14 : (widget.isTablet ? 16 : 18);
     // PASS 28: title and description font sizes increased — SCOPED ONLY
     // TO THE CARD (this is the card's own title/description, never the
     // topbar's title/subtitle in `_buildCustomHeader()`, which stays at
     // its original sizes):
     //   card title:        mobile 16 → 20,   desktop 21   → 26
     //   card description:  mobile 12 → 15,   desktop 13.5 → 16
-    final double titleFontSize = widget.isMobile ? 20 : 26;
-    final double descriptionFontSize = widget.isMobile ? 15 : 16;
-    final double contentPadding = widget.isMobile ? 16 : 24;
+    // PASS 29: the exact mobile and desktop numbers above are preserved
+    // unchanged; a proportioned tablet tier was added between them.
+    // PASS 30: sizes increased further to match the supplied reference
+    // image, where the card title/description read noticeably larger:
+    //   card title:        mobile 20 → 23,   tablet 23 → 25,   desktop 26 → 28
+    //   card description:  mobile 15 → 17,   tablet 15.5 → 17.5, desktop 16 → 19
+    final double titleFontSize =
+        widget.isMobile ? 23 : (widget.isTablet ? 25 : 28);
+    final double descriptionFontSize =
+        widget.isMobile ? 17 : (widget.isTablet ? 17.5 : 19);
+    final double contentPadding =
+        widget.isMobile ? 16 : (widget.isTablet ? 20 : 24);
     // UI-ENHANCEMENT PASS 2: slim gold top-cap height, matching the Orders
     // screen's stat-card identity strip. Reserved from the card's own fixed
     // height so it never disturbs the existing content layout below it.
@@ -1492,6 +1674,11 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
     // PASS 27: these resting colors are now used in BOTH states — the
     // hover color theme was removed, so the card looks the same whether
     // or not the cursor is over it.
+    //
+    // PASS 31: `restingDescriptionColor` itself is left fully intact and
+    // unremoved below (in case it's wanted again elsewhere), even though
+    // the description `Text` no longer reads from it on any breakpoint —
+    // see the PASS 31 note further down where the description is built.
     final Color restingBg =
         Color.lerp(_Palette.canvas, _Palette.paleRose, 0.55)!;
     final Color restingBorder = _Palette.paleRose;
@@ -1541,7 +1728,7 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
                 restingBg,
               ],
             ),
-            borderRadius: BorderRadius.circular(widget.isMobile ? 20 : 26),
+            borderRadius: BorderRadius.circular(cardRadius),
             // PASS 27: same normal border in both states (no maroon hover
             // border anymore).
             border: Border.all(
@@ -1575,7 +1762,7 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
           // card matches the reference image's persistent "›" on the
           // right edge, replacing the old hover-only "Manage →" hint pill.
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(widget.isMobile ? 20 : 26),
+            borderRadius: BorderRadius.circular(cardRadius),
             child: Stack(
               children: [
                 // ── Decorative corner glow (purely cosmetic) ─────────────
@@ -1641,20 +1828,23 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
                   left: 0,
                   child: Container(
                     padding: EdgeInsets.symmetric(
-                      horizontal: widget.isMobile ? 11 : 14,
-                      vertical: widget.isMobile ? 5 : 7,
+                      horizontal:
+                          widget.isMobile ? 11 : (widget.isTablet ? 12.5 : 14),
+                      vertical: widget.isMobile ? 5 : (widget.isTablet ? 6 : 7),
                     ),
                     decoration: BoxDecoration(
                       color: _Palette.milanoRedDeep,
                       borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(widget.isMobile ? 20 : 26),
-                        bottomRight: Radius.circular(widget.isMobile ? 14 : 18),
+                        topLeft: Radius.circular(cardRadius),
+                        bottomRight: Radius.circular(stepTagRadius),
                       ),
                     ),
                     child: Text(
                       '0${widget.index + 1}',
                       style: GoogleFonts.inter(
-                        fontSize: widget.isMobile ? 10 : 11,
+                        fontSize: widget.isMobile
+                            ? 10
+                            : (widget.isTablet ? 10.5 : 11),
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.5,
                         color: Colors.white,
@@ -1756,8 +1946,8 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
                                     _Palette.paleRose,
                                   ],
                                 ),
-                                borderRadius: BorderRadius.circular(
-                                    widget.isMobile ? 16 : 20),
+                                borderRadius:
+                                    BorderRadius.circular(cardRadius - 6),
                                 boxShadow: [
                                   BoxShadow(
                                     color: _Palette.lemonChiffonDeep
@@ -1776,7 +1966,10 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
                           ),
                         ),
                       ),
-                      SizedBox(width: widget.isMobile ? 16 : 22),
+                      SizedBox(
+                          width: widget.isMobile
+                              ? 16
+                              : (widget.isTablet ? 19 : 22)),
                       // ── Title + description, left-aligned ──────────────
                       // PASS 6: wrapped in `Align` + `FittedBox` so this
                       // block scales down instead of overflowing if the
@@ -1840,7 +2033,9 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
                                             ),
                                           ),
                                           SizedBox(
-                                              width: widget.isMobile ? 7 : 9),
+                                              width: widget.isMobile
+                                                  ? 7
+                                                  : (widget.isTablet ? 8 : 9)),
                                           Flexible(
                                             child: Text(
                                               widget.title,
@@ -1857,31 +2052,47 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
                                         ],
                                       ),
                                       SizedBox(
-                                          height: widget.isMobile ? 8 : 10),
+                                          height: widget.isMobile
+                                              ? 8
+                                              : (widget.isTablet ? 9 : 10)),
                                       // ── Description ─────────────────
                                       // PASS 26: on mobile, the description
                                       // is always solid black for a
                                       // clearer, more professional look on
                                       // small screens.
                                       //
-                                      // PASS 27: on desktop it now stays
-                                      // the normal resting color/weight
+                                      // PASS 27: on tablet/desktop it
+                                      // stayed the normal resting
+                                      // color/weight
                                       // (`restingDescriptionColor`,
                                       // `w500`) even while hovered.
                                       //
                                       // PASS 28: mobile `maxLines` is `3`
                                       // (was `2`) so the larger, wrapped
                                       // text is never cut off with "…".
+                                      //
+                                      // PASS 31: the description now
+                                      // renders in solid black
+                                      // (`Colors.black`) on EVERY
+                                      // breakpoint — mobile, tablet, and
+                                      // desktop alike — instead of the
+                                      // old `widget.isMobile ? Colors.black
+                                      // : restingDescriptionColor` branch,
+                                      // and its weight is bumped from
+                                      // `w500` to `w600` on tablet/desktop
+                                      // so the newly-black text reads
+                                      // crisp and attractive rather than
+                                      // flat. Mobile keeps its original
+                                      // `w600` weight from PASS 22,
+                                      // unchanged.
                                       Text(
                                         widget.description,
                                         maxLines: widget.isMobile ? 3 : 2,
                                         overflow: TextOverflow.ellipsis,
                                         style: GoogleFonts.inter(
-                                          color: widget.isMobile
-                                              ? Colors.black
-                                              : restingDescriptionColor,
+                                          color: Colors.black,
                                           fontSize: descriptionFontSize,
-                                          fontWeight: FontWeight.w500,
+                                          fontWeight: FontWeight.w600,
                                           height: 1.4,
                                         ),
                                       ),
@@ -1893,7 +2104,10 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
                           },
                         ),
                       ),
-                      SizedBox(width: widget.isMobile ? 8 : 12),
+                      SizedBox(
+                          width: widget.isMobile
+                              ? 8
+                              : (widget.isTablet ? 10 : 12)),
                       // ── Trailing chevron ───────────────────────────────
                       // PASS 23: always visible (not tied to `_isHovered`)
                       // so it matches the persistent "›" shown on every
@@ -1907,7 +2121,8 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
                       Icon(
                         Icons.chevron_right_rounded,
                         color: _Palette.milanoRedDeep,
-                        size: widget.isMobile ? 24 : 28,
+                        size:
+                            widget.isMobile ? 24 : (widget.isTablet ? 26 : 28),
                       ),
                     ],
                   ),

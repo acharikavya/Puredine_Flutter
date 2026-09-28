@@ -196,6 +196,27 @@ import 'package:restaurant_unified_app/admin/services/tables_service.dart';
 /// No label/badge text, color, or the `required`/`badge` logic was
 /// touched, and no other field label, form field, or validator anywhere
 /// in this file was changed.
+///
+/// MOBILE OVERFLOW/CLIPPING BUGFIX PASS 10 (whole-dialog clipped on the
+/// right — Submit button appears cut off): the outer `Dialog` widget was
+/// never given an explicit `insetPadding`, so Flutter was applying its
+/// own default (`EdgeInsets.symmetric(horizontal: 40, vertical: 24)`) on
+/// top of the already-computed `dialogWidth`/`dialogHeight` (which are
+/// deliberately sized as a fraction of the screen per breakpoint, e.g.
+/// `width * 0.96` on mobile). That stacked extra margin on top of an
+/// already near-full-width box, pushing the dialog's right edge past the
+/// physical screen boundary — which is why the header's segmented
+/// control ("...Delive[ry]"), the top dot row, and the footer's "Submit"
+/// button all appeared sliced off at the right edge on phones, exactly
+/// as in the reported screenshot. The fix sets `insetPadding:
+/// EdgeInsets.zero` on the `Dialog`, so the width/height this file
+/// already computes per breakpoint is the actual on-screen size, with no
+/// hidden extra margin added around it. This is a pure layout fix: no
+/// table loading, order submission, validation, quantity,
+/// category/item navigation, or button `onPressed` callback
+/// (`Navigator.pop(context)` / `_isSubmitting ? null : _submitOrder`)
+/// was touched, and no field, callback, or keyword was renamed anywhere
+/// in this file.
 /// ─────────────────────────────────────────────────────────────────────────
 class _Palette {
   // PUREDINE Maroon + Cream — field names unchanged on purpose (see the
@@ -453,6 +474,16 @@ class _ManualOrderDialogState extends State<ManualOrderDialog> {
 
     return Dialog(
       backgroundColor: Colors.transparent,
+      // BUGFIX PASS 10: without this, Flutter applies its own default
+      // `insetPadding` (40 horizontal / 24 vertical) on top of the
+      // `dialogWidth`/`dialogHeight` already computed above, pushing the
+      // dialog's right edge past the physical screen boundary on phones
+      // (that's what was slicing off the header's "Delivery" segment,
+      // the top dot row, and the footer's "Submit" button in the
+      // reported screenshot). Setting it to zero here means the sizes
+      // this file already computes per breakpoint are the actual
+      // on-screen size, with nothing extra stacked on top.
+      insetPadding: EdgeInsets.zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
       child: Container(
         width: dialogWidth,

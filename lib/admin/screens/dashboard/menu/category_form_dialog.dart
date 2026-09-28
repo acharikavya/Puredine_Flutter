@@ -73,6 +73,17 @@ import 'package:restaurant_unified_app/admin/services/menu_service.dart';
 /// button styles, colors, icons, loading spinner, `onPressed`
 /// callbacks, or the stacked/row breakpoint logic — was changed.
 ///
+/// ACTIONS-ROW PASS 9 (always one line): the Cancel and Create/Save
+/// buttons now ALWAYS render side-by-side in a single row, on every
+/// screen width — the narrow-width "stacked" (vertical/Column) layout
+/// has been disabled so the two buttons never wrap onto two lines on
+/// mobile. `_Responsive.stackedActionsBreakpoint` is left in place
+/// (unused) for parity/reference only. Button sizing
+/// (`actionButtonWidth`), styles, colors, icons, text, loading spinner,
+/// alignment (`MainAxisAlignment.end`), spacing (`actionGap`), and all
+/// `onPressed` callbacks are unchanged from Pass 8 — only the
+/// stack-vs-row decision was removed so the row path is always used.
+///
 /// ZERO changes were made to `_submit`, `_formKey`, validators,
 /// `onSaved`, `MenuService` calls, `Navigator.of(context).pop(...)`
 /// calls, or any other business logic — this pass is layout/sizing only.
@@ -258,9 +269,10 @@ class _Responsive {
   /// PASS 8: narrowed a little further at every breakpoint.
   double get actionButtonWidth => isDesktop ? 118 : (isTablet ? 108 : 98);
 
-  /// Below this width the Cancel / Submit row is cramped, so the actions
-  /// stack vertically instead (tiny phones only — normal mobile widths
-  /// stay as a row).
+  /// Below this width the Cancel / Submit row used to stack vertically.
+  /// PASS 9: no longer used to trigger stacking (the row is now always
+  /// used regardless of width) — left in place for reference/parity so
+  /// no other file that might reference this constant breaks.
   static const double stackedActionsBreakpoint = 340;
 }
 
@@ -774,13 +786,15 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                 ),
 
                 // ── Actions ─────────────────────────────────────────────
-                // ACTIONS-ROW PASS 7: Cancel and Create/Save are both
-                // wrapped to the SAME fixed `r.actionButtonWidth` (smaller
-                // than the previous flex-based sizing) and the row/column
-                // is left-aligned instead of stretching across the
-                // dialog. Everything else here — styles, icons, text,
-                // loading spinner, onPressed callbacks, and the
-                // stacked/row breakpoint logic — is unchanged.
+                // ACTIONS-ROW PASS 9: Cancel and Create/Save always sit in
+                // ONE row, side-by-side, on every screen width — the old
+                // narrow-width vertical stacking has been removed so the
+                // buttons never wrap onto two lines on mobile. Both
+                // buttons still share the same fixed `r.actionButtonWidth`
+                // sizing token and the row is right-aligned exactly as
+                // before. Everything else here — styles, icons, text,
+                // loading spinner, and all `onPressed` callbacks — is
+                // unchanged.
                 Container(
                   color: _Palette.canvas,
                   padding: EdgeInsets.fromLTRB(
@@ -789,59 +803,19 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                     r.actionsHPad,
                     r.actionsBottomPad,
                   ),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final cancelButton = OutlinedButton(
-                        onPressed: _isLoading
-                            ? null
-                            : () => Navigator.of(context).pop(false),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: _Palette.textMuted,
-                          backgroundColor: Colors.white,
-                          side: const BorderSide(color: _Palette.paleRose),
-                          padding: EdgeInsets.symmetric(
-                            vertical: r.actionVerticalPad,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          'Cancel',
-                          style: GoogleFonts.inter(
-                            fontWeight: FontWeight.w700,
-                            fontSize: r.actionFontSize,
-                          ),
-                        ),
-                      );
-
-                      final submitButton = DecoratedBox(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: _isLoading
-                              ? const []
-                              : [
-                                  BoxShadow(
-                                    color: _Palette.milanoRed
-                                        .withValues(alpha: 0.32),
-                                    blurRadius: 18,
-                                    offset: const Offset(0, 8),
-                                  ),
-                                  BoxShadow(
-                                    color: _Palette.lemonChiffon
-                                        .withValues(alpha: 0.12),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                        ),
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _submit,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _Palette.milanoRed,
-                            disabledBackgroundColor:
-                                _Palette.milanoRed.withValues(alpha: 0.6),
-                            elevation: 0,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      SizedBox(
+                        width: r.actionButtonWidth,
+                        child: OutlinedButton(
+                          onPressed: _isLoading
+                              ? null
+                              : () => Navigator.of(context).pop(false),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: _Palette.textMuted,
+                            backgroundColor: Colors.white,
+                            side: const BorderSide(color: _Palette.paleRose),
                             padding: EdgeInsets.symmetric(
                               vertical: r.actionVerticalPad,
                             ),
@@ -849,91 +823,91 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: _isLoading
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      isEditing
-                                          ? Icons.save_rounded
-                                          : Icons.add_rounded,
-                                      size: 18,
-                                      color: _Palette.lemonChiffon,
+                          child: Text(
+                            'Cancel',
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w700,
+                              fontSize: r.actionFontSize,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: r.actionGap),
+                      SizedBox(
+                        width: r.actionButtonWidth,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: _isLoading
+                                ? const []
+                                : [
+                                    BoxShadow(
+                                      color: _Palette.milanoRed
+                                          .withValues(alpha: 0.32),
+                                      blurRadius: 18,
+                                      offset: const Offset(0, 8),
                                     ),
-                                    const SizedBox(width: 8),
-                                    Flexible(
-                                      child: Text(
-                                        isEditing ? 'Save Changes' : 'Create',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: GoogleFonts.inter(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                          fontSize: r.actionFontSize,
-                                        ),
-                                      ),
+                                    BoxShadow(
+                                      color: _Palette.lemonChiffon
+                                          .withValues(alpha: 0.12),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
                                     ),
                                   ],
-                                ),
+                          ),
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _submit,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _Palette.milanoRed,
+                              disabledBackgroundColor:
+                                  _Palette.milanoRed.withValues(alpha: 0.6),
+                              elevation: 0,
+                              padding: EdgeInsets.symmetric(
+                                vertical: r.actionVerticalPad,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        isEditing
+                                            ? Icons.save_rounded
+                                            : Icons.add_rounded,
+                                        size: 18,
+                                        color: _Palette.lemonChiffon,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Flexible(
+                                        child: Text(
+                                          isEditing ? 'Save Changes' : 'Create',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: GoogleFonts.inter(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                            fontSize: r.actionFontSize,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                          ),
                         ),
-                      );
-
-                      // Both buttons now share one fixed, smaller width so
-                      // they render as an equally-sized pair instead of
-                      // stretching to fill the row.
-                      final sizedCancelButton = SizedBox(
-                        width: r.actionButtonWidth,
-                        child: cancelButton,
-                      );
-                      final sizedSubmitButton = SizedBox(
-                        width: r.actionButtonWidth,
-                        child: submitButton,
-                      );
-
-                      // RESPONSIVE PASS 6: on very narrow widths, stack
-                      // the two actions instead of squeezing them into a
-                      // Row, so labels never wrap or clip.
-                      // FIX: the `<` operator is required here — without
-                      // it this line does not compile.
-                      final stacked = constraints.maxWidth <
-                          _Responsive.stackedActionsBreakpoint;
-
-                      if (stacked) {
-                        // ACTIONS-ROW PASS 8: even when stacked, both
-                        // buttons keep the same fixed, smaller width and
-                        // are right-aligned rather than stretched full
-                        // width.
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            sizedSubmitButton,
-                            SizedBox(height: r.actionGap),
-                            sizedCancelButton,
-                          ],
-                        );
-                      }
-
-                      // ACTIONS-ROW PASS 8: right-aligned row of two
-                      // equally, smaller-sized buttons (no more
-                      // Expanded/flex stretching across the dialog).
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          sizedCancelButton,
-                          SizedBox(width: r.actionGap),
-                          sizedSubmitButton,
-                        ],
-                      );
-                    },
+                      ),
+                    ],
                   ),
                 ),
               ],

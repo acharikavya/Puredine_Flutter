@@ -204,7 +204,7 @@ import 'package:restaurant_unified_app/admin/services/orders_service.dart';
 /// PDF/print logic anywhere in this file was touched, and no existing
 /// field, callback, route or keyword was renamed.
 ///
-/// UI-ENHANCEMENT PASS 14 (this pass): responsive-layout-only, exactly
+/// UI-ENHANCEMENT PASS 14: responsive-layout-only, exactly
 /// like every pass above — no provider, data loading, filtering, sorting,
 /// status-update, dialog, or PDF/print logic anywhere in this file was
 /// touched, and no state field, callback, route, or keyword was renamed.
@@ -229,6 +229,24 @@ import 'package:restaurant_unified_app/admin/services/orders_service.dart';
 ///      starting at the tablet breakpoint instead of only above 900px, so
 ///      it reads as a proper data table on tablets instead of the stacked
 ///      mobile card list; mobile keeps the original stacked card list.
+///
+/// FEATURE PASS 15 (this pass): added SEARCH BY CUSTOMER NAME — and
+/// nothing else. No provider call, data loading, status/payment/type/time
+/// filter, sorting, status-update, dialog, or PDF/print logic was changed,
+/// and no existing field, callback, route or keyword was renamed.
+///   1. SEARCH RULE: the `matchSearch` condition inside `_filtered` now
+///      also matches when the (case-insensitive) search text appears in
+///      `o.customerName`, in addition to the existing Order ID match.
+///      Because the same `_searchQuery` state and `_filtered` getter feed
+///      the header's "N found" chip, the "Showing X of Y orders" line,
+///      the mobile card list AND the tablet/desktop data table, the new
+///      search works identically on all three device types with no
+///      layout-specific code. Surrounding whitespace in the search text
+///      is ignored so "  john " still finds "John".
+///   2. HINT TEXT: the header search bar's hint now tells the user they
+///      can search by customer name too. It is a shorter string on mobile
+///      and is single-line with an ellipsis (`maxLines: 1` /
+///      `TextOverflow.ellipsis`) so it always fits the pill on any width.
 /// -----------------------------------------------------------------------
 class _OrdersTheme {
   // Primary brand — the "PUREDINE Maroon + Cream" palette (see the
@@ -489,9 +507,13 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
   List<OrderModel> get _filtered {
     final cutoff = _timeCutoff;
+    // FEATURE PASS 15: trimmed + lower-cased once, so the search below can
+    // match either the Order ID or the customer name.
+    final query = _searchQuery.trim().toLowerCase();
     final filtered = _orders.where((o) {
-      final matchSearch = _searchQuery.isEmpty ||
-          o.id.toLowerCase().contains(_searchQuery.toLowerCase());
+      final matchSearch = query.isEmpty ||
+          o.id.toLowerCase().contains(query) ||
+          o.customerName.toLowerCase().contains(query);
       final matchStatus = _statusFilter == 'All Status' ||
           o.status.toUpperCase() == _statusFilter.toUpperCase();
       final matchPayment = _paymentFilter == 'All Payments' ||
@@ -769,6 +791,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
   /// reads with a bit more breathing room on tablets instead of jumping
   /// straight from the compact phone sizing to the full desktop sizing.
   /// Structure, text, state and handlers are unchanged.
+  ///
+  /// PASS 15: the search bar's hint text now mentions customer name too
+  /// (shorter on mobile, single-line with ellipsis so it always fits).
   Widget _buildHeader(_DeviceType deviceType) {
     final bool isMobile = deviceType == _DeviceType.mobile;
     final bool isTablet = deviceType == _DeviceType.tablet;
@@ -985,7 +1010,13 @@ class _OrdersScreenState extends State<OrdersScreen> {
                             ),
                             cursorColor: _OrdersTheme.milanoRed,
                             decoration: InputDecoration(
-                              hintText: 'Search by Order ID...',
+                              // PASS 15: hint now mentions customer name;
+                              // shorter on mobile and always a single line
+                              // with an ellipsis so it fits every width.
+                              hintText: isMobile
+                                  ? 'Search order ID or customer...'
+                                  : 'Search by Order ID or Customer Name...',
+                              hintMaxLines: 1,
                               border: InputBorder.none,
                               focusedBorder: InputBorder.none,
                               enabledBorder: InputBorder.none,
@@ -993,7 +1024,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                               filled: false,
                               hintStyle: GoogleFonts.inter(
                                 color: _OrdersTheme.mutedTaupe,
-                              ),
+                                fontSize: isMobile ? 13.5 : 14,
+                              ).copyWith(overflow: TextOverflow.ellipsis),
                             ),
                           ),
                         ),

@@ -98,29 +98,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) async {
-    // App returned from background
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    debugPrint('Admin lifecycle: $state');
 
     if (state == AppLifecycleState.resumed) {
-      bool isValid = await SessionManager.isSessionValid();
-
-      if (!isValid && mounted) {
-        await SessionManager.logout();
-
-        if (!mounted) return;
-        await context.read<AuthProvider>().logout();
-
-        if (mounted) {
-          context.go('/login');
-        }
-      } else {
-        await SessionManager.updateLastActiveTime();
-      }
-    }
-
-    // App moved to background
-    if (state == AppLifecycleState.paused) {
-      await SessionManager.updateLastActiveTime();
+      debugPrint('Admin app resumed - keeping user logged in');
     }
   }
 

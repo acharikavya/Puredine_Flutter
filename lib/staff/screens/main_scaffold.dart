@@ -9,6 +9,7 @@ import 'orders_screen.dart';
 import 'tables_screen.dart';
 import 'billing_screen.dart';
 import '../../utils/session_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'profile_screen.dart';
 import 'package:go_router/go_router.dart';
 
@@ -176,7 +177,8 @@ class MainScaffold extends StatefulWidget {
 
 class _MainScaffoldState extends State<MainScaffold>
     with WidgetsBindingObserver {
-  late int _currentIndex;
+  int _currentIndex = 0;
+  static const String _savedTabKey = 'puredine_current_tab';
 
   @override
   void initState() {
@@ -185,64 +187,34 @@ class _MainScaffoldState extends State<MainScaffold>
     WidgetsBinding.instance.addObserver(this);
 
     _currentIndex = widget.initialTab;
-
-    _checkSessionOnStartup();
+    _restoreCurrentTab();
   }
 
-  Future<void> _checkSessionOnStartup() async {
-    final isValid = await SessionManager.isSessionValid();
+  Future<void> _restoreCurrentTab() async {
+    final prefs = await SharedPreferences.getInstance();
 
-    print('Startup Session Valid: $isValid');
+    if (!mounted) return;
 
-    if (!isValid) {
-      print('===== STARTUP SESSION INVALID =====');
+    final savedTab = prefs.getInt(_savedTabKey);
 
-      await SessionManager.logout();
-
-      if (!mounted) return;
-
-      await context.read<StaffAuthProvider>().logout();
-
-      if (!mounted) return;
-
-      context.go('/login');
-
-      return;
+    if (savedTab != null) {
+      setState(() {
+        _currentIndex = savedTab;
+      });
     }
+  }
 
-    await SessionManager.updateLastActiveTime();
+  Future<void> _saveCurrentTab(int index) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_savedTabKey, index);
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) async {
-    // App resumed
-    print("Lifecycle: $state");
-    if (state == AppLifecycleState.inactive) {
-      await SessionManager.updateLastActiveTime();
-    }
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    debugPrint("Lifecycle: $state");
+
     if (state == AppLifecycleState.resumed) {
-      bool isValid = await SessionManager.isSessionValid();
-      print("Session Valid: $isValid");
-
-      if (!isValid && mounted) {
-        print("===== LOGGING OUT =====");
-
-        await SessionManager.logout();
-
-        if (!mounted) return;
-        await context.read<StaffAuthProvider>().logout();
-
-        if (mounted) {
-          context.go('/login');
-        }
-      } else {
-        await SessionManager.updateLastActiveTime();
-      }
-    }
-
-    // App paused
-    if (state == AppLifecycleState.paused) {
-      await SessionManager.updateLastActiveTime();
+      debugPrint("App resumed — keeping user logged in.");
     }
   }
 
@@ -343,7 +315,10 @@ class _MainScaffoldState extends State<MainScaffold>
                 _Sidebar(
                   navItems: navItems,
                   currentIndex: safeIndex,
-                  onTap: (idx) => setState(() => _currentIndex = idx),
+                  onTap: (idx) {
+                    setState(() => _currentIndex = idx);
+                    _saveCurrentTab(idx);
+                  },
                   roleName: isBilling ? 'Billing Staff' : 'Serving Staff',
                   isBilling: isBilling,
                   accentColor: accentColor,
@@ -367,7 +342,10 @@ class _MainScaffoldState extends State<MainScaffold>
             accentColor: accentColor,
             accentLightColor: accentLightColor,
             isBilling: isBilling,
-            onTap: (idx) => setState(() => _currentIndex = idx),
+            onTap: (idx) {
+              setState(() => _currentIndex = idx);
+              _saveCurrentTab(idx);
+            },
           ),
         );
       },

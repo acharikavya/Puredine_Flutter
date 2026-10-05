@@ -6,8 +6,8 @@ import 'core/theme.dart';
 import 'router.dart';
 
 // Admin Providers
-import 'admin/core/providers/restaurant_provider.dart';
-import 'admin/core/providers/notification_provider.dart';
+import 'core/admin/core/providers/restaurant_provider.dart';
+import 'core/admin/core/providers/notification_provider.dart';
 
 // Staff Providers
 import 'staff/contexts/orders_provider.dart';
@@ -99,3 +99,4 @@ class _RestaurantUnifiedAppState extends State<RestaurantUnifiedApp> {
     );
   }
 }
+

@@ -354,3 +354,4 @@ class MenuItem {
     this.isAvailable = true,
   });
 }
+

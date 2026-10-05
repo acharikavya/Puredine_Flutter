@@ -13,6 +13,14 @@ class SessionManager {
     return prefs.getBool(_isLoggedInKey) ?? false;
   }
 
+  static Future<void> updateLastActiveTime() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setInt(
+    'lastActiveTime',
+    DateTime.now().millisecondsSinceEpoch,
+  );
+}
+
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -20,3 +28,4 @@ class SessionManager {
     await prefs.remove(_isLoggedInKey);
   }
 }
+

@@ -959,3 +959,4 @@ class _NavItem {
     required this.screen,
   });
 }
+

@@ -15,3 +15,4 @@ class CurrencyUtils {
     return NumberFormat.decimalPattern('en_IN').format(amount);
   }
 }
+

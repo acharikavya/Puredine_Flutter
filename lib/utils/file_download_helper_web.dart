@@ -11,3 +11,4 @@ Future<bool> downloadFile(Uint8List bytes, String fileName) async {
   html.Url.revokeObjectUrl(url);
   return true;
 }
+

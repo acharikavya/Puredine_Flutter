@@ -7,9 +7,8 @@ import 'shared/forgot_password_screen.dart';
 import 'shared/reset_password_screen.dart';
 
 // Admin
-import 'admin/screens/dashboard/admin_main_scaffold.dart';
-import 'admin/screens/dashboard/staff/staff_screen.dart';
-
+import 'core/admin/screens/dashboard/admin_main_scaffold.dart';
+import 'core/admin/screens/dashboard/staff/staff_screen.dart';
 // Staff
 import 'staff/screens/main_scaffold.dart';
 import 'staff/screens/new_orders_screen.dart';
@@ -283,3 +282,4 @@ GoRouter createRouter(AuthProvider authProvider) {
     ],
   );
 }
+

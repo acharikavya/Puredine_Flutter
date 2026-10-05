@@ -1111,4 +1111,3 @@ class _HeaderCloseButtonState extends State<_HeaderCloseButton> {
     );
   }
 }
-

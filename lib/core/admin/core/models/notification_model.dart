@@ -44,4 +44,3 @@ class NotificationModel {
   factory NotificationModel.fromJson(String source) =>
       NotificationModel.fromMap(json.decode(source));
 }
-

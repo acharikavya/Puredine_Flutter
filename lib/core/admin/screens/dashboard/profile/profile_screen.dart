@@ -1472,4 +1472,3 @@ class _InfoRow {
     required this.value,
   });
 }
-

@@ -4125,4 +4125,3 @@ class _TopToastWidgetState extends State<_TopToastWidget>
     );
   }
 }
-

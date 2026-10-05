@@ -47,4 +47,3 @@ class TablesProvider extends ChangeNotifier {
     }
   }
 }
-

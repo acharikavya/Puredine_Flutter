@@ -469,4 +469,3 @@ class _InputGroup extends StatelessWidget {
     );
   }
 }
-

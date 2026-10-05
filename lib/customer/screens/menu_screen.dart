@@ -355,4 +355,3 @@ class _CustomerMenuScreenState extends State<CustomerMenuScreen> {
     );
   }
 }
-

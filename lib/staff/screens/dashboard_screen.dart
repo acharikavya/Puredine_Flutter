@@ -2125,4 +2125,3 @@ class _StatusConfig {
     required this.leftBar,
   });
 }
-

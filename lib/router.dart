@@ -282,4 +282,3 @@ GoRouter createRouter(AuthProvider authProvider) {
     ],
   );
 }
-

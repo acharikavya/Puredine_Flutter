@@ -99,4 +99,3 @@ class _RestaurantUnifiedAppState extends State<RestaurantUnifiedApp> {
     );
   }
 }
-

@@ -256,4 +256,3 @@ class OrdersProvider extends ChangeNotifier {
     }
   }
 }
-

@@ -124,4 +124,3 @@ class NotificationProvider with ChangeNotifier {
     notifyListeners();
   }
 }
-

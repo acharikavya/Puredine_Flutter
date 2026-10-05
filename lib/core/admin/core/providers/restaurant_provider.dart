@@ -113,4 +113,3 @@ class RestaurantProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
-

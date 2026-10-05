@@ -1942,4 +1942,3 @@ class _CategoryCardState extends State<_CategoryCard> {
     );
   }
 }
-

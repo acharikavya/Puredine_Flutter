@@ -1262,4 +1262,3 @@ class _TableDisplayConfig {
     required this.cardBorder,
   });
 }
-

@@ -812,4 +812,3 @@ class AdminLandingScreen extends StatelessWidget {
     );
   }
 }
-

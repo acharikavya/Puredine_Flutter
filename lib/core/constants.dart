@@ -95,4 +95,3 @@ class AppColors {
   static const Color slate800 = Color(0xFF1E293B);
   static const Color slate900 = Color(0xFF0F172A);
 }
-

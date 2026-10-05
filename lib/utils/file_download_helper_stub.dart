@@ -5,4 +5,3 @@ Future<bool> downloadFile(Uint8List bytes, String fileName) async {
     'Cannot download file without dart:html or dart:io',
   );
 }
-

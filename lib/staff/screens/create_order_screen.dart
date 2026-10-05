@@ -2029,4 +2029,3 @@ class _SummaryDetailRow extends StatelessWidget {
     );
   }
 }
-

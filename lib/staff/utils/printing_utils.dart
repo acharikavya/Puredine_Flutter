@@ -307,4 +307,3 @@ class PrintingUtils {
     return months[m - 1];
   }
 }
-

@@ -62,4 +62,3 @@ Future<bool> downloadFile(Uint8List bytes, String fileName) async {
     return false;
   }
 }
-

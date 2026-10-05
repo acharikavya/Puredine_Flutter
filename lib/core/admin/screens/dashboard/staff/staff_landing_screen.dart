@@ -2138,4 +2138,3 @@ class _StaffTypeCardState extends State<_StaffTypeCard> {
     );
   }
 }
-

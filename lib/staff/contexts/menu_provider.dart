@@ -218,4 +218,3 @@ class MenuProvider extends ChangeNotifier {
     );
   }
 }
-

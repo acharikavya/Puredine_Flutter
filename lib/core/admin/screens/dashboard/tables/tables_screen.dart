@@ -2445,4 +2445,3 @@ class _TitleDivider extends StatelessWidget {
     );
   }
 }
-

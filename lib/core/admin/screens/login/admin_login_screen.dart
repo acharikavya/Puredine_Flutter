@@ -439,4 +439,3 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.05);
   }
 }
-

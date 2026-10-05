@@ -923,4 +923,3 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
     );
   }
 }
-

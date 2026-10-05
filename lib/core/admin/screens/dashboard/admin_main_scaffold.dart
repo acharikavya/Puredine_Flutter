@@ -877,4 +877,3 @@ class _NavRow extends StatelessWidget {
     );
   }
 }
-

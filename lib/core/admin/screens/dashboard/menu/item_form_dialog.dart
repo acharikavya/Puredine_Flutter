@@ -1315,4 +1315,3 @@ class _ItemFormDialogState extends State<ItemFormDialog> {
     );
   }
 }
-

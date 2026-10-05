@@ -30,26 +30,7 @@ class MainActivity : FlutterActivity() {
             "ACTIVITY DESTROYED - isFinishing=$isFinishing"
         )
 
-        if (isFinishing) {
 
-            Log.d(
-                "MainActivity",
-                "ACTIVITY FINISHING - CLEARING SESSION"
-            )
-
-            getSharedPreferences(
-                "FlutterSharedPreferences",
-                MODE_PRIVATE
-            )
-                .edit()
-                .clear()
-                .apply()
-
-            Log.d(
-                "MainActivity",
-                "SESSION CLEARED"
-            )
-        }
 
         super.onDestroy()
     }

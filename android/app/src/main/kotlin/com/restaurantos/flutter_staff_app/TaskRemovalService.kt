@@ -15,18 +15,7 @@ class TaskRemovalService : Service() {
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
-        // Clear Flutter SharedPreferences when the app
-        // is removed from the Android Recent Apps screen.
-        getSharedPreferences(
-            "FlutterSharedPreferences",
-            MODE_PRIVATE
-        )
-            .edit()
-            .clear()
-            .apply()
-
         stopSelf()
-
         super.onTaskRemoved(rootIntent)
     }
 

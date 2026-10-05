@@ -38,10 +38,7 @@
         </activity>
 
         <!-- Detect when the app task is removed from Recent Apps -->
-        <service
-            android:name=".TaskRemovalService"
-            android:exported="false"
-            android:stopWithTask="false" />
+
 
         <meta-data
             android:name="flutterEmbedding"

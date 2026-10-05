@@ -23,19 +23,26 @@ void main() async {
     final staffAuthProvider = StaffAuthProvider();
 
     // Start loading but don't block forever if one fails
-    await Future.wait([
-      authProvider.loadAuth().timeout(
-            const Duration(seconds: 5),
-            onTimeout: () {},
-          ),
-      staffAuthProvider.loadAuth().timeout(
-            const Duration(seconds: 5),
-            onTimeout: () {},
-          ),
-    ]).catchError((e) {
-      debugPrint("Initialization error: $e");
-      return <void>[];
-    });
+    try {
+  // AuthProvider is the SINGLE source of truth for persisted login.
+  //
+  // It restores:
+  // - auth_token
+  // - user_role
+  // - user_data
+  //
+  // Do NOT load StaffAuthProvider here because both providers use
+  // the same auth_token key.
+  await authProvider.loadAuth();
+
+  debugPrint("========== APP STARTUP AUTH ==========");
+  debugPrint("Authenticated: ${authProvider.isAuthenticated}");
+  debugPrint("Role: ${authProvider.role}");
+  debugPrint("Token exists: ${authProvider.token != null}");
+  debugPrint("======================================");
+} catch (e) {
+  debugPrint("Auth initialization error: $e");
+}
 
     runApp(
       MultiProvider(

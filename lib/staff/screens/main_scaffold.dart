@@ -9,7 +9,6 @@ import 'orders_screen.dart';
 import 'tables_screen.dart';
 import 'billing_screen.dart';
 import '../../utils/session_manager.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'profile_screen.dart';
 import 'package:go_router/go_router.dart';
 
@@ -178,7 +177,7 @@ class MainScaffold extends StatefulWidget {
 class _MainScaffoldState extends State<MainScaffold>
     with WidgetsBindingObserver {
   int _currentIndex = 0;
-  static const String _savedTabKey = 'puredine_current_tab';
+
 
   @override
   void initState() {
@@ -187,27 +186,9 @@ class _MainScaffoldState extends State<MainScaffold>
     WidgetsBinding.instance.addObserver(this);
 
     _currentIndex = widget.initialTab;
-    _restoreCurrentTab();
+
   }
 
-  Future<void> _restoreCurrentTab() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    if (!mounted) return;
-
-    final savedTab = prefs.getInt(_savedTabKey);
-
-    if (savedTab != null) {
-      setState(() {
-        _currentIndex = savedTab;
-      });
-    }
-  }
-
-  Future<void> _saveCurrentTab(int index) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_savedTabKey, index);
-  }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -316,9 +297,8 @@ class _MainScaffoldState extends State<MainScaffold>
                   navItems: navItems,
                   currentIndex: safeIndex,
                   onTap: (idx) {
-                    setState(() => _currentIndex = idx);
-                    _saveCurrentTab(idx);
-                  },
+  setState(() => _currentIndex = idx);
+},
                   roleName: isBilling ? 'Billing Staff' : 'Serving Staff',
                   isBilling: isBilling,
                   accentColor: accentColor,
@@ -343,9 +323,8 @@ class _MainScaffoldState extends State<MainScaffold>
             accentLightColor: accentLightColor,
             isBilling: isBilling,
             onTap: (idx) {
-              setState(() => _currentIndex = idx);
-              _saveCurrentTab(idx);
-            },
+  setState(() => _currentIndex = idx);
+},
           ),
         );
       },

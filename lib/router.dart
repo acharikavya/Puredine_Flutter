@@ -61,20 +61,16 @@ GoRouter createRouter(AuthProvider authProvider) {
 
       final isLoggingIn = state.matchedLocation == '/login';
 
-      final isForgotPassword =
-          state.matchedLocation == '/forgot-password';
+      final isForgotPassword = state.matchedLocation == '/forgot-password';
 
       final isResetPassword =
           state.matchedLocation.startsWith('/reset-password');
 
-      final isCustomerScan =
-          state.matchedLocation == '/customer/scan-qr';
+      final isCustomerScan = state.matchedLocation == '/customer/scan-qr';
 
-      final isCustomerMenu =
-          state.matchedLocation == '/customer/menu';
+      final isCustomerMenu = state.matchedLocation == '/customer/menu';
 
-      final isAuthRoute =
-          isLoggingIn ||
+      final isAuthRoute = isLoggingIn ||
           isForgotPassword ||
           isResetPassword ||
           isCustomerScan ||
@@ -129,15 +125,13 @@ GoRouter createRouter(AuthProvider authProvider) {
 
       GoRoute(
         path: '/forgot-password',
-        builder: (context, state) =>
-            const ForgotPasswordScreen(),
+        builder: (context, state) => const ForgotPasswordScreen(),
       ),
 
       GoRoute(
         path: '/reset-password/:token',
         builder: (context, state) {
-          final token =
-              state.pathParameters['token'] ?? '';
+          final token = state.pathParameters['token'] ?? '';
 
           return ResetPasswordScreen(
             token: token,
@@ -151,27 +145,23 @@ GoRouter createRouter(AuthProvider authProvider) {
 
       GoRoute(
         path: '/admin/dashboard',
-        builder: (context, state) =>
-            const AdminMainScaffold(initialTab: 0),
+        builder: (context, state) => const AdminMainScaffold(initialTab: 0),
       ),
 
       GoRoute(
         path: '/admin/menu',
-        builder: (context, state) =>
-            const AdminMainScaffold(initialTab: 0),
+        builder: (context, state) => const AdminMainScaffold(initialTab: 0),
       ),
 
       GoRoute(
         path: '/admin/staff',
-        builder: (context, state) =>
-            const AdminMainScaffold(initialTab: 1),
+        builder: (context, state) => const AdminMainScaffold(initialTab: 1),
       ),
 
       GoRoute(
         path: '/admin/staff/:role',
         builder: (context, state) {
-          final role =
-              state.pathParameters['role'] ?? 'server';
+          final role = state.pathParameters['role'] ?? 'server';
 
           return StaffScreen(role: role);
         },
@@ -179,20 +169,17 @@ GoRouter createRouter(AuthProvider authProvider) {
 
       GoRoute(
         path: '/admin/tables',
-        builder: (context, state) =>
-            const AdminMainScaffold(initialTab: 2),
+        builder: (context, state) => const AdminMainScaffold(initialTab: 2),
       ),
 
       GoRoute(
         path: '/admin/orders',
-        builder: (context, state) =>
-            const AdminMainScaffold(initialTab: 3),
+        builder: (context, state) => const AdminMainScaffold(initialTab: 3),
       ),
 
       GoRoute(
         path: '/admin/profile',
-        builder: (context, state) =>
-            const AdminMainScaffold(initialTab: 4),
+        builder: (context, state) => const AdminMainScaffold(initialTab: 4),
       ),
 
       // ------------------------------------------------------------
@@ -201,54 +188,45 @@ GoRouter createRouter(AuthProvider authProvider) {
 
       GoRoute(
         path: '/staff/dashboard',
-        builder: (context, state) =>
-            const MainScaffold(initialTab: 0),
+        builder: (context, state) => const MainScaffold(initialTab: 0),
       ),
 
       GoRoute(
         path: '/staff/orders',
-        builder: (context, state) =>
-            const MainScaffold(initialTab: 1),
+        builder: (context, state) => const MainScaffold(initialTab: 1),
       ),
 
       GoRoute(
         path: '/staff/tables',
-        builder: (context, state) =>
-            const MainScaffold(initialTab: 2),
+        builder: (context, state) => const MainScaffold(initialTab: 2),
       ),
 
       GoRoute(
         path: '/staff/profile',
-        builder: (context, state) =>
-            const MainScaffold(initialTab: 3),
+        builder: (context, state) => const MainScaffold(initialTab: 3),
       ),
 
       GoRoute(
         path: '/staff/billing',
-        builder: (context, state) =>
-            const MainScaffold(initialTab: 0),
+        builder: (context, state) => const MainScaffold(initialTab: 0),
       ),
 
       GoRoute(
         path: '/staff/new-orders',
-        builder: (context, state) =>
-            const NewOrdersScreen(),
+        builder: (context, state) => const NewOrdersScreen(),
       ),
 
       GoRoute(
         path: '/staff/create-order',
-        builder: (context, state) =>
-            const CreateOrderScreen(),
+        builder: (context, state) => const CreateOrderScreen(),
       ),
 
       GoRoute(
         path: '/staff/order-details/:id',
         builder: (context, state) {
-          final id =
-              state.pathParameters['id'] ?? '';
+          final id = state.pathParameters['id'] ?? '';
 
-          final from =
-              state.uri.queryParameters['from'];
+          final from = state.uri.queryParameters['from'];
 
           return OrderDetailsScreen(
             orderId: id,
@@ -260,8 +238,7 @@ GoRouter createRouter(AuthProvider authProvider) {
       GoRoute(
         path: '/staff/payment/:id',
         builder: (context, state) {
-          final id =
-              state.pathParameters['id'] ?? '';
+          final id = state.pathParameters['id'] ?? '';
 
           return PaymentScreen(
             orderId: id,
@@ -272,16 +249,12 @@ GoRouter createRouter(AuthProvider authProvider) {
       GoRoute(
         path: '/staff/bill',
         builder: (context, state) {
-          final extra =
-              state.extra as Map<String, dynamic>? ?? {};
+          final extra = state.extra as Map<String, dynamic>? ?? {};
 
           return BillScreen(
-            orderId:
-                extra['orderId'] as String? ?? '',
-            finalTotal:
-                extra['finalTotal'] as int? ?? 0,
-            paymentMethod:
-                extra['paymentMethod'] as String? ?? 'cash',
+            orderId: extra['orderId'] as String? ?? '',
+            finalTotal: extra['finalTotal'] as int? ?? 0,
+            paymentMethod: extra['paymentMethod'] as String? ?? 'cash',
           );
         },
       ),
@@ -293,11 +266,9 @@ GoRouter createRouter(AuthProvider authProvider) {
       GoRoute(
         path: '/customer/scan-qr',
         builder: (context, state) {
-          final table =
-              state.uri.queryParameters['table'];
+          final table = state.uri.queryParameters['table'];
 
-          final token =
-              state.uri.queryParameters['token'];
+          final token = state.uri.queryParameters['token'];
 
           return WelcomeScreen(
             tableNumber: table ?? token,
@@ -307,8 +278,7 @@ GoRouter createRouter(AuthProvider authProvider) {
 
       GoRoute(
         path: '/customer/menu',
-        builder: (context, state) =>
-            const CustomerMenuScreen(),
+        builder: (context, state) => const CustomerMenuScreen(),
       ),
     ],
   );

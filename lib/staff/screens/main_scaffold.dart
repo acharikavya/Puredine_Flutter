@@ -178,7 +178,6 @@ class _MainScaffoldState extends State<MainScaffold>
     with WidgetsBindingObserver {
   int _currentIndex = 0;
 
-
   @override
   void initState() {
     super.initState();
@@ -186,9 +185,7 @@ class _MainScaffoldState extends State<MainScaffold>
     WidgetsBinding.instance.addObserver(this);
 
     _currentIndex = widget.initialTab;
-
   }
-
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -297,8 +294,8 @@ class _MainScaffoldState extends State<MainScaffold>
                   navItems: navItems,
                   currentIndex: safeIndex,
                   onTap: (idx) {
-  setState(() => _currentIndex = idx);
-},
+                    setState(() => _currentIndex = idx);
+                  },
                   roleName: isBilling ? 'Billing Staff' : 'Serving Staff',
                   isBilling: isBilling,
                   accentColor: accentColor,
@@ -323,8 +320,8 @@ class _MainScaffoldState extends State<MainScaffold>
             accentLightColor: accentLightColor,
             isBilling: isBilling,
             onTap: (idx) {
-  setState(() => _currentIndex = idx);
-},
+              setState(() => _currentIndex = idx);
+            },
           ),
         );
       },

@@ -24,25 +24,25 @@ void main() async {
 
     // Start loading but don't block forever if one fails
     try {
-  // AuthProvider is the SINGLE source of truth for persisted login.
-  //
-  // It restores:
-  // - auth_token
-  // - user_role
-  // - user_data
-  //
-  // Do NOT load StaffAuthProvider here because both providers use
-  // the same auth_token key.
-  await authProvider.loadAuth();
+      // AuthProvider is the SINGLE source of truth for persisted login.
+      //
+      // It restores:
+      // - auth_token
+      // - user_role
+      // - user_data
+      //
+      // Do NOT load StaffAuthProvider here because both providers use
+      // the same auth_token key.
+      await authProvider.loadAuth();
 
-  debugPrint("========== APP STARTUP AUTH ==========");
-  debugPrint("Authenticated: ${authProvider.isAuthenticated}");
-  debugPrint("Role: ${authProvider.role}");
-  debugPrint("Token exists: ${authProvider.token != null}");
-  debugPrint("======================================");
-} catch (e) {
-  debugPrint("Auth initialization error: $e");
-}
+      debugPrint("========== APP STARTUP AUTH ==========");
+      debugPrint("Authenticated: ${authProvider.isAuthenticated}");
+      debugPrint("Role: ${authProvider.role}");
+      debugPrint("Token exists: ${authProvider.token != null}");
+      debugPrint("======================================");
+    } catch (e) {
+      debugPrint("Auth initialization error: $e");
+    }
 
     runApp(
       MultiProvider(

@@ -156,18 +156,18 @@ class StaffAuthProvider extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-  debugPrint("========== LOGOUT CALLED ==========");
+    debugPrint("========== LOGOUT CALLED ==========");
 
-  _user = null;
-  _role = null;
-  _token = null;
+    _user = null;
+    _role = null;
+    _token = null;
 
-  final prefs = await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences.getInstance();
 
-  await prefs.remove(kTokenKey);
+    await prefs.remove(kTokenKey);
 
-  await SessionManager.logout();
+    await SessionManager.logout();
 
-  notifyListeners();
-}
+    notifyListeners();
+  }
 }
